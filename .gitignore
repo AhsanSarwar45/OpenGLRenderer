@@ -1,12 +1,9 @@
 # Prerequisites
 *.d
 
-
 # Directories
-/build # Build Directory
-.vscode/ # VSCode files
-.vs/ # Visual Studio files
-./out # Visual Studio build directory
+/build
+/.vscode
 
 # Compiled Object files
 *.slo
