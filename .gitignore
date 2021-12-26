@@ -1,6 +1,13 @@
 # Prerequisites
 *.d
 
+
+# Directories
+/build # Build Directory
+.vscode/ # VSCode files
+.vs/ # Visual Studio files
+./out # Visual Studio build directory
+
 # Compiled Object files
 *.slo
 *.lo
@@ -31,15 +38,9 @@
 *.out
 *.app
 
-
 # Configurations
 *.ini
 
 # Cache
 *.idx
 
-# Directories
-build/ # Build Directory
-.vscode/ # VSCode files
-.vs/ # Visual Studio files
-./out # Visual Studio build directory
