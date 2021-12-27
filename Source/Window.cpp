@@ -2,19 +2,29 @@
 #include "Window.hpp"
 
 #include <iostream>
+#include <signal.h>
 
 #include <ImGui/backends/imgui_impl_glfw.h>
 #include <ImGui/backends/imgui_impl_opengl3.h>
 #include <ImGui/imgui.h>
 
-void ErrorCallback(int error, const char* description)
+#include <glad/glad.h>
+
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+                                const GLchar* message, const void* userParam)
 {
-    fprintf(stderr, "Error: %s\n", description);
+    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, message);
+    raise(SIGABRT);
 }
 
-Window::Window(const std::string& name, uint32_t width, uint32_t height)
+void ErrorCallback(int error, const char* description) { fprintf(stderr, "Error: %s\n", description); }
+
+Window::Window(const std::string& name, WindowDimension width, WindowDimension height)
     : m_Properties({name, width, height, 0, 0})
 {
+    // TODO if width and height are negative.
+
     /* Initialize the library */
     glfwInit();
 
@@ -22,12 +32,11 @@ Window::Window(const std::string& name, uint32_t width, uint32_t height)
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     /* Create a windowed mode window and its OpenGL context */
-    m_Window = glfwCreateWindow(m_Properties.Width, m_Properties.Height,
-                                m_Properties.Name.c_str(), NULL, NULL);
+    m_Window = glfwCreateWindow(m_Properties.Width, m_Properties.Height, m_Properties.Name.c_str(), NULL, NULL);
     if (!m_Window)
     {
         glfwTerminate();
@@ -40,20 +49,16 @@ Window::Window(const std::string& name, uint32_t width, uint32_t height)
 
     glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    glfwSetFramebufferSizeCallback(m_Window, [](GLFWwindow* window, int width,
-                                                int height) {
-        WindowProperties* data =
-            static_cast<WindowProperties*>(glfwGetWindowUserPointer(window));
-        data->Width  = width;
-        data->Height = height;
+    glfwSetFramebufferSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
+        WindowProperties* data = static_cast<WindowProperties*>(glfwGetWindowUserPointer(window));
+        data->Width            = width;
+        data->Height           = height;
 
         glViewport(0, 0, width, height);
     });
 
-    glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos,
-                                          double yPos) {
-        WindowProperties* data =
-            static_cast<WindowProperties*>(glfwGetWindowUserPointer(window));
+    glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos) {
+        WindowProperties* data = static_cast<WindowProperties*>(glfwGetWindowUserPointer(window));
 
         static double lastX = xPos;
         static double lastY = yPos;
@@ -72,6 +77,10 @@ Window::Window(const std::string& name, uint32_t width, uint32_t height)
     glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    // During init, enable debug output
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
+
     glfwSwapInterval(1);
 
     IMGUI_CHECKVERSION();

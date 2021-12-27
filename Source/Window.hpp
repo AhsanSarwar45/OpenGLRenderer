@@ -5,11 +5,13 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
+using WindowDimension = uint16_t;
+
 struct WindowProperties
 {
-    std::string Name;
-    uint32_t    Width;
-    uint32_t    Height;
+    std::string     Name;
+    WindowDimension Width;
+    WindowDimension Height;
 
     double OffsetX;
     double OffsetY;
@@ -17,9 +19,8 @@ struct WindowProperties
 
 class Window
 {
-
   public:
-    Window(const std::string& name, uint32_t width, uint32_t height);
+    Window(const std::string& name, WindowDimension width, WindowDimension height);
     ~Window();
 
     void Update();

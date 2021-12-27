@@ -8,6 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CPP_LINKER_FLAGS "-loleaut32 -limm32 -lversion -lole32")
 
+add_subdirectory("Vendor/tinyobjloader")
+add_subdirectory("Vendor/glm")
 add_subdirectory("Vendor/GLFW")
 add_subdirectory("Vendor/Glad")
 
@@ -15,6 +17,12 @@ add_executable(${PROJECT_NAME}
 "Source/main.cpp"
 "Source/Window.cpp"
 "Source/Texture.cpp"
+"Source/Model.cpp"
+"Source/Mesh.cpp"
+"Source/Shader.cpp"
+"Source/Camera.cpp"
+"Source/Skybox.cpp"
+"Source/Vertex.cpp"
 "Vendor/ImGui/imgui.cpp"
 "Vendor/ImGui/imgui_demo.cpp"
 "Vendor/ImGui/imgui_draw.cpp"
@@ -38,4 +46,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC "Vendor/ImGui")
 
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 target_link_libraries(${PROJECT_NAME} PUBLIC stdc++fs)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
 target_link_libraries(${PROJECT_NAME} PUBLIC glad)
+target_link_libraries(${PROJECT_NAME} PUBLIC tinyobjloader)

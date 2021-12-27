@@ -1,0 +1,6 @@
+[submodule "Vendor/tinyobjloader"]
+	path = Vendor/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader
+[submodule "Vendor/glm"]
+	path = Vendor/glm
+	url = https://github.com/g-truc/glm

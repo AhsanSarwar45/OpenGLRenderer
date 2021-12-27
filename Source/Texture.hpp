@@ -9,24 +9,20 @@ enum class TextureType
     NonColor
 };
 
-class Texture
+using TextureDimensions = uint16_t;
+
+struct Texture
 {
-
-  public:
-    Texture(const std::string& path);
-    Texture(const std::string& path, TextureType type);
-    Texture();
-    ~Texture();
-
-    void Load(const std::string& path);
-    void Bind(unsigned int slot) const;
-
-    TextureType GetType() const { return m_Type; }
-    int         GetID() const { return m_Id; }
-    void        SetType(TextureType type) { m_Type = type; }
-
-  private:
-    unsigned int m_Id;
-    TextureType  m_Type;
-    std::string  m_Path;
+    unsigned int      Id;
+    TextureType       Type;
+    std::string       Path;
+    TextureDimensions Width;
+    TextureDimensions Height;
+    uint8_t           ComponentCount;
+    bool              IsLoaded;
 };
+
+Texture LoadTexture(const std::string& path);
+Texture LoadTexture(const std::string& path, const TextureType type);
+
+void BindTexture(unsigned int id, unsigned int slot);
