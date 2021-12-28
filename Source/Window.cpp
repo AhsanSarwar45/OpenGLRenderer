@@ -77,11 +77,12 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
     glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    // During init, enable debug output
     glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glEnable(GL_STENCIL_TEST);
+    // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
     glDebugMessageCallback(MessageCallback, 0);
 
     glfwSwapInterval(1);

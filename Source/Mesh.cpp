@@ -38,7 +38,6 @@ void DrawMesh(const Mesh& mesh, Shader& shader, Texture& texture)
 {
 
     BindTexture(texture.Id, 0);
-
     ShaderSetInt(shader, "material.diffuse", 0);
 
     // std::cout << mesh.Indices.size() << "\n";

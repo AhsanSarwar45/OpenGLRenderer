@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME}
 "Source/Camera.cpp"
 "Source/Skybox.cpp"
 "Source/Vertex.cpp"
+"Source/Billboard.cpp"
 "Vendor/ImGui/imgui.cpp"
 "Vendor/ImGui/imgui_demo.cpp"
 "Vendor/ImGui/imgui_draw.cpp"
