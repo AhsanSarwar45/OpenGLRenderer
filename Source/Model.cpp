@@ -113,6 +113,7 @@ void DrawModel(Model& model, Shader& shader)
     modelMatrix           = glm::translate(modelMatrix, transform.position);
     modelMatrix           = glm::scale(modelMatrix, transform.scale);
 
+    UseShader(shader);
     ShaderSetMat4(shader, "model", modelMatrix);
 
     for (auto& mesh : model.meshes)

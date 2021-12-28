@@ -31,7 +31,8 @@ int main()
 
     Texture texture = LoadTexture("../Assets/Images/image.jpg", TextureType::Color);
 
-    Shader shader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag", "Head");
+    Shader shader        = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag", "Head");
+    Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag", "Outline");
 
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
@@ -85,7 +86,7 @@ int main()
         }
         ImGui::End();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         UseShader(shader);
 
@@ -103,14 +104,36 @@ int main()
         ShaderSetFloat(shader, "light.linear", lightLinear);
         ShaderSetFloat(shader, "light.quadratic", lightQuadratic);
 
-        ShaderSetMat4(shader, "model", glm::translate(glm::mat4(1.0f), objPos));
+        glStencilMask(0x00);
+        DrawSkybox(skybox);
 
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
         for (auto& model : models)
         {
             DrawModel(model, shader);
         }
 
-        DrawSkybox(skybox);
+        // Draw outline
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+
+        UseShader(outlineShader);
+        ShaderSetFloat3(outlineShader, "color", glm::vec3(1.0f, 1.0f, 0.0f));
+
+        for (auto model : models)
+        {
+            model.transform.scale *= 1.1f;
+            // std::cout << model.transform.scale.x << ", " << model.transform.scale.y << ", " <<
+            // model.transform.scale.z
+            //   << "\n";
+            DrawModel(model, outlineShader);
+        }
+
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glEnable(GL_DEPTH_TEST);
 
         window.Render();
     }
