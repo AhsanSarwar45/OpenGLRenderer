@@ -40,6 +40,8 @@ Billboard LoadBillboard(const std::string& texturePath)
 
 void DrawBillboard(Billboard& billboard)
 {
+    glDisable(GL_CULL_FACE);
+
     Transform transform   = billboard.transform;
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     modelMatrix           = glm::translate(modelMatrix, transform.position);
@@ -54,4 +56,6 @@ void DrawBillboard(Billboard& billboard)
     glBindVertexArray(billboard.vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
+
+    glEnable(GL_CULL_FACE);
 }
