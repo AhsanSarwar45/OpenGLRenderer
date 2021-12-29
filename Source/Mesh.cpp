@@ -9,17 +9,17 @@
 
 void InitializeMesh(Mesh& mesh)
 {
-    glGenVertexArrays(1, &mesh.VAO);
-    glGenBuffers(1, &mesh.VBO);
-    glGenBuffers(1, &mesh.EBO);
+    glGenVertexArrays(1, &mesh.vao);
+    glGenBuffers(1, &mesh.vbo);
+    glGenBuffers(1, &mesh.ebo);
 
-    glBindVertexArray(mesh.VAO);
+    glBindVertexArray(mesh.vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
-    glBufferData(GL_ARRAY_BUFFER, mesh.Vertices.size() * sizeof(Vertex), &mesh.Vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.Indices.size() * sizeof(unsigned int), &mesh.Indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), &mesh.indices[0], GL_STATIC_DRAW);
 
     // vertex positions
     glEnableVertexAttribArray(0);
@@ -37,12 +37,12 @@ void InitializeMesh(Mesh& mesh)
 void DrawMesh(const Mesh& mesh, Shader& shader, Texture& texture)
 {
 
-    BindTexture(texture.Id, 0);
+    BindTexture(texture.id, 0);
     ShaderSetInt(shader, "material.diffuse", 0);
 
     // std::cout << mesh.Indices.size() << "\n";
 
-    glBindVertexArray(mesh.VAO);
-    glDrawElements(GL_TRIANGLES, mesh.Indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(mesh.vao);
+    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }

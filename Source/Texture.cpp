@@ -7,14 +7,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-Texture LoadTexture(const std::string& path, const TextureType type)
+Texture LoadTexture(const std::filesystem::path& path, const TextureType type)
 {
     stbi_set_flip_vertically_on_load(false);
 
     unsigned int   id;
     int            width, height;
     int            componentCount;
-    unsigned char* data     = stbi_load(path.c_str(), &width, &height, &componentCount, 0);
+    unsigned char* data     = stbi_load(path.string().c_str(), &width, &height, &componentCount, 0);
     bool           isLoaded = false;
     if (data)
     {
@@ -46,8 +46,8 @@ Texture LoadTexture(const std::string& path, const TextureType type)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width
-                  << ", height: " << height << "\n";
+        // std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width
+        //           << ", height: " << height << "\n";
 
         isLoaded = true;
     }
@@ -58,16 +58,16 @@ Texture LoadTexture(const std::string& path, const TextureType type)
 
     stbi_image_free(data);
 
-    return {.Id             = id,
-            .Type           = type,
-            .Path           = path,
-            .Width          = width,
-            .Height         = height,
-            .ComponentCount = componentCount,
-            .IsLoaded       = isLoaded};
+    return {.id             = id,
+            .type           = type,
+            .path           = path.string().c_str(),
+            .width          = width,
+            .height         = height,
+            .componentCount = componentCount,
+            .isLoaded       = isLoaded};
 }
 
-Texture LoadTexture(const std::string& path) { return LoadTexture(path, TextureType::Color); }
+Texture LoadTexture(const std::filesystem::path& path) { return LoadTexture(path, TextureType::Color); }
 
 void BindTexture(const unsigned int id, const unsigned int slot)
 {

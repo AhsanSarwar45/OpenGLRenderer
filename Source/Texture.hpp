@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 enum class TextureType
@@ -13,16 +14,16 @@ using TextureDimensions = uint16_t;
 
 struct Texture
 {
-    unsigned int      Id;
-    TextureType       Type;
-    std::string       Path;
-    TextureDimensions Width;
-    TextureDimensions Height;
-    uint8_t           ComponentCount;
-    bool              IsLoaded;
+    const char*       path;
+    unsigned int      id;
+    TextureType       type;
+    TextureDimensions width;
+    TextureDimensions height;
+    uint8_t           componentCount;
+    bool              isLoaded;
 };
 
-Texture LoadTexture(const std::string& path);
-Texture LoadTexture(const std::string& path, const TextureType type);
+Texture LoadTexture(const std::filesystem::path& path);
+Texture LoadTexture(const std::filesystem::path& path, const TextureType type);
 
 void BindTexture(unsigned int id, unsigned int slot);

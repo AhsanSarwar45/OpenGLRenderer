@@ -12,6 +12,9 @@ add_subdirectory("Vendor/tinyobjloader")
 add_subdirectory("Vendor/glm")
 add_subdirectory("Vendor/GLFW")
 add_subdirectory("Vendor/Glad")
+# add_subdirectory("Vendor/rttr")
+
+# find_package(RTTR CONFIG REQUIRED Core)
 
 add_executable(${PROJECT_NAME}
 "Source/main.cpp"
@@ -50,3 +53,4 @@ target_link_libraries(${PROJECT_NAME} PUBLIC stdc++fs)
 target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
 target_link_libraries(${PROJECT_NAME} PUBLIC glad)
 target_link_libraries(${PROJECT_NAME} PUBLIC tinyobjloader)
+# target_link_libraries(${PROJECT_NAME} PUBLIC Core_Lib)

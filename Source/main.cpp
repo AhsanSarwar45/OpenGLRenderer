@@ -5,6 +5,7 @@
 
 #include "Billboard.hpp"
 #include "Camera.hpp"
+#include "Debug.hpp"
 #include "Model.hpp"
 #include "Shader.hpp"
 #include "Skybox.hpp"
@@ -13,6 +14,11 @@
 
 int main()
 {
+
+    PRN_STRUCT_OFFSETS(Model, name, transform, meshes, textures);
+    PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
+    PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
+
     Window             window = Window("OpenGL", 1240, 720);
     Camera             camera = Camera(&window);
     std::vector<Model> models;
@@ -37,8 +43,15 @@ int main()
 
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
-    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", "Head"));
-    models.push_back(LoadModelOBJ("../Assets/Models/Gun/Gun.obj", "Gun"));
+    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shader, "Head"));
+    models.push_back(LoadModelOBJ("../Assets/Models/Gun/Gun.obj", shader, "Gun"));
+
+    float xPos = 0.0f;
+    for (auto& model : models)
+    {
+        model.transform.position.x = xPos;
+        xPos += 2.0f;
+    }
 
     while (window.IsRunning())
     {
@@ -57,7 +70,7 @@ int main()
         {
             for (auto& model : models)
             {
-                if (ImGui::TreeNode(model.name.c_str()))
+                if (ImGui::TreeNode(model.name))
                 {
                     ImGui::DragFloat3("Position", (float*)(&model.transform.position), 0.03f);
                     ImGui::DragFloat3("Scale", (float*)(&model.transform.scale), 0.03f);
@@ -112,7 +125,7 @@ int main()
         // glStencilMask(0xFF);
         for (auto& model : models)
         {
-            DrawModel(model, shader);
+            DrawModel(model);
         }
 
         DrawBillboard(billboard);

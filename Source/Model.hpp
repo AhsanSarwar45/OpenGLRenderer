@@ -12,13 +12,14 @@
 
 struct Model
 {
-    std::string          name;
+    const char*          name;
     Transform            transform;
     std::vector<Mesh>    meshes;
     std::vector<Texture> textures;
+    Shader               shader;
 };
 
-Model LoadModelOBJ(const std::filesystem::path& path, const std::string& name = "Model");
+Model LoadModelOBJ(const std::filesystem::path& path, Shader shader, const std::string& name = "Model");
 
-void DrawModel(Model& model, Shader& shader);
+void DrawModel(Model& model);
 // void DrawMode(std::vector<Model>& model, Shader& shader);

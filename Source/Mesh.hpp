@@ -10,12 +10,12 @@
 
 struct Mesh
 {
-    std::vector<Vertex>       Vertices;
-    std::vector<unsigned int> Indices;
+    std::vector<Vertex>       vertices;
+    std::vector<unsigned int> indices;
 
-    unsigned int VAO;
-    unsigned int VBO;
-    unsigned int EBO;
+    unsigned int vao;
+    unsigned int vbo;
+    unsigned int ebo;
 };
 
 void InitializeMesh(Mesh& mesh);

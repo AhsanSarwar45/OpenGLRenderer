@@ -50,7 +50,7 @@ void DrawBillboard(Billboard& billboard)
     UseShader(billboard.shader);
     ShaderSetMat4(billboard.shader, "model", modelMatrix);
 
-    BindTexture(billboard.texture.Id, 0);
+    BindTexture(billboard.texture.id, 0);
     ShaderSetInt(billboard.shader, "material.diffuse", 0);
 
     glBindVertexArray(billboard.vao);

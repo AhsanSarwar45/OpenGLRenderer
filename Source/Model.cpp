@@ -10,7 +10,7 @@
 #include "Texture.hpp"
 #include "glm/gtc/quaternion.hpp"
 
-Model LoadModelOBJ(const std::filesystem::path& path, const std::string& name)
+Model LoadModelOBJ(const std::filesystem::path& path, Shader shader, const std::string& name)
 {
 
     tinyobj::ObjReader reader;
@@ -86,38 +86,38 @@ Model LoadModelOBJ(const std::filesystem::path& path, const std::string& name)
     //                    .TexCoords = glm::vec2(attrib.texcoords[texCoordIndex], attrib.texcoords[texCoordIndex + 1])};
     // }
 
-    std::cout << "Model: " << path << "\n";
-    std::cout << "Vertices: " << vertices.size() << "\n";
-    std::cout << "Indices: " << indices.size() << "\n";
+    // std::cout << "Model: " << path << "\n";
+    // std::cout << "Vertices: " << vertices.size() << "\n";
+    // std::cout << "Indices: " << indices.size() << "\n";
 
     Model model;
 
-    model.meshes.push_back({.Vertices = vertices, .Indices = indices});
-    model.name = name;
+    model.meshes.push_back({.vertices = vertices, .indices = indices});
+    model.name   = name.c_str();
+    model.shader = shader;
 
     for (auto& mesh : model.meshes)
     {
         InitializeMesh(mesh);
     }
 
-    model.textures.push_back(
-        LoadTexture((path.parent_path() / materials[0].diffuse_texname).string(), TextureType::Color));
+    model.textures.push_back(LoadTexture(path.parent_path() / materials[0].diffuse_texname, TextureType::Color));
 
     return model;
 }
 
-void DrawModel(Model& model, Shader& shader)
+void DrawModel(Model& model)
 {
     Transform transform   = model.transform;
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     modelMatrix           = glm::translate(modelMatrix, transform.position);
     modelMatrix           = glm::scale(modelMatrix, transform.scale);
 
-    UseShader(shader);
-    ShaderSetMat4(shader, "model", modelMatrix);
+    UseShader(model.shader);
+    ShaderSetMat4(model.shader, "model", modelMatrix);
 
     for (auto& mesh : model.meshes)
     {
-        DrawMesh(mesh, shader, model.textures[0]);
+        DrawMesh(mesh, model.shader, model.textures[0]);
     }
 }
