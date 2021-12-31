@@ -18,24 +18,11 @@ void ShaderUpdateListener::handleFileAction(efsw::WatchID watchid, const std::st
     {
     case efsw::Actions::Modified:
 
-        std::string::size_type idx = filename.rfind('.');
+        std::filesystem::path filepath = std::filesystem::path(dir + filename);
 
-        std::string extension;
+        filepath.make_preferred();
 
-        if (idx != std::string::npos)
-        {
-            extension                         = filename.substr(idx + 1);
-            std::filesystem::path filepath    = std::filesystem::path(dir + filename);
-            std::filesystem::path oldFilepath = std::filesystem::path(dir + oldFilename);
-
-            filepath.make_preferred();
-            oldFilepath.make_preferred();
-
-            ResourceManager::GetInstance().AddDirtyShader(filepath);
-        }
-
-        // = LoadShader(const std::string &vertexShaderPath, const std::string
-        // &fragmentShaderPath, const char *name);
+        ResourceManager::GetInstance().AddDirtyShader(filepath);
         break;
     }
 }
