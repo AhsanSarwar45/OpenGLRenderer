@@ -10,7 +10,8 @@
 #include "Texture.hpp"
 #include "glm/gtc/quaternion.hpp"
 
-Model LoadModelOBJ(const std::filesystem::path& path, Shader shader, const std::string& name)
+Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgram, const std::string& name,
+                   bool flipTexture)
 {
 
     tinyobj::ObjReader reader;
@@ -74,50 +75,55 @@ Model LoadModelOBJ(const std::filesystem::path& path, Shader shader, const std::
         }
     }
 
-    // for (size_t i = 0; i < numVertices; i++)
-    // {
-    //     size_t vertexIndex   = i * 3;
-    //     size_t texCoordIndex = i * 2;
-
-    //     vertices[i] = {.Position  = glm::vec3(attrib.vertices[vertexIndex], attrib.vertices[vertexIndex + 1],
-    //                                          attrib.vertices[vertexIndex + 2]),
-    //                    .Normal    = glm::vec3(attrib.normals[vertexIndex], attrib.normals[vertexIndex + 1],
-    //                                        attrib.normals[vertexIndex + 2]),
-    //                    .TexCoords = glm::vec2(attrib.texcoords[texCoordIndex], attrib.texcoords[texCoordIndex + 1])};
-    // }
-
-    // std::cout << "Model: " << path << "\n";
-    // std::cout << "Vertices: " << vertices.size() << "\n";
-    // std::cout << "Indices: " << indices.size() << "\n";
-
     Model model;
 
     model.meshes.push_back({.vertices = vertices, .indices = indices});
-    model.name   = name.c_str();
-    model.shader = shader;
+    model.name          = name.c_str();
+    model.shaderProgram = shaderProgram;
 
     for (auto& mesh : model.meshes)
     {
         InitializeMesh(mesh);
     }
 
-    model.textures.push_back(LoadTexture(path.parent_path() / materials[0].diffuse_texname, TextureType::Color));
+    Material material;
+
+    if (!materials[0].diffuse_texname.empty())
+    {
+        material.textures.push_back(
+            LoadTexture(path.parent_path() / materials[0].diffuse_texname, TextureType::Color, "diffuse", flipTexture));
+    }
+    if (!materials[0].specular_texname.empty())
+    {
+        material.textures.push_back(LoadTexture(path.parent_path() / materials[0].specular_texname,
+                                                TextureType::NonColor, "specular", flipTexture));
+    }
+
+    model.material = material;
 
     return model;
 }
 
-void DrawModel(Model& model)
+void DrawModel(const Model& model)
 {
     Transform transform   = model.transform;
     glm::mat4 modelMatrix = glm::mat4(1.0f);
     modelMatrix           = glm::translate(modelMatrix, transform.position);
     modelMatrix           = glm::scale(modelMatrix, transform.scale);
 
-    UseShader(model.shader);
-    ShaderSetMat4(model.shader, "model", modelMatrix);
+    UseShaderProgram(model.shaderProgram);
+    ShaderSetMat4(model.shaderProgram, "model", modelMatrix);
+
+    int index = 0;
+    for (auto& texture : model.material.textures)
+    {
+        ShaderSetInt(model.shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
+        BindTexture(texture.id, index);
+        index++;
+    }
 
     for (auto& mesh : model.meshes)
     {
-        DrawMesh(mesh, model.shader, model.textures[0]);
+        DrawMesh(mesh);
     }
 }

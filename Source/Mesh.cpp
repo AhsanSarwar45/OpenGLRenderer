@@ -34,11 +34,8 @@ void InitializeMesh(Mesh& mesh)
     glBindVertexArray(0);
 }
 
-void DrawMesh(const Mesh& mesh, Shader& shader, Texture& texture)
+void DrawMesh(const Mesh& mesh)
 {
-
-    BindTexture(texture.id, 0);
-    ShaderSetInt(shader, "material.diffuse", 0);
 
     // std::cout << mesh.Indices.size() << "\n";
 

@@ -38,7 +38,7 @@ Billboard LoadBillboard(const std::string& texturePath)
     return billboard;
 }
 
-void DrawBillboard(Billboard& billboard)
+void DrawBillboard(const Billboard& billboard)
 {
     glDisable(GL_CULL_FACE);
 
@@ -47,7 +47,7 @@ void DrawBillboard(Billboard& billboard)
     modelMatrix           = glm::translate(modelMatrix, transform.position);
     modelMatrix           = glm::scale(modelMatrix, transform.scale);
 
-    UseShader(billboard.shader);
+    UseShaderProgram(billboard.shader);
     ShaderSetMat4(billboard.shader, "model", modelMatrix);
 
     BindTexture(billboard.texture.id, 0);

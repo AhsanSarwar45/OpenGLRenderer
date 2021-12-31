@@ -19,4 +19,4 @@ struct Mesh
 };
 
 void InitializeMesh(Mesh& mesh);
-void DrawMesh(const Mesh& mesh, Shader& shader, Texture& texture);
+void DrawMesh(const Mesh& mesh);

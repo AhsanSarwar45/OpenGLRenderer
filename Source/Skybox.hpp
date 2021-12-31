@@ -8,16 +8,16 @@
 
 struct Skybox
 {
-    Shader Shader;
+    ShaderProgram shaderProgram;
 
-    unsigned int VBO;
-    unsigned int VAO;
+    unsigned int vbo;
+    unsigned int vao;
 
-    unsigned int TextureID;
+    unsigned int textureId;
 };
 
 Skybox LoadSkybox(const std::string& path);
 
 void DeleteSkybox(Skybox& skybox);
 
-void DrawSkybox(Skybox& skybox);
+void DrawSkybox(const Skybox& skybox);

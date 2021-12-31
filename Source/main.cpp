@@ -1,12 +1,16 @@
 #include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <ImGui/imgui.h>
-#include <vector>
 
 #include "Billboard.hpp"
 #include "Camera.hpp"
 #include "Debug.hpp"
+#include "FileWatcher.hpp"
 #include "Model.hpp"
+#include "ResourceManager.hpp"
 #include "Shader.hpp"
 #include "Skybox.hpp"
 #include "Texture.hpp"
@@ -15,13 +19,14 @@
 int main()
 {
 
-    PRN_STRUCT_OFFSETS(Model, name, transform, meshes, textures);
-    PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
-    PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
+    // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, material, shader);
+    // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
+    // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
     Window             window = Window("OpenGL", 1240, 720);
     Camera             camera = Camera(&window);
     std::vector<Model> models;
+    // std::unordered_map<std::string, Shader*> shaders;
 
     glm::vec3 objPos(0.0f, 0.0f, 0.0f);
     glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
@@ -38,13 +43,15 @@ int main()
 
     Billboard billboard = LoadBillboard("../Assets/Images/grass.png");
 
-    Shader shader        = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag", "Head");
-    Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag", "Outline");
+    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Head");
+    // Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag", "Outline");
 
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
-    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shader, "Head"));
-    models.push_back(LoadModelOBJ("../Assets/Models/Gun/Gun.obj", shader, "Gun"));
+    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shaderProgram, "Head"));
+    models.push_back(LoadModelOBJ("../Assets/Models/Gun/Gun.obj", shaderProgram, "Gun"));
+    models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shaderProgram, "Backpack", true));
+    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Box"));
 
     float xPos = 0.0f;
     for (auto& model : models)
@@ -52,6 +59,14 @@ int main()
         model.transform.position.x = xPos;
         xPos += 2.0f;
     }
+
+    efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
+
+    ShaderUpdateListener* shaderListener = new ShaderUpdateListener();
+
+    efsw::WatchID watchID = fileWatcher->addWatch("../Assets/Shaders", shaderListener, true);
+
+    fileWatcher->watch();
 
     while (window.IsRunning())
     {
@@ -102,21 +117,23 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        UseShader(shader);
+        ResourceManager::GetInstance().CheckDirtyShaders();
 
-        ShaderSetFloat(shader, "material.shininess", objectShininess);
+        UseShaderProgram(shaderProgram);
 
-        ShaderSetFloat3(shader, "viewPos", camera.GetPosition());
+        ShaderSetFloat(shaderProgram, "material.shininess", objectShininess);
 
-        ShaderSetFloat3(shader, "light.position", lightPos);
+        ShaderSetFloat3(shaderProgram, "viewPos", camera.GetPosition());
 
-        ShaderSetFloat3(shader, "light.diffuse", lightColor);
-        ShaderSetFloat3(shader, "light.specular", lightSpecular);
-        ShaderSetFloat3(shader, "light.ambient", lightAmbient);
+        ShaderSetFloat3(shaderProgram, "light.position", lightPos);
 
-        ShaderSetFloat(shader, "light.constant", lightConstant);
-        ShaderSetFloat(shader, "light.linear", lightLinear);
-        ShaderSetFloat(shader, "light.quadratic", lightQuadratic);
+        ShaderSetFloat3(shaderProgram, "light.diffuse", lightColor);
+        ShaderSetFloat3(shaderProgram, "light.specular", lightSpecular);
+        ShaderSetFloat3(shaderProgram, "light.ambient", lightAmbient);
+
+        ShaderSetFloat(shaderProgram, "light.constant", lightConstant);
+        ShaderSetFloat(shaderProgram, "light.linear", lightLinear);
+        ShaderSetFloat(shaderProgram, "light.quadratic", lightQuadratic);
 
         // glStencilMask(0x00);
         DrawSkybox(skybox);
@@ -135,7 +152,7 @@ int main()
         // glStencilMask(0x00);
         // glDisable(GL_DEPTH_TEST);
 
-        // UseShader(outlineShader);
+        // UseShaderProgram(outlineShader);
         // ShaderSetFloat3(outlineShader, "color", glm::vec3(1.0f, 1.0f, 0.0f));
 
         // for (auto model : models)

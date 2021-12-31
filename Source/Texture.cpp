@@ -7,9 +7,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-Texture LoadTexture(const std::filesystem::path& path, const TextureType type)
+Texture LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name, bool flipTexture)
 {
-    stbi_set_flip_vertically_on_load(false);
+    stbi_set_flip_vertically_on_load(flipTexture);
 
     unsigned int   id;
     int            width, height;
@@ -58,16 +58,20 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type)
 
     stbi_image_free(data);
 
-    return {.id             = id,
+    return {.path           = path.string().c_str(),
+            .name           = name,
+            .id             = id,
             .type           = type,
-            .path           = path.string().c_str(),
             .width          = width,
             .height         = height,
             .componentCount = componentCount,
             .isLoaded       = isLoaded};
 }
 
-Texture LoadTexture(const std::filesystem::path& path) { return LoadTexture(path, TextureType::Color); }
+Texture LoadTexture(const std::filesystem::path& path, const char* name, bool flipTexture)
+{
+    return LoadTexture(path, TextureType::Color, name, flipTexture);
+}
 
 void BindTexture(const unsigned int id, const unsigned int slot)
 {

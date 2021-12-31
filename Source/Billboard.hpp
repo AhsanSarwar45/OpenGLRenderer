@@ -2,11 +2,10 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 
-
 struct Billboard
 {
-    Transform transform;
-    Shader    shader;
+    Transform     transform;
+    ShaderProgram shader;
 
     unsigned int vbo;
     unsigned int vao;
@@ -15,4 +14,4 @@ struct Billboard
 };
 
 Billboard LoadBillboard(const std::string& texturePath);
-void      DrawBillboard(Billboard& billboard);
+void      DrawBillboard(const Billboard& billboard);

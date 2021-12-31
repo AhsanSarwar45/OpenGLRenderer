@@ -15,6 +15,7 @@ using TextureDimensions = uint16_t;
 struct Texture
 {
     const char*       path;
+    const char*       name;
     unsigned int      id;
     TextureType       type;
     TextureDimensions width;
@@ -23,7 +24,8 @@ struct Texture
     bool              isLoaded;
 };
 
-Texture LoadTexture(const std::filesystem::path& path);
-Texture LoadTexture(const std::filesystem::path& path, const TextureType type);
+Texture LoadTexture(const std::filesystem::path& path, const char* name = "diffuse", bool flipTexture = false);
+Texture LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse",
+                    bool flipTexture = false);
 
 void BindTexture(unsigned int id, unsigned int slot);
