@@ -126,4 +126,9 @@ void DrawModel(const Model& model)
     {
         DrawMesh(mesh);
     }
+
+    for (int i = 0; i < model.material.textures.size(); i++)
+    {
+        UnBindTexture(i);
+    }
 }

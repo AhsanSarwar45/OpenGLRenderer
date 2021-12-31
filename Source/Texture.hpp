@@ -29,3 +29,4 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
                     bool flipTexture = false);
 
 void BindTexture(unsigned int id, unsigned int slot);
+void UnBindTexture(const unsigned int slot);

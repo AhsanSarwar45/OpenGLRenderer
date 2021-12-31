@@ -78,3 +78,9 @@ void BindTexture(const unsigned int id, const unsigned int slot)
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, id);
 }
+
+void UnBindTexture(const unsigned int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
