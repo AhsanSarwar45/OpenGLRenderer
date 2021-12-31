@@ -8,13 +8,14 @@
 #include <string>
 
 #include "Camera.hpp"
+#include "ResourceManager.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 
 Billboard LoadBillboard(const std::string& texturePath)
 {
     Billboard billboard;
-    billboard.shader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/Billboard.frag", "Billboard");
+    billboard.shader = ResourceManager::GetInstance().GetBillboardShader();
 
     float transparentVertices[] = {
         // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)

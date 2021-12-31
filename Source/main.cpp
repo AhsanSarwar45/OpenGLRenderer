@@ -41,6 +41,8 @@ int main()
     float lightConstant  = 0.01f;
     float lightQuadratic = 0.045f;
 
+    ResourceManager::GetInstance().Initialize();
+
     Billboard billboard = LoadBillboard("../Assets/Images/grass.png");
 
     ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Head");

@@ -14,22 +14,6 @@
 
 using namespace ShaderInternal;
 
-// bool ShaderPath::operator==(const ShaderPath& other) const
-// {
-//     return vertexShaderPath == other.vertexShaderPath && fragmentShaderPath == other.fragmentShaderPath;
-// }
-
-// template <>
-// struct std::hash<ShaderPath>
-// {
-//     std::size_t operator()(ShaderPath const& s) const
-//     {
-//         std::size_t res = 0;
-//         HashCombine(res, s.vertexShaderPath);
-//         HashCombine(res, s.fragmentShaderPath);
-//         return res;
-//     }
-// };
 ShaderProgram LoadShaders(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform)
 {
     std::vector<ShaderStage> shaderStages;
@@ -71,9 +55,10 @@ ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem
     ShaderProgram shaderProgram = glCreateProgram();
 
     ShaderStageId vertexShaderStage = CreateShaderStage(GL_VERTEX_SHADER);
-    CompileShaderStage(vertexShaderStage, ParseShaderStage(vertexShaderPath).c_str());
+    CompileShaderStage(vertexShaderStage, GL_VERTEX_SHADER, ParseShaderStage(vertexShaderPath).c_str());
+
     ShaderStageId fragmentShaderStage = CreateShaderStage(GL_FRAGMENT_SHADER);
-    CompileShaderStage(fragmentShaderStage, ParseShaderStage(fragmentShaderPath).c_str());
+    CompileShaderStage(fragmentShaderStage, GL_FRAGMENT_SHADER, ParseShaderStage(fragmentShaderPath).c_str());
 
     glAttachShader(shaderProgram, vertexShaderStage);
     glAttachShader(shaderProgram, fragmentShaderStage);
@@ -150,7 +135,7 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
     for (auto& shaderData : shaderStages)
     {
         ShaderStageId shaderStageId = CreateShaderStage(shaderData.type);
-        CompileShaderStage(shaderStageId, ParseShaderStage(shaderData.path).c_str());
+        CompileShaderStage(shaderStageId, shaderData.type, ParseShaderStage(shaderData.path).c_str());
 
         shaderData.id = shaderStageId;
 
@@ -161,7 +146,7 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
         ResourceManager::GetInstance().AddShader(shaderProgram, shaderData);
     }
 
-    // TODO clear this mess
+    // TODO safety issues
 
     LinkProgram(shaderProgram);
     ValidateProgram(shaderProgram);
@@ -175,9 +160,10 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
 
     return shaderProgram;
 }
+
 bool ReloadShaderStage(const ShaderProgram shaderProgram, ShaderStage shaderStage)
 {
-    CompileShaderStage(shaderStage.id, ParseShaderStage(shaderStage.path).c_str());
+    CompileShaderStage(shaderStage.id, shaderStage.type, ParseShaderStage(shaderStage.path).c_str());
 
     if (!LinkProgram(shaderProgram))
     {
@@ -204,7 +190,7 @@ bool LinkProgram(const ShaderProgram shaderProgram)
         glGetProgramInfoLog(shaderProgram, length, &length, message);
         std::cout << "Failed to link program (id: " << shaderProgram << ")\n";
         std::cout << message << "\n";
-        return false; // todo return fallback shader
+        return false;
     }
 
     return true;
@@ -252,7 +238,7 @@ std::string ParseShaderStage(const std::filesystem::path& path)
 
 ShaderStageId CreateShaderStage(const ShaderType type) { return glCreateShader(type); }
 
-bool CompileShaderStage(const ShaderStageId shaderStageId, std::string source)
+bool CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std::string source)
 {
     const char* src = source.c_str();
     glShaderSource(shaderStageId, 1, &src, nullptr);
@@ -268,7 +254,7 @@ bool CompileShaderStage(const ShaderStageId shaderStageId, std::string source)
         glGetShaderInfoLog(shaderStageId, length, &length, message);
         std::cout << "Failed to compile shader (id: " << shaderStageId << ")\n ";
         std::cout << message << "\n";
-        glDeleteShader(shaderStageId);
+        SetToFallback(shaderStageId, type);
         return false;
     }
 
@@ -283,6 +269,17 @@ void PrintShaderStageSource(const ShaderStageId shaderStage)
     glGetShaderSource(shaderStage, length, &length, source);
 
     std::cout << source;
+}
+
+void SetToFallback(const ShaderStage shaderStage) { SetToFallback(shaderStage.id, shaderStage.type); }
+
+void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
+{
+    if (type == GL_FRAGMENT_SHADER)
+    {
+        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER,
+                           ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str());
+    }
 }
 
 } // namespace ShaderInternal

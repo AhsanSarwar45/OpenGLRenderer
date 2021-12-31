@@ -26,12 +26,20 @@ class ResourceManager
     ResourceManager(const ResourceManager&) = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;
 
+    void Initialize();
+
+    void AddShader(ShaderProgram shaderProgram, ShaderStage shaderStage);
+
     void AddDirtyShader(const std::filesystem::path& path);
     void CheckDirtyShaders();
 
-    void AddShader(ShaderProgram shaderProgram, ShaderStage shaderStage);
+    inline ShaderProgram GetSkyboxShader() const { return m_SkyboxShader; }
+    inline ShaderProgram GetBillboardShader() const { return m_BillboardShader; }
 
   private:
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
     std::vector<ShaderLookup>                     m_DirtyShaderStages;
+    ShaderProgram                                 m_SkyboxShader;
+    ShaderProgram                                 m_BillboardShader;
+    ShaderStageId                                 m_FallbackFragmentStage;
 };

@@ -8,13 +8,13 @@
 #include <string>
 
 #include "Camera.hpp"
+#include "ResourceManager.hpp"
 #include "Shader.hpp"
 
 Skybox LoadSkybox(const std::string& directory)
 {
     Skybox skybox;
-    skybox.shaderProgram =
-        LoadShader("../Assets/Shaders/Skybox.vert", "../Assets/Shaders/Skybox.frag", "Skybox", false);
+    skybox.shaderProgram = ResourceManager::GetInstance().GetSkyboxShader();
 
     float skyboxVertices[] = {// positions
                               -1.0f, 1.0f,  -1.0f, -1.0f, -1.0f, -1.0f, 1.0f,  -1.0f, -1.0f,

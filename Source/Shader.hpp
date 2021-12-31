@@ -42,13 +42,15 @@ void ShaderSetMat4(ShaderProgram shaderProgram, const std::string& uniformName, 
 namespace ShaderInternal
 {
 
-ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, const char* name,
-                               bool cameraTransform = true);
+ShaderProgram LoadShaderStages(std::vector<ShaderStage>& shaderStages, const char* name, bool cameraTransform = true);
+ShaderStageId LoadShaderStage(const std::filesystem::path& path, ShaderProgram shaderProgram, const ShaderType type);
 std::string   ParseShaderStage(const std::filesystem::path& path);
 bool          ReloadShaderStage(const ShaderProgram shaderProgram, ShaderStage shaderStage);
-bool          CompileShaderStage(const ShaderStageId shaderStageId, std::string source);
+bool          CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std::string source);
 bool          LinkProgram(const ShaderProgram shaderProgram);
 bool          ValidateProgram(const ShaderProgram shaderProgram);
 void          PrintShaderStageSource(const ShaderStageId shaderStageId);
+void          SetToFallback(const ShaderStage shaderStage);
+void          SetToFallback(const ShaderStageId shaderStageId, const ShaderType type);
 ShaderStageId CreateShaderStage(const ShaderType type);
 } // namespace ShaderInternal
