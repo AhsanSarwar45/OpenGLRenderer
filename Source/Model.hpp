@@ -23,4 +23,5 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
                    bool flipTexture = false);
 
 void DrawModel(const Model& model);
+void DrawModel(const Model& model, const ShaderProgram shader);
 // void DrawMode(std::vector<Model>& model, Shader& shader);

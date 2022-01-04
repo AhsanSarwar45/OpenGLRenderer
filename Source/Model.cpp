@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include <tinyobjloader/tiny_obj_loader.h>
@@ -8,7 +9,9 @@
 #include "Mesh.hpp"
 #include "Model.hpp"
 #include "Texture.hpp"
-#include "glm/gtc/quaternion.hpp"
+
+// #define GLM_ENABLE_EXPERIMENTAL
+// #include <glm/gtx/quaternion.hpp>
 
 Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgram, const std::string& name,
                    bool flipTexture)
@@ -20,14 +23,13 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
     {
         if (!reader.Error().empty())
         {
-            std::cerr << "TinyObjReader: " << reader.Error();
+            std::cerr << "TinyObjReader [Error]: " << reader.Error();
         }
-        exit(1);
     }
 
     if (!reader.Warning().empty())
     {
-        std::cout << "TinyObjReader: " << reader.Warning();
+        std::cout << "TinyObjReader [Warning]: " << reader.Warning();
     }
 
     const tinyobj::attrib_t&                attributes = reader.GetAttrib();
@@ -101,6 +103,8 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
 
     model.material = material;
 
+    printf("Loaded Model %s\n", path.string().c_str());
+
     return model;
 }
 
@@ -132,3 +136,42 @@ void DrawModel(const Model& model)
         UnBindTexture(i);
     }
 }
+
+void DrawModel(const Model& model, const ShaderProgram shader)
+{
+    Transform transform   = model.transform;
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix           = glm::translate(modelMatrix, transform.position);
+    modelMatrix           = glm::scale(modelMatrix, transform.scale);
+
+    UseShaderProgram(shader);
+    ShaderSetMat4(shader, "model", modelMatrix);
+
+    int index = 0;
+    for (auto& texture : model.material.textures)
+    {
+        ShaderSetInt(shader, ("material." + std::string(texture.name)).c_str(), index);
+        BindTexture(texture.id, index);
+        index++;
+    }
+
+    for (auto& mesh : model.meshes)
+    {
+        DrawMesh(mesh);
+    }
+
+    for (int i = 0; i < model.material.textures.size(); i++)
+    {
+        UnBindTexture(i);
+    }
+}
+
+// Transform transform = model.transform;
+
+// // glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
+
+// glm::mat4 modelMatrix =
+//     glm::translate(glm::mat4(1.0f), transform.position) * glm::scale(glm::mat4(1.0f), transform.scale);
+
+// UseShaderProgram(shader);
+// ShaderSetMat4(shader, "model", modelMatrix);

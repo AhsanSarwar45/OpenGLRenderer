@@ -17,6 +17,7 @@ void ResourceManager::AddDirtyShader(const std::filesystem::path& path)
         m_DirtyShaderStages.push_back(it->second);
     }
 }
+
 void ResourceManager::CheckDirtyShaders()
 {
     for (const auto& dirtShader : m_DirtyShaderStages)

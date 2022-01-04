@@ -21,7 +21,7 @@ using ShaderType    = unsigned int; // TODO rename this
 struct ShaderStage
 {
     std::filesystem::path path;
-    ShaderType            type; // todo maybe dont need this
+    ShaderType            type;
     ShaderStageId         id;
 };
 

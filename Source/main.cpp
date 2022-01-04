@@ -15,6 +15,23 @@
 #include "Skybox.hpp"
 #include "Texture.hpp"
 #include "Window.hpp"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/fwd.hpp"
+
+std::vector<Model> models;
+
+glm::vec3 objPos(0.0f, 0.0f, 0.0f);
+glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
+
+float objectShininess = 32.0f;
+
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+glm::vec3 lightSpecular(0.7f, 0.7f, 0.7f);
+glm::vec3 lightAmbient(0.5f, 0.5f, 0.5f);
+
+float lightLinear    = 0.01f;
+float lightConstant  = 0.01f;
+float lightQuadratic = 0.045f;
 
 int main()
 {
@@ -23,37 +40,38 @@ int main()
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
-    Window             window = Window("OpenGL", 1240, 720);
-    Camera             camera = Camera(&window);
-    std::vector<Model> models;
+    Window window = Window("OpenGL", 1240, 720);
+    Camera camera = Camera(&window);
+
     // std::unordered_map<std::string, Shader*> shaders;
-
-    glm::vec3 objPos(0.0f, 0.0f, 0.0f);
-    glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
-
-    float objectShininess = 32.0f;
-
-    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-    glm::vec3 lightSpecular(0.7f, 0.7f, 0.7f);
-    glm::vec3 lightAmbient(0.5f, 0.5f, 0.5f);
-
-    float lightLinear    = 0.01f;
-    float lightConstant  = 0.01f;
-    float lightQuadratic = 0.045f;
 
     ResourceManager::GetInstance().Initialize();
 
     Billboard billboard = LoadBillboard("../Assets/Images/grass.png");
 
-    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Head");
+    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Lit");
+    ShaderProgram lightShaderProgram =
+        LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Light.frag"}, "Light");
+    ShaderProgram depthShaderProgram = LoadShaders(
+        {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
+    ShaderProgram shadowShaderProgram =
+        LoadShaders({"../Assets/Shaders/ShadowMapLit.vert", "../Assets/Shaders/ShadowMapLit.frag"}, "LitShadow");
     // Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag", "Outline");
 
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
-    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shaderProgram, "Head"));
-    models.push_back(LoadModelOBJ("../Assets/Models/Gun/Gun.obj", shaderProgram, "Gun"));
-    models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shaderProgram, "Backpack", true));
-    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Box"));
+    Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
+    Model bulb  = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Bulb");
+
+    bulb.transform.scale = glm::vec3(0.2f);
+
+    floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
+    floor.transform.position.y = -0.5;
+
+    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
+    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box2"));
+    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box3"));
+    models.push_back(floor);
 
     float xPos = 0.0f;
     for (auto& model : models)
@@ -69,6 +87,29 @@ int main()
     efsw::WatchID watchID = fileWatcher->addWatch("../Assets/Shaders", shaderListener, true);
 
     fileWatcher->watch();
+
+    bool showShadowMap = false;
+
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                 NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     while (window.IsRunning())
     {
@@ -112,42 +153,114 @@ int main()
         }
         if (ImGui::TreeNode("Material"))
         {
-            ImGui::DragFloat("Object Shininess", &objectShininess, 0.03f);
+            int total = -1;
+            glGetProgramiv(shaderProgram, GL_ACTIVE_UNIFORMS, &total);
+            for (int i = 0; i < total; ++i)
+            {
+                int    name_len = -1, num = -1;
+                GLenum type = GL_ZERO;
+                char   name[100];
+                glGetActiveUniform(shaderProgram, GLuint(i), sizeof(name) - 1, &name_len, &num, &type, name);
+                name[name_len]  = 0;
+                GLuint location = glGetUniformLocation(shaderProgram, name);
+
+                std::string typeString;
+
+                if (type == GL_FLOAT_MAT4)
+                    typeString = "mat4";
+                else if (type == GL_FLOAT_VEC3)
+                    typeString = "vec3";
+                else if (type == GL_FLOAT_VEC4)
+                    typeString = "vec4";
+                else if (type == GL_FLOAT)
+                    typeString = "float";
+                else if (type == GL_INT)
+                    typeString = "int";
+                else if (type == GL_BOOL)
+                    typeString = "bool";
+                else if (type == GL_SAMPLER_2D)
+                    typeString = "sampler2d";
+                else
+                    typeString = type;
+
+                ImGui::Text("Uniform Info Name: %s, Location: %d, Type:%s", name, location, typeString.c_str());
+            }
+            ImGui::TreePop();
+        }
+
+        ImGui::End();
+
+        ImGui::Begin("Debug");
+        if (ImGui::TreeNode("Shadow Map"))
+        {
+            ImGui::Image((void*)(intptr_t)depthMap, ImVec2(512, 512), ImVec2(1, 1), ImVec2(0, 0));
             ImGui::TreePop();
         }
         ImGui::End();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
         ResourceManager::GetInstance().CheckDirtyShaders();
 
-        UseShaderProgram(shaderProgram);
+        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightSpaceMatrix;
+        float     near_plane = 1.0f, far_plane = 7.5f;
+        lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        lightView        = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        // render scene from light's point of view
+        UseShaderProgram(depthShaderProgram);
+        ShaderSetMat4(depthShaderProgram, "lightSpaceMatrix", lightSpaceMatrix);
 
-        ShaderSetFloat(shaderProgram, "material.shininess", objectShininess);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-        ShaderSetFloat3(shaderProgram, "viewPos", camera.GetPosition());
+        for (auto& model : models)
+        {
+            DrawModel(model, depthShaderProgram);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        ShaderSetFloat3(shaderProgram, "light.position", lightPos);
+        glViewport(0, 0, window.GetProperties().Width, window.GetProperties().Height);
 
-        ShaderSetFloat3(shaderProgram, "light.diffuse", lightColor);
-        ShaderSetFloat3(shaderProgram, "light.specular", lightSpecular);
-        ShaderSetFloat3(shaderProgram, "light.ambient", lightAmbient);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        ShaderSetFloat(shaderProgram, "light.constant", lightConstant);
-        ShaderSetFloat(shaderProgram, "light.linear", lightLinear);
-        ShaderSetFloat(shaderProgram, "light.quadratic", lightQuadratic);
+        UseShaderProgram(shadowShaderProgram);
 
-        // glStencilMask(0x00);
-        DrawSkybox(skybox);
+        ShaderSetMat4(shadowShaderProgram, "lightSpaceMatrix", lightSpaceMatrix);
 
-        // glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        // glStencilMask(0xFF);
+        ShaderSetFloat(shadowShaderProgram, "material.shininess", objectShininess);
+
+        ShaderSetFloat3(shadowShaderProgram, "viewPos", camera.GetPosition());
+
+        ShaderSetFloat3(shadowShaderProgram, "light.position", lightPos);
+
+        ShaderSetFloat3(shadowShaderProgram, "light.diffuse", lightColor);
+        ShaderSetFloat3(shadowShaderProgram, "light.specular", lightSpecular);
+        ShaderSetFloat3(shadowShaderProgram, "light.ambient", lightAmbient);
+
+        ShaderSetFloat(shadowShaderProgram, "light.constant", lightConstant);
+        ShaderSetFloat(shadowShaderProgram, "light.linear", lightLinear);
+        ShaderSetFloat(shadowShaderProgram, "light.quadratic", lightQuadratic);
+
+        ShaderSetInt(shadowShaderProgram, "shadowMap", 7);
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+
+        bulb.transform.position = lightPos;
+        DrawModel(bulb, lightShaderProgram);
+
         for (auto& model : models)
         {
             DrawModel(model);
         }
 
-        DrawBillboard(billboard);
+        // glStencilMask(0x00);
+        // DrawSkybox(skybox);
+
+        // glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        // glStencilMask(0xFF);
+
+        // DrawBillboard(billboard);
 
         // Draw outline
         // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
