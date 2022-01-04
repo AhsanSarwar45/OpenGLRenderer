@@ -15,13 +15,20 @@
 #include "Skybox.hpp"
 #include "Texture.hpp"
 #include "Window.hpp"
+
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 std::vector<Model> models;
 
 glm::vec3 objPos(0.0f, 0.0f, 0.0f);
 glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
+glm::vec3 lightDir(3.0f, 3.0f, 3.0f);
 
 float objectShininess = 32.0f;
 
@@ -32,6 +39,9 @@ glm::vec3 lightAmbient(0.5f, 0.5f, 0.5f);
 float lightLinear    = 0.01f;
 float lightConstant  = 0.01f;
 float lightQuadratic = 0.045f;
+
+float shadowNearClip = 0.5f;
+float shadowFarClip  = 10.0f;
 
 int main()
 {
@@ -68,9 +78,10 @@ int main()
     floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     floor.transform.position.y = -0.5;
 
+    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
     models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
-    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box2"));
-    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box3"));
+    models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
+
     models.push_back(floor);
 
     float xPos = 0.0f;
@@ -102,8 +113,10 @@ int main()
                  NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -141,6 +154,7 @@ int main()
         if (ImGui::TreeNode("Light"))
         {
             ImGui::DragFloat3("Position", (float*)(&lightPos), 0.03f);
+            ImGui::DragFloat3("Direction", (float*)(&lightDir), 0.03f);
 
             ImGui::ColorEdit3("Color", (float*)(&lightColor));
             ImGui::ColorEdit3("Specular", (float*)(&lightSpecular));
@@ -149,6 +163,18 @@ int main()
             ImGui::DragFloat("Constant", &lightConstant, 0.003f, 0.01f);
             ImGui::DragFloat("Linear", &lightLinear, 0.003f, 0.01f);
             ImGui::DragFloat("Quadratic", &lightQuadratic, 0.003f, 0.01f);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Camera"))
+        {
+            ImGui::DragFloat("Near Clip", camera.GetNearClipPtr(), 0.01f);
+            ImGui::DragFloat("Far Clip", camera.GetFarClipPtr(), 1.0f);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Shadows"))
+        {
+            ImGui::DragFloat("Near Clip", &shadowNearClip, 0.01f);
+            ImGui::DragFloat("Far Clip", &shadowFarClip, 1.0f);
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Material"))
@@ -202,9 +228,8 @@ int main()
 
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
-        float     near_plane = 1.0f, far_plane = 7.5f;
-        lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-        lightView        = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, shadowNearClip, shadowFarClip);
+        lightView        = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         // render scene from light's point of view
         UseShaderProgram(depthShaderProgram);
@@ -233,6 +258,7 @@ int main()
         ShaderSetFloat3(shadowShaderProgram, "viewPos", camera.GetPosition());
 
         ShaderSetFloat3(shadowShaderProgram, "light.position", lightPos);
+        ShaderSetFloat3(shadowShaderProgram, "light.direction", lightDir);
 
         ShaderSetFloat3(shadowShaderProgram, "light.diffuse", lightColor);
         ShaderSetFloat3(shadowShaderProgram, "light.specular", lightSpecular);
@@ -255,7 +281,7 @@ int main()
         }
 
         // glStencilMask(0x00);
-        // DrawSkybox(skybox);
+        DrawSkybox(skybox);
 
         // glStencilFunc(GL_ALWAYS, 1, 0xFF);
         // glStencilMask(0xFF);
