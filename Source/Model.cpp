@@ -10,8 +10,8 @@
 #include "Model.hpp"
 #include "Texture.hpp"
 
-// #define GLM_ENABLE_EXPERIMENTAL
-// #include <glm/gtx/quaternion.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgram, const std::string& name,
                    bool flipTexture)
@@ -110,10 +110,12 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
 
 void DrawModel(const Model& model)
 {
-    Transform transform   = model.transform;
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
-    modelMatrix           = glm::translate(modelMatrix, transform.position);
-    modelMatrix           = glm::scale(modelMatrix, transform.scale);
+    Transform transform = model.transform;
+
+    glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
+
+    glm::mat4 modelMatrix =
+        glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
 
     UseShaderProgram(model.shaderProgram);
     ShaderSetMat4(model.shaderProgram, "model", modelMatrix);
@@ -137,20 +139,22 @@ void DrawModel(const Model& model)
     }
 }
 
-void DrawModel(const Model& model, const ShaderProgram shader)
+void DrawModel(const Model& model, const ShaderProgram shaderProgram)
 {
-    Transform transform   = model.transform;
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
-    modelMatrix           = glm::translate(modelMatrix, transform.position);
-    modelMatrix           = glm::scale(modelMatrix, transform.scale);
+    Transform transform = model.transform;
 
-    UseShaderProgram(shader);
-    ShaderSetMat4(shader, "model", modelMatrix);
+    glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
+
+    glm::mat4 modelMatrix =
+        glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
+
+    UseShaderProgram(shaderProgram);
+    ShaderSetMat4(shaderProgram, "model", modelMatrix);
 
     int index = 0;
     for (auto& texture : model.material.textures)
     {
-        ShaderSetInt(shader, ("material." + std::string(texture.name)).c_str(), index);
+        ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
         BindTexture(texture.id, index);
         index++;
     }
@@ -165,13 +169,3 @@ void DrawModel(const Model& model, const ShaderProgram shader)
         UnBindTexture(i);
     }
 }
-
-// Transform transform = model.transform;
-
-// // glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
-
-// glm::mat4 modelMatrix =
-//     glm::translate(glm::mat4(1.0f), transform.position) * glm::scale(glm::mat4(1.0f), transform.scale);
-
-// UseShaderProgram(shader);
-// ShaderSetMat4(shader, "model", modelMatrix);
