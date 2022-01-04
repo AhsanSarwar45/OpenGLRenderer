@@ -5,18 +5,17 @@
 #include <string>
 #include <vector>
 
-#include "Material.hpp"
 #include "Mesh.hpp"
 #include "Shader.hpp"
 #include "Transform.hpp"
 
 struct Model
 {
-    const char*       name;
-    Transform         transform;
-    std::vector<Mesh> meshes;
-    Material          material;
-    ShaderProgram     shaderProgram;
+    const char*           name;
+    Transform             transform;
+    std::vector<Mesh>     meshes;
+    std::vector<Material> materials;
+    ShaderProgram         shaderProgram;
 };
 
 Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgram, const std::string& name = "Model",

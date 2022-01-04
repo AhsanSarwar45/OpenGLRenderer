@@ -36,14 +36,20 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
     const std::vector<tinyobj::shape_t>&    shapes     = reader.GetShapes();
     const std::vector<tinyobj::material_t>& materials  = reader.GetMaterials();
 
-    size_t                    numVertices = attributes.vertices.size() / 3;
-    std::vector<Vertex>       vertices    = std::vector<Vertex>();
-    std::vector<unsigned int> indices     = std::vector<unsigned>();
+    size_t numVertices = attributes.vertices.size() / 3;
 
-    std::unordered_map<Vertex, uint32_t> uniqueVertices;
+    Model model;
 
+    model.name          = name.c_str();
+    model.shaderProgram = shaderProgram;
+
+    // Adding Meshes
     for (const auto& shape : shapes)
     {
+        std::vector<Vertex>                  vertices = std::vector<Vertex>();
+        std::vector<unsigned int>            indices  = std::vector<unsigned>();
+        std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
         // For each shape, loop through its indices.
         for (const auto& index : shape.mesh.indices)
         {
@@ -75,69 +81,37 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
 
             indices.push_back(uniqueVertices[vertex]);
         }
+
+        model.meshes.push_back({.vertices = vertices, .indices = indices, .materialId = shape.mesh.material_ids[0]});
+        InitializeMesh(model.meshes.back());
     }
 
-    Model model;
-
-    model.meshes.push_back({.vertices = vertices, .indices = indices});
-    model.name          = name.c_str();
-    model.shaderProgram = shaderProgram;
-
-    for (auto& mesh : model.meshes)
+    // Add materials
+    for (const auto& material : materials)
     {
-        InitializeMesh(mesh);
+        Material modelMaterial;
+
+        if (!material.diffuse_texname.empty())
+        {
+            modelMaterial.textures.push_back(
+                LoadTexture(path.parent_path() / material.diffuse_texname, TextureType::Color, "diffuse", flipTexture));
+        }
+        if (!material.specular_texname.empty())
+        {
+            modelMaterial.textures.push_back(LoadTexture(path.parent_path() / material.specular_texname,
+                                                         TextureType::NonColor, "specular", flipTexture));
+        }
+
+        model.materials.push_back(modelMaterial);
     }
 
-    Material material;
-
-    if (!materials[0].diffuse_texname.empty())
-    {
-        material.textures.push_back(
-            LoadTexture(path.parent_path() / materials[0].diffuse_texname, TextureType::Color, "diffuse", flipTexture));
-    }
-    if (!materials[0].specular_texname.empty())
-    {
-        material.textures.push_back(LoadTexture(path.parent_path() / materials[0].specular_texname,
-                                                TextureType::NonColor, "specular", flipTexture));
-    }
-
-    model.material = material;
-
-    printf("Loaded Model %s\n", path.string().c_str());
+    printf("Loaded Model %s (%d meshes, %d materials)\n", path.string().c_str(), model.meshes.size(),
+           model.materials.size());
 
     return model;
 }
 
-void DrawModel(const Model& model)
-{
-    Transform transform = model.transform;
-
-    glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
-
-    glm::mat4 modelMatrix =
-        glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
-
-    UseShaderProgram(model.shaderProgram);
-    ShaderSetMat4(model.shaderProgram, "model", modelMatrix);
-
-    int index = 0;
-    for (auto& texture : model.material.textures)
-    {
-        ShaderSetInt(model.shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
-        BindTexture(texture.id, index);
-        index++;
-    }
-
-    for (auto& mesh : model.meshes)
-    {
-        DrawMesh(mesh);
-    }
-
-    for (int i = 0; i < model.material.textures.size(); i++)
-    {
-        UnBindTexture(i);
-    }
-}
+void DrawModel(const Model& model) { DrawModel(model, model.shaderProgram); }
 
 void DrawModel(const Model& model, const ShaderProgram shaderProgram)
 {
@@ -151,21 +125,8 @@ void DrawModel(const Model& model, const ShaderProgram shaderProgram)
     UseShaderProgram(shaderProgram);
     ShaderSetMat4(shaderProgram, "model", modelMatrix);
 
-    int index = 0;
-    for (auto& texture : model.material.textures)
-    {
-        ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
-        BindTexture(texture.id, index);
-        index++;
-    }
-
     for (auto& mesh : model.meshes)
     {
-        DrawMesh(mesh);
-    }
-
-    for (int i = 0; i < model.material.textures.size(); i++)
-    {
-        UnBindTexture(i);
+        DrawMesh(mesh, shaderProgram, model.materials[mesh.materialId]);
     }
 }

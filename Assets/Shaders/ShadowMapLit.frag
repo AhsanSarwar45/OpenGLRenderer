@@ -34,9 +34,16 @@ struct Light
     float quadratic;
 };
 
+struct Bias
+{
+    float minimun;
+    float maximum;
+};
+
 uniform vec3     viewPos;
 uniform Material material;
 uniform Light    light;
+uniform Bias     bias;
 
 float ShadowCalculation(vec4 fragPosLightSpace, float dotLightNormal)
 {
@@ -52,7 +59,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, float dotLightNormal)
     {
         currentDepth = 1.0;
     }
-    float bias = max(0.01 * (1.0 - dotLightNormal), 0.005);
+    float bias = max(0.05 * (1.0 - dotLightNormal), 0.005);
     // check whether current frag pos is in shadow
     float shadow    = 0.0;
     vec2  texelSize = 1.0 / textureSize(shadowMap, 0);

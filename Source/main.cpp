@@ -70,19 +70,23 @@ int main()
 
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
-    Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
-    Model bulb  = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Bulb");
+    // Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
+    Model bulb = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Bulb");
 
     bulb.transform.scale = glm::vec3(0.2f);
 
-    floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
-    floor.transform.position.y = -0.5;
+    // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
+    // floor.transform.position.y = -0.5;
 
-    models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
-    models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
-    models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
+    Model sponza = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
 
-    models.push_back(floor);
+    sponza.transform.scale = glm::vec3(0.1);
+
+    models.push_back(sponza);
+    // models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
+    // models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
+    // models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
+    // models.push_back(floor);
 
     float xPos = 0.0f;
     for (auto& model : models)
@@ -167,6 +171,7 @@ int main()
         }
         if (ImGui::TreeNode("Camera"))
         {
+            ImGui::DragFloat("Speed", camera.GetSpeedPtr(), 0.03f);
             ImGui::DragFloat("Near Clip", camera.GetNearClipPtr(), 0.01f);
             ImGui::DragFloat("Far Clip", camera.GetFarClipPtr(), 1.0f);
             ImGui::TreePop();

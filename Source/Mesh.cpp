@@ -34,12 +34,23 @@ void InitializeMesh(Mesh& mesh)
     glBindVertexArray(0);
 }
 
-void DrawMesh(const Mesh& mesh)
+void DrawMesh(const Mesh& mesh, const ShaderProgram shaderProgram, const Material& material)
 {
 
-    // std::cout << mesh.Indices.size() << "\n";
+    int index = 0;
+    for (auto& texture : material.textures)
+    {
+        ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
+        BindTexture(texture.id, index);
+        index++;
+    }
 
     glBindVertexArray(mesh.vao);
     glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+
+    for (int i = 0; i < material.textures.size(); i++)
+    {
+        UnBindTexture(i);
+    }
 }

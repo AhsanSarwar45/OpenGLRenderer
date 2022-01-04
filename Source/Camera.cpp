@@ -42,7 +42,7 @@ void Camera::Update(float deltaTime)
 
     if (m_Window->IsFocused())
     {
-        float speed = 2.5 * deltaTime;
+        float speed = m_MovementSpeed * deltaTime;
         if (glfwGetKey(m_NativeWindow, GLFW_KEY_W) == GLFW_PRESS)
             m_Position += speed * m_Front;
         if (glfwGetKey(m_NativeWindow, GLFW_KEY_S) == GLFW_PRESS)

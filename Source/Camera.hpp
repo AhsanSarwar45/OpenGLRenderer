@@ -9,7 +9,7 @@
 // Default camera values
 const float YAW         = -90.0f;
 const float PITCH       = 0.0f;
-const float SPEED       = 5.0f;
+const float SPEED       = 25.0f;
 const float SENSITIVITY = 0.15f;
 const float ZOOM        = 45.0f;
 const float NEAR        = 0.1f;
@@ -30,6 +30,7 @@ class Camera
 
     float* GetNearClipPtr() { return &m_NearClip; }
     float* GetFarClipPtr() { return &m_FarClip; }
+    float* GetSpeedPtr() { return &m_MovementSpeed; }
 
     float     GetZoom() const { return m_Zoom; }
     glm::vec3 GetPosition() const { return m_Position; }
