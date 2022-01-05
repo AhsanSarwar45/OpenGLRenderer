@@ -87,19 +87,20 @@ void main()
 
     // ambient
     vec3 ambient = light.ambient;
+
     // diffuse
     // vec3  lightDir       = normalize(light.position - fs_in.FragPos);
     vec3  lightDir       = normalize(light.direction);
     float dotLightNormal = dot(lightDir, normal);
     float diff           = max(dotLightNormal, 0.0);
     vec3  diffuse        = diff * light.diffuse;
+
     // specular
     vec3  viewDir    = normalize(viewPos - fs_in.FragPos);
     vec3  reflectDir = reflect(-lightDir, normal);
-    float spec       = 0.0;
     vec3  halfwayDir = normalize(lightDir + viewDir);
-    spec             = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
-    vec3 specular    = spec * light.specular;
+    float spec       = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
+    vec3  specular   = spec * light.specular;
 
     // calculate shadow
     float shadow   = ShadowCalculation(fs_in.FragPosLightSpace, dotLightNormal);

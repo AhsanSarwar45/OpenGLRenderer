@@ -11,12 +11,13 @@ enum class TextureType
 };
 
 using TextureDimensions = uint16_t;
+using TextureId         = unsigned int;
 
 struct Texture
 {
     const char*       path;
     const char*       name;
-    unsigned int      id;
+    TextureId         id;
     TextureType       type;
     TextureDimensions width;
     TextureDimensions height;
@@ -24,9 +25,17 @@ struct Texture
     bool              isLoaded;
 };
 
-Texture LoadTexture(const std::filesystem::path& path, const char* name = "diffuse", bool flipTexture = false);
-Texture LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse",
-                    bool flipTexture = false);
+struct DepthTexture
+{
+    TextureId         id;
+    TextureDimensions width;
+    TextureDimensions height;
+};
+
+Texture      LoadTexture(const std::filesystem::path& path, const char* name = "diffuse", bool flipTexture = false);
+Texture      LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse",
+                         bool flipTexture = false);
+DepthTexture CreateDepthTexture(TextureDimensions width, TextureDimensions height);
 
 void BindTexture(unsigned int id, unsigned int slot);
 void UnBindTexture(const unsigned int slot);

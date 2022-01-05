@@ -27,6 +27,7 @@ add_executable(${PROJECT_NAME}
 "Source/Camera.cpp"
 "Source/Skybox.cpp"
 "Source/Vertex.cpp"
+"Source/Render.cpp"
 "Source/FileWatcher.cpp"
 "Source/Billboard.cpp"
 "Source/ResourceManager.cpp"

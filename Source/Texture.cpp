@@ -11,7 +11,7 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
 {
     stbi_set_flip_vertically_on_load(flipTexture);
 
-    unsigned int   id;
+    TextureId      id;
     int            width, height;
     int            componentCount;
     unsigned char* data     = stbi_load(path.string().c_str(), &width, &height, &componentCount, 0);
@@ -71,6 +71,26 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
 Texture LoadTexture(const std::filesystem::path& path, const char* name, bool flipTexture)
 {
     return LoadTexture(path, TextureType::Color, name, flipTexture);
+}
+
+DepthTexture CreateDepthTexture(TextureDimensions width, TextureDimensions height)
+{
+    TextureId depthMapId;
+    glGenTextures(1, &depthMapId);
+    glBindTexture(GL_TEXTURE_2D, depthMapId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    return {
+        .id     = depthMapId,
+        .width  = width,
+        .height = height,
+    };
 }
 
 void BindTexture(const unsigned int id, const unsigned int slot)

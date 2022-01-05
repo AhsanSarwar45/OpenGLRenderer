@@ -10,6 +10,7 @@
 #include "Debug.hpp"
 #include "FileWatcher.hpp"
 #include "Model.hpp"
+#include "Render.hpp"
 #include "ResourceManager.hpp"
 #include "Shader.hpp"
 #include "Skybox.hpp"
@@ -103,30 +104,9 @@ int main()
 
     fileWatcher->watch();
 
-    bool showShadowMap = false;
+    DepthTexture depthMap = CreateDepthTexture(1024, 1024);
 
-    unsigned int depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
-
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-                 NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
     while (window.IsRunning())
     {
@@ -149,7 +129,10 @@ int main()
                 {
                     ImGui::DragFloat3("Position", (float*)(&model.transform.position), 0.03f);
                     ImGui::DragFloat3("Scale", (float*)(&model.transform.scale), 0.03f);
-                    ImGui::DragFloat3("Rotation", (float*)(&model.transform.rotation), 0.03f);
+                    glm::vec3 rotation = glm::degrees(model.transform.rotation);
+                    ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.03f);
+                    model.transform.rotation = glm::radians(rotation);
+
                     ImGui::TreePop();
                 }
             }
@@ -224,7 +207,7 @@ int main()
         ImGui::Begin("Debug");
         if (ImGui::TreeNode("Shadow Map"))
         {
-            ImGui::Image((void*)(intptr_t)depthMap, ImVec2(512, 512), ImVec2(1, 1), ImVec2(0, 0));
+            ImGui::Image((void*)(intptr_t)depthMap.id, ImVec2(512, 512), ImVec2(1, 1), ImVec2(0, 0));
             ImGui::TreePop();
         }
         ImGui::End();
@@ -240,8 +223,8 @@ int main()
         UseShaderProgram(depthShaderProgram);
         ShaderSetMat4(depthShaderProgram, "lightSpaceMatrix", lightSpaceMatrix);
 
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glViewport(0, 0, depthMap.width, depthMap.height);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthFramebuffer);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         for (auto& model : models)
@@ -275,7 +258,7 @@ int main()
 
         ShaderSetInt(shadowShaderProgram, "shadowMap", 7);
         glActiveTexture(GL_TEXTURE7);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glBindTexture(GL_TEXTURE_2D, depthMap.id);
 
         bulb.transform.position = lightPos;
         DrawModel(bulb, lightShaderProgram);
