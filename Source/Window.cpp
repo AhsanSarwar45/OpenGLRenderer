@@ -33,7 +33,7 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    // glfwWindowHint(GLFW_SAMPLES, 4);
 
     /* Create a windowed mode window and its OpenGL context */
     m_Window = glfwCreateWindow(m_Properties.Width, m_Properties.Height, m_Properties.Name.c_str(), NULL, NULL);
@@ -73,13 +73,13 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
 
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    // glEnable(GL_MULTISAMPLE);
+    // glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // glEnable(GL_STENCIL_TEST);
     // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
     // glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
