@@ -27,12 +27,12 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
         }
         else if (componentCount == 3)
         {
-            internalFormat = (type == TextureType::NonColor) ? GL_SRGB : GL_RGB;
+            internalFormat = GL_RGB;
             dataFormat     = GL_RGB;
         }
         else if (componentCount == 4)
         {
-            internalFormat = (type == TextureType::NonColor) ? GL_SRGB_ALPHA : GL_RGBA;
+            internalFormat = GL_RGBA;
             dataFormat     = GL_RGBA;
         }
 

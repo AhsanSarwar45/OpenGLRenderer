@@ -6,6 +6,10 @@ in VS_OUT
     vec3 FragPos;
     vec3 Normal;
     vec2 TexCoords;
+    vec3 TangentLightPos;
+    vec3 TangentLightDirection;
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
     vec4 FragPosLightSpace;
 }
 fs_in;
@@ -40,7 +44,6 @@ struct Bias
     float maximum;
 };
 
-uniform vec3     viewPos;
 uniform Material material;
 uniform Light    light;
 uniform Bias     bias;
@@ -82,25 +85,28 @@ float ShadowCalculation(vec4 fragPosLightSpace, float dotLightNormal)
 
 void main()
 {
-    vec3 color  = texture(material.diffuse, fs_in.TexCoords).rgb;
-    vec3 normal = normalize(fs_in.Normal);
-
+    vec3 color = texture(material.diffuse, fs_in.TexCoords).rgb;
+    // obtain normal from normal map in range [0,1]
+    vec3 normal = texture(material.normal, fs_in.TexCoords).rgb;
+    // transform normal vector to range [-1,1]
+    normal = normalize(normal * 2.0 - 1.0); // this normal is in tangent space
+    // vec3 norm = normalize(fs_in.Normal);
     // ambient
     vec3 ambient = light.ambient;
 
     // diffuse
-    // vec3  lightDir       = normalize(light.position - fs_in.FragPos);
+    // vec3 lightDir = normalize(light.position - fs_in.TangentFragPos);
     vec3  lightDir       = normalize(light.direction);
     float dotLightNormal = dot(lightDir, normal);
     float diff           = max(dotLightNormal, 0.0);
     vec3  diffuse        = diff * light.diffuse;
 
     // specular
-    vec3  viewDir    = normalize(viewPos - fs_in.FragPos);
+    vec3  viewDir    = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec3  reflectDir = reflect(-lightDir, normal);
     vec3  halfwayDir = normalize(lightDir + viewDir);
     float spec       = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
-    vec3  specular   = spec * light.specular;
+    vec3  specular   = spec * light.specular * texture(material.specular, fs_in.TexCoords).rgb;
 
     // calculate shadow
     float shadow   = ShadowCalculation(fs_in.FragPosLightSpace, dotLightNormal);

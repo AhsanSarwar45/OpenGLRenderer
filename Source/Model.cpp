@@ -9,6 +9,7 @@
 #include "Mesh.hpp"
 #include "Model.hpp"
 #include "Texture.hpp"
+#include "glm/geometric.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
@@ -82,6 +83,46 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
             indices.push_back(uniqueVertices[vertex]);
         }
 
+        for (unsigned int i = 0; i < indices.size(); i += 3)
+        {
+            Vertex& v0 = vertices[indices[i]];
+            Vertex& v1 = vertices[indices[i + 1]];
+            Vertex& v2 = vertices[indices[i + 2]];
+
+            glm::vec3 Edge1 = v1.Position - v0.Position;
+            glm::vec3 Edge2 = v2.Position - v0.Position;
+
+            float DeltaU1 = v1.TexCoord.x - v0.TexCoord.x;
+            float DeltaV1 = v1.TexCoord.y - v0.TexCoord.y;
+            float DeltaU2 = v2.TexCoord.x - v0.TexCoord.x;
+            float DeltaV2 = v2.TexCoord.y - v0.TexCoord.y;
+
+            float f = 1.0f / (DeltaU1 * DeltaV2 - DeltaU2 * DeltaV1);
+
+            glm::vec3 tangent, bitangent;
+
+            tangent.x = f * (DeltaV2 * Edge1.x - DeltaV1 * Edge2.x);
+            tangent.y = f * (DeltaV2 * Edge1.y - DeltaV1 * Edge2.y);
+            tangent.z = f * (DeltaV2 * Edge1.z - DeltaV1 * Edge2.z);
+
+            bitangent.x = f * (-DeltaU2 * Edge1.x + DeltaU1 * Edge2.x);
+            bitangent.y = f * (-DeltaU2 * Edge1.y + DeltaU1 * Edge2.y);
+            bitangent.z = f * (-DeltaU2 * Edge1.z + DeltaU1 * Edge2.z);
+
+            v0.Tangent += tangent;
+            v1.Tangent += tangent;
+            v2.Tangent += tangent;
+
+            v0.Bitangent += bitangent;
+            v1.Bitangent += bitangent;
+            v2.Bitangent += bitangent;
+        }
+
+        for (unsigned int i = 0; i < vertices.size(); i++)
+        {
+            glm::normalize(vertices[i].Tangent);
+        }
+
         model.meshes.push_back({.vertices = vertices, .indices = indices, .materialId = shape.mesh.material_ids[0]});
         InitializeMesh(model.meshes.back());
     }
@@ -95,6 +136,11 @@ Model LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgra
         {
             modelMaterial.textures.push_back(
                 LoadTexture(path.parent_path() / material.diffuse_texname, TextureType::Color, "diffuse", flipTexture));
+        }
+        if (!material.bump_texname.empty())
+        {
+            modelMaterial.textures.push_back(
+                LoadTexture(path.parent_path() / material.bump_texname, TextureType::NonColor, "normal", flipTexture));
         }
         if (!material.specular_texname.empty())
         {

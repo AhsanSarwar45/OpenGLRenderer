@@ -35,14 +35,15 @@ float objectShininess = 32.0f;
 
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 glm::vec3 lightSpecular(0.7f, 0.7f, 0.7f);
-glm::vec3 lightAmbient(0.5f, 0.5f, 0.5f);
+glm::vec3 lightAmbient(0.2f, 0.2f, 0.2f);
 
 float lightLinear    = 0.01f;
 float lightConstant  = 0.01f;
 float lightQuadratic = 0.045f;
 
-float shadowNearClip = 0.5f;
+float shadowNearClip = 0.0f;
 float shadowFarClip  = 10.0f;
+float shadowMapOrtho = 5.0f;
 
 int main()
 {
@@ -79,11 +80,13 @@ int main()
     // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     // floor.transform.position.y = -0.5;
 
-    Model sponza = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
+    // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
+    Model backpack = LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true);
 
-    sponza.transform.scale = glm::vec3(0.1);
+    // sponza.transform.scale = glm::vec3(0.05);
 
-    models.push_back(sponza);
+    // models.push_back(sponza);
+    models.push_back(backpack);
     // models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
     // models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
     // models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
@@ -104,7 +107,7 @@ int main()
 
     fileWatcher->watch();
 
-    DepthTexture depthMap = CreateDepthTexture(1024, 1024);
+    DepthTexture depthMap = CreateDepthTexture(2048, 2048);
 
     Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
@@ -130,7 +133,7 @@ int main()
                     ImGui::DragFloat3("Position", (float*)(&model.transform.position), 0.03f);
                     ImGui::DragFloat3("Scale", (float*)(&model.transform.scale), 0.03f);
                     glm::vec3 rotation = glm::degrees(model.transform.rotation);
-                    ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.03f);
+                    ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.3f);
                     model.transform.rotation = glm::radians(rotation);
 
                     ImGui::TreePop();
@@ -141,7 +144,9 @@ int main()
         if (ImGui::TreeNode("Light"))
         {
             ImGui::DragFloat3("Position", (float*)(&lightPos), 0.03f);
-            ImGui::DragFloat3("Direction", (float*)(&lightDir), 0.03f);
+            glm::vec3 rotation = glm::degrees(lightDir);
+            ImGui::DragFloat3("Direction", (float*)(&rotation), 0.3f);
+            lightDir = glm::radians(rotation);
 
             ImGui::ColorEdit3("Color", (float*)(&lightColor));
             ImGui::ColorEdit3("Specular", (float*)(&lightSpecular));
@@ -163,6 +168,7 @@ int main()
         {
             ImGui::DragFloat("Near Clip", &shadowNearClip, 0.01f);
             ImGui::DragFloat("Far Clip", &shadowFarClip, 1.0f);
+            ImGui::DragFloat("Ortho Size", &shadowMapOrtho, 1.0f);
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Material"))
@@ -216,7 +222,8 @@ int main()
 
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
-        lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, shadowNearClip, shadowFarClip);
+        lightProjection =
+            glm::ortho(-shadowMapOrtho, shadowMapOrtho, -shadowMapOrtho, shadowMapOrtho, shadowNearClip, shadowFarClip);
         lightView        = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         // render scene from light's point of view
@@ -244,6 +251,8 @@ int main()
         ShaderSetFloat(shadowShaderProgram, "material.shininess", objectShininess);
 
         ShaderSetFloat3(shadowShaderProgram, "viewPos", camera.GetPosition());
+        ShaderSetFloat3(shadowShaderProgram, "lightPos", lightPos);
+        ShaderSetFloat3(shadowShaderProgram, "lightDirection", lightDir);
 
         ShaderSetFloat3(shadowShaderProgram, "light.position", lightPos);
         ShaderSetFloat3(shadowShaderProgram, "light.direction", lightDir);

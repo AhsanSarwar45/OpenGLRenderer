@@ -1,3 +1,4 @@
+#include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include <glm/gtx/hash.hpp>
 
@@ -8,6 +9,8 @@ struct Vertex
     glm::vec3 Position;
     glm::vec3 Normal;
     glm::vec2 TexCoord;
+    glm::vec3 Tangent;
+    glm::vec3 Bitangent;
 
     bool operator==(const Vertex& other) const;
 };
