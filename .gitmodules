@@ -7,3 +7,6 @@
 [submodule "Vendor/efsw"]
 	path = Vendor/efsw
 	url = https://github.com/SpartanJ/efsw
+[submodule "Vendor/assimp"]
+	path = Vendor/assimp
+	url = https://github.com/assimp/assimp

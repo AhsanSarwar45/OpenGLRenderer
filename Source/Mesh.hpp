@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -21,6 +22,6 @@ struct Mesh
     int materialId;
 };
 
-void InitializeMesh(Mesh& mesh);
+void InitializeMesh(std::shared_ptr<Mesh> mesh);
 // void DrawMesh(const Mesh& mesh);
 void DrawMesh(const Mesh& mesh, const ShaderProgram shaderProgram, const Material& material);

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -26,8 +27,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-std::vector<Model>      models;
-std::vector<PointLight> pointLights;
+std::vector<std::shared_ptr<Model>> models;
+std::vector<PointLight>             pointLights;
 
 glm::vec3 objPos(0.0f, 0.0f, 0.0f);
 glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
@@ -81,24 +82,25 @@ int main()
     Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
 
     // Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
-    Model bulb = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", lightShaderProgram, "Bulb");
+    std::shared_ptr<Model> bulb = LoadModel("../Assets/Models/WoodenBox/cube.obj", lightShaderProgram, "Bulb");
 
-    bulb.transform.scale = glm::vec3(0.2f);
+    bulb->transform.scale = glm::vec3(0.2f);
 
     // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     // floor.transform.position.y = -0.5;
 
     // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
-    Model backpack = LoadModelOBJ("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", true);
+    std::shared_ptr<Model> backpack =
+        LoadModel("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", false);
 
     // sponza.transform.scale = glm::vec3(0.05);
 
     // models.push_back(sponza);
     models.push_back(backpack);
-    models.push_back(backpack);
-    models.push_back(backpack);
-    models.push_back(backpack);
-    models.push_back(backpack);
+    // models.push_back(backpack);
+    // models.push_back(backpack);
+    // models.push_back(backpack);
+    // models.push_back(backpack);
     // models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
     // models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
     // models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
@@ -122,7 +124,7 @@ int main()
     float xPos = 0.0f;
     for (auto& model : models)
     {
-        model.transform.position.x = xPos;
+        model->transform.position.x = xPos;
         xPos += 4.0f;
     }
 
@@ -138,7 +140,8 @@ int main()
 
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
-    GeometryFrameBuffer gBuffer = CreateGeometryBuffer(window.GetProperties().Width, window.GetProperties().Height);
+    BlinnPhongGeometryFramebuffer gBuffer =
+        CreateBlinnPhongGeometryBuffer(window.GetProperties().Width, window.GetProperties().Height);
 
     ScreenQuad screenQuad = CreateScreenQuad();
 
@@ -165,13 +168,13 @@ int main()
         {
             for (auto& model : models)
             {
-                if (ImGui::TreeNode(model.name))
+                if (ImGui::TreeNode(model->name))
                 {
-                    ImGui::DragFloat3("Position", (float*)(&model.transform.position), 0.03f);
-                    ImGui::DragFloat3("Scale", (float*)(&model.transform.scale), 0.03f);
-                    glm::vec3 rotation = glm::degrees(model.transform.rotation);
+                    ImGui::DragFloat3("Position", (float*)(&model->transform.position), 0.03f);
+                    ImGui::DragFloat3("Scale", (float*)(&model->transform.scale), 0.03f);
+                    glm::vec3 rotation = glm::degrees(model->transform.rotation);
                     ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.3f);
-                    model.transform.rotation = glm::radians(rotation);
+                    model->transform.rotation = glm::radians(rotation);
 
                     ImGui::TreePop();
                 }
@@ -286,7 +289,7 @@ int main()
 
         for (const auto& model : models)
         {
-            DrawModel(model, geometryPassShader);
+            RenderModel(model, geometryPassShader);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -326,8 +329,8 @@ int main()
 
         for (const auto& pointLight : pointLights)
         {
-            bulb.transform.position = pointLight.position;
-            DrawModel(bulb, lightShaderProgram);
+            bulb->transform.position = pointLight.position;
+            RenderModel(bulb, lightShaderProgram);
         }
 
         DrawSkybox(skybox);

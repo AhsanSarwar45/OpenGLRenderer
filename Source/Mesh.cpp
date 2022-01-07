@@ -7,19 +7,20 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 
-void InitializeMesh(Mesh& mesh)
+void InitializeMesh(std::shared_ptr<Mesh> mesh)
 {
-    glGenVertexArrays(1, &mesh.vao);
-    glGenBuffers(1, &mesh.vbo);
-    glGenBuffers(1, &mesh.ebo);
+    glGenVertexArrays(1, &mesh->vao);
+    glGenBuffers(1, &mesh->vbo);
+    glGenBuffers(1, &mesh->ebo);
 
-    glBindVertexArray(mesh.vao);
+    glBindVertexArray(mesh->vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Vertex), &mesh->vertices[0], GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), &mesh.indices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0],
+                 GL_STATIC_DRAW);
 
     // vertex positions
     glEnableVertexAttribArray(0);
@@ -38,25 +39,4 @@ void InitializeMesh(Mesh& mesh)
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
     glBindVertexArray(0);
-}
-
-void DrawMesh(const Mesh& mesh, const ShaderProgram shaderProgram, const Material& material)
-{
-
-    int index = 0;
-    for (auto& texture : material.textures)
-    {
-        ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
-        BindTexture(texture.id, index);
-        index++;
-    }
-
-    glBindVertexArray(mesh.vao);
-    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-
-    for (int i = 0; i < material.textures.size(); i++)
-    {
-        UnBindTexture(i);
-    }
 }

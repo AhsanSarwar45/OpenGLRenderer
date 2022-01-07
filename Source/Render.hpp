@@ -1,13 +1,28 @@
+#pragma once
+
+#include "Mesh.hpp"
+#include "Model.hpp"
+#include "Shader.hpp"
 #include "Texture.hpp"
+#include <memory>
 
 using Framebuffer = unsigned int;
 
-struct GeometryFrameBuffer
+struct BlinnPhongGeometryFramebuffer
 {
     Framebuffer id;
     TextureId   gPosition;
     TextureId   gNormal;
     TextureId   gAlbedoSpec;
+};
+
+struct PBRGeometryFramebuffer
+{
+    Framebuffer id;
+    TextureId   gPosition;
+    TextureId   gNormal;
+    TextureId   gAlbedo;
+    TextureId   gMetalnessRoughnessAO;
 };
 
 struct ScreenQuad
@@ -21,7 +36,8 @@ struct ScreenQuad
     unsigned int vbo;
 };
 
-GeometryFrameBuffer CreateGeometryBuffer(TextureDimensions width, TextureDimensions height);
+BlinnPhongGeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height);
+PBRGeometryFramebuffer        CreatePBRGeometryBuffer(TextureDimensions width, TextureDimensions height);
 
 Framebuffer CreateFramebuffer();
 
@@ -31,3 +47,7 @@ Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions he
 ScreenQuad CreateScreenQuad();
 
 void RenderScreenQuad(const ScreenQuad& screenQuad);
+void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shaderProgram,
+                const std::shared_ptr<const Material> material);
+void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram shader);
+void RenderModel(const std::shared_ptr<const Model> model);

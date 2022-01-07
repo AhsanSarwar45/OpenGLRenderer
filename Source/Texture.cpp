@@ -9,12 +9,15 @@
 
 Texture LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name, bool flipTexture)
 {
+
     stbi_set_flip_vertically_on_load(flipTexture);
+
+    std::filesystem::path filePathStr = path;
 
     TextureId      id;
     int            width, height;
     int            componentCount;
-    unsigned char* data     = stbi_load(path.string().c_str(), &width, &height, &componentCount, 0);
+    unsigned char* data = stbi_load(filePathStr.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
     bool           isLoaded = false;
     if (data)
     {

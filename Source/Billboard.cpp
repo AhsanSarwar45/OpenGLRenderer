@@ -12,7 +12,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 
-Billboard LoadBillboard(const std::string& texturePath)
+Billboard LoadBillboard(const std::filesystem::path& texturePath)
 {
     Billboard billboard;
     billboard.shader = ResourceManager::GetInstance().GetBillboardShader();

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Model.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
@@ -13,5 +15,5 @@ struct Billboard
     Texture texture;
 };
 
-Billboard LoadBillboard(const std::string& texturePath);
+Billboard LoadBillboard(const std::filesystem::path& texturePath);
 void      DrawBillboard(const Billboard& billboard);
