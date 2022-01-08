@@ -264,30 +264,15 @@ int main()
         ImGui::Begin("Debug");
         if (ImGui::TreeNode("G-Buffer"))
         {
-            if (ImGui::TreeNode("Position"))
+            for (const auto& texture : deferredRenderData.gBuffer.textures)
             {
-                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gPosition, ImVec2(256, 256), ImVec2(1, 1),
-                             ImVec2(0, 0));
-                ImGui::TreePop();
+                if (ImGui::TreeNode(texture.name))
+                {
+                    ImGui::Image((void*)(intptr_t)texture.textureId, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::TreePop();
+                }
             }
-            if (ImGui::TreeNode("Normal"))
-            {
-                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gNormal, ImVec2(256, 256), ImVec2(1, 1),
-                             ImVec2(0, 0));
-                ImGui::TreePop();
-            }
-            if (ImGui::TreeNode("Albedo"))
-            {
-                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gAlbedo, ImVec2(256, 256), ImVec2(1, 1),
-                             ImVec2(0, 0));
-                ImGui::TreePop();
-            }
-            if (ImGui::TreeNode("Metalness-Roughness-AO"))
-            {
-                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gMetalnessRoughnessAO, ImVec2(256, 256),
-                             ImVec2(1, 1), ImVec2(0, 0));
-                ImGui::TreePop();
-            }
+
             ImGui::TreePop();
         }
         ImGui::End();
@@ -297,24 +282,6 @@ int main()
         RenderGeometryPass(scene, deferredRenderData);
         RenderLightPass(scene, deferredRenderData, camera.GetPosition());
         RenderForwardPass(scene, deferredRenderData);
-
-        // UseShaderProgram(shadowShaderProgram);
-
-        // ShaderSetMat4(shadowShaderProgram, "lightSpaceMatrix", lightSpaceMatrix);
-
-        // ShaderSetFloat3(shadowShaderProgram, "lightPos", lightPos);
-        // ShaderSetFloat3(shadowShaderProgram, "lightDirection", lightDir);
-
-        // ShaderSetFloat3(shadowShaderProgram, "light.position", lightPos);
-        // ShaderSetFloat3(shadowShaderProgram, "light.direction", lightDir);
-
-        // ShaderSetFloat3(shadowShaderProgram, "light.diffuse", lightColor);
-        // ShaderSetFloat3(shadowShaderProgram, "light.specular", lightSpecular);
-        // ShaderSetFloat3(shadowShaderProgram, "light.ambient", lightAmbient);
-
-        // ShaderSetFloat(shadowShaderProgram, "light.constant", lightConstant);
-        // ShaderSetFloat(shadowShaderProgram, "light.linear", lightLinear);
-        // ShaderSetFloat(shadowShaderProgram, "light.quadratic", lightQuadratic);
 
         // ShaderSetInt(shadowShaderProgram, "shadowMap", 7);
         // glActiveTexture(GL_TEXTURE7);

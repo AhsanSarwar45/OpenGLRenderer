@@ -2,8 +2,7 @@
 
 #include <memory>
 
-#include "Aliases.hpp"
-
+#include "Framebuffer.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 
@@ -11,23 +10,6 @@ struct Scene;
 struct Model;
 struct Material;
 struct Mesh;
-
-struct BlinnPhongGeometryFramebuffer
-{
-    Framebuffer id;
-    TextureId   gPosition;
-    TextureId   gNormal;
-    TextureId   gAlbedoSpec;
-};
-
-struct PBRGeometryFramebuffer
-{
-    Framebuffer id;
-    TextureId   gPosition;
-    TextureId   gNormal;
-    TextureId   gAlbedo;
-    TextureId   gMetalnessRoughnessAO;
-};
 
 struct ScreenQuad
 {
@@ -41,20 +23,12 @@ struct DeferredRenderData
     WindowDimension frameBufferWidth;
     WindowDimension frameBufferHeight;
 
-    PBRGeometryFramebuffer gBuffer;
-    ScreenQuad             screenQuad;
+    GeometryFramebuffer gBuffer;
+    ScreenQuad          screenQuad;
 
-    ShaderProgram pbrGeometryPassShader;
-    ShaderProgram pbrLightPassShader;
+    ShaderProgram geometryPassShader;
+    ShaderProgram lightPassShader;
 };
-
-BlinnPhongGeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height);
-PBRGeometryFramebuffer        CreatePBRGeometryBuffer(TextureDimensions width, TextureDimensions height);
-
-Framebuffer CreateFramebuffer();
-
-Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
-Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions height);
 
 ScreenQuad CreateScreenQuad();
 

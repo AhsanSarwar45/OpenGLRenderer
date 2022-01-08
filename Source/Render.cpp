@@ -13,138 +13,6 @@
 #include "Scene.hpp"
 #include "Texture.hpp"
 
-Framebuffer CreateFrameBuffer()
-{
-    Framebuffer fbo;
-    glGenFramebuffers(1, &fbo);
-
-    return fbo;
-}
-
-Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
-{
-    Framebuffer fbo;
-    glGenFramebuffers(1, &fbo);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture.id, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return fbo;
-}
-
-Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions height)
-{
-    DepthTexture depthTexture = CreateDepthTexture(width, height);
-    return CreateDepthFramebuffer(depthTexture);
-}
-
-PBRGeometryFramebuffer CreatePBRGeometryBuffer(TextureDimensions width, TextureDimensions height)
-{
-    // configure g-buffer framebuffer
-    // ------------------------------
-    Framebuffer gBuffer;
-    glGenFramebuffers(1, &gBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-    TextureId gPosition, gNormal, gAlbedo, gMetalnessRoughnessAO;
-    // position color buffer
-    glGenTextures(1, &gPosition);
-    glBindTexture(GL_TEXTURE_2D, gPosition);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-    // normal color buffer
-    glGenTextures(1, &gNormal);
-    glBindTexture(GL_TEXTURE_2D, gNormal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-    // color buffer
-    glGenTextures(1, &gAlbedo);
-    glBindTexture(GL_TEXTURE_2D, gAlbedo);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
-    // metalness + roughness + AO
-    glGenTextures(1, &gMetalnessRoughnessAO);
-    glBindTexture(GL_TEXTURE_2D, gMetalnessRoughnessAO);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMetalnessRoughnessAO, 0);
-    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
-                                   GL_COLOR_ATTACHMENT3};
-    glDrawBuffers(4, attachments);
-    // create and attach depth buffer (renderbuffer)
-    unsigned int rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-    // finally check if framebuffer is complete
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "Framebuffer not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return {.id                    = gBuffer,
-            .gPosition             = gPosition,
-            .gNormal               = gNormal,
-            .gAlbedo               = gAlbedo,
-            .gMetalnessRoughnessAO = gMetalnessRoughnessAO};
-}
-
-BlinnPhongGeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height)
-{
-    // configure g-buffer framebuffer
-    // ------------------------------
-    Framebuffer gBuffer;
-    glGenFramebuffers(1, &gBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-    TextureId gPosition, gNormal, gAlbedoSpec;
-    // position color buffer
-    glGenTextures(1, &gPosition);
-    glBindTexture(GL_TEXTURE_2D, gPosition);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-    // normal color buffer
-    glGenTextures(1, &gNormal);
-    glBindTexture(GL_TEXTURE_2D, gNormal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-    // color + specular color buffer
-    glGenTextures(1, &gAlbedoSpec);
-    glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
-    // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3, attachments);
-    // create and attach depth buffer (renderbuffer)
-    unsigned int rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-    // finally check if framebuffer is complete
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "Framebuffer not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return {.id = gBuffer, .gPosition = gPosition, .gNormal = gNormal, .gAlbedoSpec = gAlbedoSpec};
-}
-
 ScreenQuad CreateScreenQuad()
 {
     ScreenQuad screenQuad;
@@ -178,10 +46,10 @@ void RenderScreenQuad(const ScreenQuad& screenQuad)
 DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const WindowDimension height)
 {
     DeferredRenderData data;
-    data.pbrGeometryPassShader =
+    data.geometryPassShader =
         LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
                     "Geometry Pass");
-    data.pbrLightPassShader =
+    data.lightPassShader =
         LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
                     "Light Pass", false);
 
@@ -191,12 +59,12 @@ DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const W
     data.frameBufferWidth  = width;
     data.frameBufferHeight = height;
 
-    UseShaderProgram(data.pbrLightPassShader);
+    UseShaderProgram(data.lightPassShader);
 
-    ShaderSetInt(data.pbrLightPassShader, "gPosition", 0);
-    ShaderSetInt(data.pbrLightPassShader, "gNormal", 1);
-    ShaderSetInt(data.pbrLightPassShader, "gAlbedo", 2);
-    ShaderSetInt(data.pbrLightPassShader, "gMetalnessRoughnessAO", 3);
+    for (int i = 0; i < data.gBuffer.textures.size(); i++)
+    {
+        ShaderSetInt(data.lightPassShader, data.gBuffer.textures[i].name, i);
+    }
 
     return data;
 }
@@ -253,39 +121,37 @@ void RenderGeometryPass(const std::shared_ptr<const Scene> scene, const Deferred
 
     for (const auto& model : scene->models)
     {
-        RenderModel(model, data.pbrGeometryPassShader);
+        RenderModel(model, data.geometryPassShader);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    UseShaderProgram(data.pbrLightPassShader);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, data.gBuffer.gPosition);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, data.gBuffer.gNormal);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, data.gBuffer.gAlbedo);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, data.gBuffer.gMetalnessRoughnessAO);
+    UseShaderProgram(data.lightPassShader);
 
-    ShaderSetInt(data.pbrLightPassShader, "numPointLights", scene->pointLights.size());
-    ShaderSetFloat3(data.pbrLightPassShader, "ambientLight", scene->ambientLight);
+    for (int i = 0; i < data.gBuffer.textures.size(); i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, data.gBuffer.textures[i].textureId);
+    }
+
+    ShaderSetInt(data.lightPassShader, "numPointLights", scene->pointLights.size());
+    ShaderSetFloat3(data.lightPassShader, "ambientLight", scene->ambientLight);
     // send light relevant uniforms
     int index = 0;
     for (const auto& pointLight : scene->pointLights)
     {
         std::string indexStr = std::to_string(index);
-        ShaderSetFloat3(data.pbrLightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
-        ShaderSetFloat3(data.pbrLightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
-        ShaderSetFloat(data.pbrLightPassShader, "pointLights[" + indexStr + "].power", pointLight.power);
-        ShaderSetFloat(data.pbrLightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
-        ShaderSetFloat(data.pbrLightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
+        ShaderSetFloat3(data.lightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
+        ShaderSetFloat3(data.lightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
+        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].power", pointLight.power);
+        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
+        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
 
         index++;
     }
-    ShaderSetFloat3(data.pbrLightPassShader, "viewPos", cameraPos);
+    ShaderSetFloat3(data.lightPassShader, "viewPos", cameraPos);
     // finally render quad
     RenderScreenQuad(data.screenQuad);
 }
