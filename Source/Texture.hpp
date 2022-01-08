@@ -4,14 +4,13 @@
 #include <filesystem>
 #include <string>
 
+#include "Aliases.hpp"
+
 enum class TextureType
 {
     Color,
     NonColor
 };
-
-using TextureDimensions = uint16_t;
-using TextureId         = unsigned int;
 
 struct Texture
 {

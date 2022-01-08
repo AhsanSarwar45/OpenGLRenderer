@@ -6,17 +6,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-// TODO mind ur naming!!
-
-using ShaderProgram = unsigned int;
+#include "Aliases.hpp"
 
 ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath,
                          const char* shaderProgramName, bool cameraTransform = true);
 ShaderProgram LoadShaders(const std::vector<std::string>& shaderStagePaths, const char* shaderProgramName,
                           bool cameraTransform = true);
-
-using ShaderStageId = unsigned int;
-using ShaderType    = unsigned int; // TODO rename this
 
 struct ShaderStage
 {

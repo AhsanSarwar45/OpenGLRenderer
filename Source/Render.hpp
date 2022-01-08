@@ -1,12 +1,16 @@
 #pragma once
 
-#include "Mesh.hpp"
-#include "Model.hpp"
-#include "Shader.hpp"
-#include "Texture.hpp"
 #include <memory>
 
-using Framebuffer = unsigned int;
+#include "Aliases.hpp"
+
+#include "Shader.hpp"
+#include "Texture.hpp"
+
+struct Scene;
+struct Model;
+struct Material;
+struct Mesh;
 
 struct BlinnPhongGeometryFramebuffer
 {
@@ -27,13 +31,21 @@ struct PBRGeometryFramebuffer
 
 struct ScreenQuad
 {
-    float vertices[20] = {
-        // positions        // texture Coords
-        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,
-    };
+
     unsigned int vao;
     unsigned int vbo;
+};
+
+struct DeferredRenderData
+{
+    WindowDimension frameBufferWidth;
+    WindowDimension frameBufferHeight;
+
+    PBRGeometryFramebuffer gBuffer;
+    ScreenQuad             screenQuad;
+
+    ShaderProgram pbrGeometryPassShader;
+    ShaderProgram pbrLightPassShader;
 };
 
 BlinnPhongGeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height);
@@ -46,7 +58,13 @@ Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions he
 
 ScreenQuad CreateScreenQuad();
 
-void RenderScreenQuad(const ScreenQuad& screenQuad);
+DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const WindowDimension height);
+
+void RenderGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
+void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos);
+void RenderForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
+
+void RenderScreenQuad(std::shared_ptr<const ScreenQuad> screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shaderProgram,
                 const std::shared_ptr<const Material> material);
 void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram shader);

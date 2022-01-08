@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 
-using WindowDimension = uint16_t;
+#include "Aliases.hpp"
 
 struct WindowProperties
 {

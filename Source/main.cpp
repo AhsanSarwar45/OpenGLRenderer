@@ -14,6 +14,7 @@
 #include "Model.hpp"
 #include "Render.hpp"
 #include "ResourceManager.hpp"
+#include "Scene.hpp"
 #include "Shader.hpp"
 #include "Skybox.hpp"
 #include "Texture.hpp"
@@ -27,14 +28,11 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-std::vector<std::shared_ptr<Model>> models;
-std::vector<PointLight>             pointLights;
-
 float shadowNearClip = 0.0f;
 float shadowFarClip  = 10.0f;
 float shadowMapOrtho = 5.0f;
 
-glm::vec3 ambientLight = glm::vec3(0.2f);
+std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
 int main()
 {
@@ -46,15 +44,9 @@ int main()
     Window window = Window("OpenGL", 1240, 720);
     Camera camera = Camera(&window);
 
-    // std::unordered_map<std::string, Shader*> shaders;
-
     ResourceManager::GetInstance().Initialize();
 
-    Billboard billboard = LoadBillboard("../Assets/Images/grass.png");
-
-    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Lit");
-    ShaderProgram lightShaderProgram =
-        LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Light.frag"}, "Light");
+    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Light");
     // ShaderProgram depthShaderProgram = LoadShaders(
     //     {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
     // ShaderProgram shadowShaderProgram =
@@ -65,21 +57,17 @@ int main()
     // ShaderProgram lightPassShader = LoadShaders(
     //     {"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/DeferredLightPass.frag"}, "Light Pass",
     //     false);
-    ShaderProgram pbrGeometryPassShader =
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
-                    "Geometry Pass");
-    ShaderProgram pbrLightPassShader =
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
-                    "Light Pass", false);
+
     // Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag",
     // "Outline");
 
-    Skybox skybox = LoadSkybox("../Assets/Skyboxes/skybox");
+    scene->skybox       = LoadSkybox("../Assets/Skyboxes/skybox");
+    scene->ambientLight = glm::vec3(0.4f);
 
     // Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
-    std::shared_ptr<Model> bulb = LoadModel("../Assets/Models/WoodenBox/cube.obj", lightShaderProgram, "Bulb");
+    // std::shared_ptr<Model> bulb = LoadModel("../Assets/Models/WoodenBox/cube.obj", lightShaderProgram, "Bulb");
 
-    bulb->transform.scale = glm::vec3(0.2f);
+    // bulb->transform.scale = glm::vec3(0.2f);
 
     // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     // floor.transform.position.y = -0.5;
@@ -108,59 +96,42 @@ int main()
     // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
     // std::shared_ptr<Model> backpack =
     //     LoadModel("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", false);
-    std::shared_ptr<Model> gun =
-        LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", pbrGeometryPassShader, "Gun", true);
-    std::shared_ptr<Model> sphere =
-        LoadModel("../Assets/Models/sphere/sphere.obj", pbrGeometryPassShader, "Sphere", true);
+    std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", shaderProgram, "Gun", true);
+    std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
+    std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
 
     SetMaterial(gun, gunMaterial);
     SetMaterial(sphere, metalLined);
+    SetMaterial(cube, metalLined);
 
     // sponza.transform.scale = glm::vec3(0.05);
 
     // models.push_back(sponza);
     // models.push_back(backpack);
-    models.push_back(gun);
-    models.push_back(sphere);
-    // models.push_back(backpack);
-    // models.push_back(backpack);
-    // models.push_back(backpack);
-    // models.push_back(backpack);
-    // models.push_back(LoadModelOBJ("../Assets/Models/african_head/african_head.obj", shadowShaderProgram, "Head"));
-    // models.push_back(LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Box"));
-    // models.push_back(LoadModelOBJ("../Assets/Models/backpack/backpack.obj", shadowShaderProgram, "Backpack", true));
-    // models.push_back(floor);
+    scene->models.push_back(gun);
+    scene->models.push_back(sphere);
+    scene->models.push_back(cube);
 
-    pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
-                           .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                           .power     = 20.0f,
-                           .linear    = 0.0f,
-                           .quadratic = 0.0f});
+    scene->pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .power     = 20.0f,
+                                  .linear    = 0.0f,
+                                  .quadratic = 0.0f});
 
-    pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
-                           .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                           .power     = 20.0f,
-                           .linear    = 0.0f,
-                           .quadratic = 0.0f});
+    scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
+                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .power     = 20.0f,
+                                  .linear    = 0.0f,
+                                  .quadratic = 0.0f});
 
-    pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-                           .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                           .power     = 20.0f,
-                           .linear    = 0.0f,
-                           .quadratic = 0.0f});
-
-    // pointLights.push_back({.position  = glm::vec3(-1.0f, 1.0f, 1.0f),
-    //                        .color     = glm::vec3(1.0f, 0.0f, 1.0f),
-    //                        .linear    = 0.01f,
-    //                        .quadratic = 0.045f});
-
-    // pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-    //                        .color     = glm::vec3(1.0f, 1.0f, 0.0f),
-    //                        .linear    = 0.01f,
-    //                        .quadratic = 0.045f});
+    scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
+                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .power     = 20.0f,
+                                  .linear    = 0.0f,
+                                  .quadratic = 0.0f});
 
     float xPos = 0.0f;
-    for (auto& model : models)
+    for (auto& model : scene->models)
     {
         model->transform.position.x = xPos;
         xPos += 4.0f;
@@ -178,21 +149,8 @@ int main()
 
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
-    PBRGeometryFramebuffer gBuffer =
-        CreatePBRGeometryBuffer(window.GetProperties().Width, window.GetProperties().Height);
-
-    ScreenQuad screenQuad = CreateScreenQuad();
-
-    UseShaderProgram(pbrLightPassShader);
-
-    // ShaderSetInt(lightPassShader, "gPosition", 0);
-    // ShaderSetInt(lightPassShader, "gNormal", 1);
-    // ShaderSetInt(lightPassShader, "gAlbedoSpec", 2);
-
-    ShaderSetInt(pbrLightPassShader, "gPosition", 0);
-    ShaderSetInt(pbrLightPassShader, "gNormal", 1);
-    ShaderSetInt(pbrLightPassShader, "gAlbedo", 2);
-    ShaderSetInt(pbrLightPassShader, "gMetalnessRoughnessAO", 3);
+    DeferredRenderData deferredRenderData =
+        CreateDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
 
     while (window.IsRunning())
     {
@@ -209,7 +167,7 @@ int main()
 
         if (ImGui::TreeNode("Transforms"))
         {
-            for (auto& model : models)
+            for (auto& model : scene->models)
             {
                 if (ImGui::TreeNode(model->name))
                 {
@@ -227,19 +185,14 @@ int main()
         if (ImGui::TreeNode("Lights"))
         {
             int lightIndex = 0;
-            for (auto& light : pointLights)
+            for (auto& light : scene->pointLights)
             {
                 if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
                 {
                     ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
-                    // glm::vec3 rotation = glm::degrees(lightDir);
-                    // ImGui::DragFloat3("Direction", (float*)(&rotation), 0.3f);
-                    // lightDir = glm::radians(rotation);
 
                     ImGui::ColorEdit3("Color", (float*)(&light.color));
-                    // ImGui::ColorEdit3("Ambient", (float*)(&light.ambient));
 
-                    // ImGui::DragFloat("Constant", &lightConstant, 0.003f, 0.01f);
                     ImGui::DragFloat("Power", &light.power, 0.003f, 0.01f);
                     ImGui::DragFloat("Linear", &light.linear, 0.003f, 0.01f);
                     ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f, 0.01f);
@@ -251,7 +204,7 @@ int main()
         }
         if (ImGui::TreeNode("Environment"))
         {
-            ImGui::ColorEdit3("Ambient Light", (float*)(&ambientLight));
+            ImGui::ColorEdit3("Ambient Light", (float*)(&scene->ambientLight));
 
             ImGui::TreePop();
         }
@@ -313,23 +266,26 @@ int main()
         {
             if (ImGui::TreeNode("Position"))
             {
-                ImGui::Image((void*)(intptr_t)gBuffer.gPosition, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
+                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gPosition, ImVec2(256, 256), ImVec2(1, 1),
+                             ImVec2(0, 0));
                 ImGui::TreePop();
             }
             if (ImGui::TreeNode("Normal"))
             {
-                ImGui::Image((void*)(intptr_t)gBuffer.gNormal, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
+                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gNormal, ImVec2(256, 256), ImVec2(1, 1),
+                             ImVec2(0, 0));
                 ImGui::TreePop();
             }
             if (ImGui::TreeNode("Albedo"))
             {
-                ImGui::Image((void*)(intptr_t)gBuffer.gAlbedo, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
+                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gAlbedo, ImVec2(256, 256), ImVec2(1, 1),
+                             ImVec2(0, 0));
                 ImGui::TreePop();
             }
             if (ImGui::TreeNode("Metalness-Roughness-AO"))
             {
-                ImGui::Image((void*)(intptr_t)gBuffer.gMetalnessRoughnessAO, ImVec2(256, 256), ImVec2(1, 1),
-                             ImVec2(0, 0));
+                ImGui::Image((void*)(intptr_t)deferredRenderData.gBuffer.gMetalnessRoughnessAO, ImVec2(256, 256),
+                             ImVec2(1, 1), ImVec2(0, 0));
                 ImGui::TreePop();
             }
             ImGui::TreePop();
@@ -338,62 +294,9 @@ int main()
 
         ResourceManager::GetInstance().CheckDirtyShaders();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.id);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        for (const auto& model : models)
-        {
-            RenderModel(model, pbrGeometryPassShader);
-        }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        UseShaderProgram(pbrLightPassShader);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.gPosition);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.gNormal);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedo);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.gMetalnessRoughnessAO);
-
-        ShaderSetInt(pbrLightPassShader, "numPointLights", pointLights.size());
-        ShaderSetFloat3(pbrLightPassShader, "ambientLight", ambientLight);
-        // send light relevant uniforms
-        int index = 0;
-        for (const auto& pointLight : pointLights)
-        {
-            std::string indexStr = std::to_string(index);
-            ShaderSetFloat3(pbrLightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
-            ShaderSetFloat3(pbrLightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
-            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].power", pointLight.power);
-            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
-            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
-
-            index++;
-        }
-        ShaderSetFloat3(pbrLightPassShader, "viewPos", camera.GetPosition());
-        // finally render quad
-        RenderScreenQuad(screenQuad);
-
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.id);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
-
-        WindowProperties props = window.GetProperties();
-        glBlitFramebuffer(0, 0, props.Width, props.Height, 0, 0, props.Width, props.Height, GL_DEPTH_BUFFER_BIT,
-                          GL_NEAREST);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        for (const auto& pointLight : pointLights)
-        {
-            bulb->transform.position = pointLight.position;
-            RenderModel(bulb, lightShaderProgram);
-        }
-
-        DrawSkybox(skybox);
+        RenderGeometryPass(scene, deferredRenderData);
+        RenderLightPass(scene, deferredRenderData, camera.GetPosition());
+        RenderForwardPass(scene, deferredRenderData);
 
         // UseShaderProgram(shadowShaderProgram);
 
