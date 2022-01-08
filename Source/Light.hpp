@@ -9,6 +9,8 @@ struct PointLight
 
     glm::vec3 color;
 
+    float power;
+
     float linear;
     float quadratic;
 };

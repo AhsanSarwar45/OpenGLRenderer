@@ -71,7 +71,7 @@ PBRGeometryFramebuffer CreatePBRGeometryBuffer(TextureDimensions width, TextureD
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gMetalnessRoughnessAO, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMetalnessRoughnessAO, 0);
     // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
     unsigned int attachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
                                    GL_COLOR_ATTACHMENT3};
@@ -178,6 +178,7 @@ void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram s
     UseShaderProgram(shaderProgram);
     ShaderSetMat4(shaderProgram, "model", modelMatrix);
 
+    // printf("%s\n", model->name);
     for (auto& mesh : model->meshes)
     {
         RenderMesh(mesh, shaderProgram, model->materials[mesh->materialId]);
@@ -191,6 +192,7 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shad
     int index = 0;
     for (auto& texture : material->textures)
     {
+        // printf("%d: %s\n", mesh->materialId, texture.name);
         ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
         BindTexture(texture.id, index);
         index++;

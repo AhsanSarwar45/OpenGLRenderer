@@ -23,5 +23,3 @@ struct Mesh
 };
 
 void InitializeMesh(std::shared_ptr<Mesh> mesh);
-// void DrawMesh(const Mesh& mesh);
-void DrawMesh(const Mesh& mesh, const ShaderProgram shaderProgram, const Material& material);

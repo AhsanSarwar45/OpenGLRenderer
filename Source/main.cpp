@@ -30,23 +30,11 @@
 std::vector<std::shared_ptr<Model>> models;
 std::vector<PointLight>             pointLights;
 
-glm::vec3 objPos(0.0f, 0.0f, 0.0f);
-glm::vec3 lightPos(2.2f, 2.0f, 3.0f);
-glm::vec3 lightDir(3.0f, 3.0f, 3.0f);
-
-float objectShininess = 32.0f;
-
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-glm::vec3 lightSpecular(0.7f, 0.7f, 0.7f);
-glm::vec3 lightAmbient(0.2f, 0.2f, 0.2f);
-
-float lightLinear    = 0.01f;
-float lightConstant  = 0.01f;
-float lightQuadratic = 0.045f;
-
 float shadowNearClip = 0.0f;
 float shadowFarClip  = 10.0f;
 float shadowMapOrtho = 5.0f;
+
+glm::vec3 ambientLight = glm::vec3(0.2f);
 
 int main()
 {
@@ -71,11 +59,18 @@ int main()
     //     {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
     // ShaderProgram shadowShaderProgram =
     //     LoadShaders({"../Assets/Shaders/ShadowMapLit.vert", "../Assets/Shaders/ShadowMapLit.frag"}, "LitShadow");
-    ShaderProgram geometryPassShader =
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/DeferredGeometryPass.frag"},
+    // ShaderProgram geometryPassShader =
+    //     LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/DeferredGeometryPass.frag"},
+    //                 "Geometry Pass");
+    // ShaderProgram lightPassShader = LoadShaders(
+    //     {"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/DeferredLightPass.frag"}, "Light Pass",
+    //     false);
+    ShaderProgram pbrGeometryPassShader =
+        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
                     "Geometry Pass");
-    ShaderProgram lightPassShader = LoadShaders(
-        {"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/DeferredLightPass.frag"}, "Light Pass", false);
+    ShaderProgram pbrLightPassShader =
+        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
+                    "Light Pass", false);
     // Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag",
     // "Outline");
 
@@ -89,14 +84,44 @@ int main()
     // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     // floor.transform.position.y = -0.5;
 
+    std::shared_ptr<Material> gunMaterial = std::make_shared<Material>();
+    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
+    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
+    gunMaterial->textures.push_back(
+        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
+    gunMaterial->textures.push_back(
+        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
+    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
+
+    std::shared_ptr<Material> metalLined = std::make_shared<Material>();
+    metalLined->textures.push_back(
+        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
+    metalLined->textures.push_back(
+        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
+    metalLined->textures.push_back(
+        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
+    metalLined->textures.push_back(
+        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
+    metalLined->textures.push_back(
+        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
+
     // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
-    std::shared_ptr<Model> backpack =
-        LoadModel("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", false);
+    // std::shared_ptr<Model> backpack =
+    //     LoadModel("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", false);
+    std::shared_ptr<Model> gun =
+        LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", pbrGeometryPassShader, "Gun", true);
+    std::shared_ptr<Model> sphere =
+        LoadModel("../Assets/Models/sphere/sphere.obj", pbrGeometryPassShader, "Sphere", true);
+
+    SetMaterial(gun, gunMaterial);
+    SetMaterial(sphere, metalLined);
 
     // sponza.transform.scale = glm::vec3(0.05);
 
     // models.push_back(sponza);
-    models.push_back(backpack);
+    // models.push_back(backpack);
+    models.push_back(gun);
+    models.push_back(sphere);
     // models.push_back(backpack);
     // models.push_back(backpack);
     // models.push_back(backpack);
@@ -108,18 +133,31 @@ int main()
 
     pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
                            .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                           .linear    = 0.01f,
-                           .quadratic = 0.045f});
+                           .power     = 20.0f,
+                           .linear    = 0.0f,
+                           .quadratic = 0.0f});
 
-    pointLights.push_back({.position  = glm::vec3(-1.0f, 1.0f, 1.0f),
-                           .color     = glm::vec3(1.0f, 0.0f, 1.0f),
-                           .linear    = 0.01f,
-                           .quadratic = 0.045f});
+    pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
+                           .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                           .power     = 20.0f,
+                           .linear    = 0.0f,
+                           .quadratic = 0.0f});
 
     pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-                           .color     = glm::vec3(1.0f, 1.0f, 0.0f),
-                           .linear    = 0.01f,
-                           .quadratic = 0.045f});
+                           .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                           .power     = 20.0f,
+                           .linear    = 0.0f,
+                           .quadratic = 0.0f});
+
+    // pointLights.push_back({.position  = glm::vec3(-1.0f, 1.0f, 1.0f),
+    //                        .color     = glm::vec3(1.0f, 0.0f, 1.0f),
+    //                        .linear    = 0.01f,
+    //                        .quadratic = 0.045f});
+
+    // pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
+    //                        .color     = glm::vec3(1.0f, 1.0f, 0.0f),
+    //                        .linear    = 0.01f,
+    //                        .quadratic = 0.045f});
 
     float xPos = 0.0f;
     for (auto& model : models)
@@ -140,16 +178,21 @@ int main()
 
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
-    BlinnPhongGeometryFramebuffer gBuffer =
-        CreateBlinnPhongGeometryBuffer(window.GetProperties().Width, window.GetProperties().Height);
+    PBRGeometryFramebuffer gBuffer =
+        CreatePBRGeometryBuffer(window.GetProperties().Width, window.GetProperties().Height);
 
     ScreenQuad screenQuad = CreateScreenQuad();
 
-    UseShaderProgram(lightPassShader);
+    UseShaderProgram(pbrLightPassShader);
 
-    ShaderSetInt(lightPassShader, "gPosition", 0);
-    ShaderSetInt(lightPassShader, "gNormal", 1);
-    ShaderSetInt(lightPassShader, "gAlbedoSpec", 2);
+    // ShaderSetInt(lightPassShader, "gPosition", 0);
+    // ShaderSetInt(lightPassShader, "gNormal", 1);
+    // ShaderSetInt(lightPassShader, "gAlbedoSpec", 2);
+
+    ShaderSetInt(pbrLightPassShader, "gPosition", 0);
+    ShaderSetInt(pbrLightPassShader, "gNormal", 1);
+    ShaderSetInt(pbrLightPassShader, "gAlbedo", 2);
+    ShaderSetInt(pbrLightPassShader, "gMetalnessRoughnessAO", 3);
 
     while (window.IsRunning())
     {
@@ -197,12 +240,19 @@ int main()
                     // ImGui::ColorEdit3("Ambient", (float*)(&light.ambient));
 
                     // ImGui::DragFloat("Constant", &lightConstant, 0.003f, 0.01f);
+                    ImGui::DragFloat("Power", &light.power, 0.003f, 0.01f);
                     ImGui::DragFloat("Linear", &light.linear, 0.003f, 0.01f);
                     ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f, 0.01f);
                     ImGui::TreePop();
                 }
                 lightIndex++;
             }
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Environment"))
+        {
+            ImGui::ColorEdit3("Ambient Light", (float*)(&ambientLight));
+
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Camera"))
@@ -271,9 +321,15 @@ int main()
                 ImGui::Image((void*)(intptr_t)gBuffer.gNormal, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
                 ImGui::TreePop();
             }
-            if (ImGui::TreeNode("Albedo-Specular"))
+            if (ImGui::TreeNode("Albedo"))
             {
-                ImGui::Image((void*)(intptr_t)gBuffer.gAlbedoSpec, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
+                ImGui::Image((void*)(intptr_t)gBuffer.gAlbedo, ImVec2(256, 256), ImVec2(1, 1), ImVec2(0, 0));
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Metalness-Roughness-AO"))
+            {
+                ImGui::Image((void*)(intptr_t)gBuffer.gMetalnessRoughnessAO, ImVec2(256, 256), ImVec2(1, 1),
+                             ImVec2(0, 0));
                 ImGui::TreePop();
             }
             ImGui::TreePop();
@@ -289,33 +345,37 @@ int main()
 
         for (const auto& model : models)
         {
-            RenderModel(model, geometryPassShader);
+            RenderModel(model, pbrGeometryPassShader);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        UseShaderProgram(lightPassShader);
+        UseShaderProgram(pbrLightPassShader);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gBuffer.gPosition);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, gBuffer.gNormal);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
+        glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedo);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, gBuffer.gMetalnessRoughnessAO);
 
-        ShaderSetInt(lightPassShader, "numPointLights", pointLights.size());
+        ShaderSetInt(pbrLightPassShader, "numPointLights", pointLights.size());
+        ShaderSetFloat3(pbrLightPassShader, "ambientLight", ambientLight);
         // send light relevant uniforms
         int index = 0;
         for (const auto& pointLight : pointLights)
         {
             std::string indexStr = std::to_string(index);
-            ShaderSetFloat3(lightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
-            ShaderSetFloat3(lightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
-            ShaderSetFloat(lightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
-            ShaderSetFloat(lightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
+            ShaderSetFloat3(pbrLightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
+            ShaderSetFloat3(pbrLightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
+            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].power", pointLight.power);
+            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
+            ShaderSetFloat(pbrLightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
 
             index++;
         }
-        ShaderSetFloat3(lightPassShader, "viewPos", camera.GetPosition());
+        ShaderSetFloat3(pbrLightPassShader, "viewPos", camera.GetPosition());
         // finally render quad
         RenderScreenQuad(screenQuad);
 

@@ -27,8 +27,7 @@ std::shared_ptr<Model> LoadModelOBJ(const std::filesystem::path& path, ShaderPro
 std::shared_ptr<Model> LoadModel(const std::filesystem::path& path, ShaderProgram shaderProgram,
                                  const std::string& name = "Model", bool flipTexture = false);
 
-void DrawModel(const Model& model);
-void DrawModel();
+void SetMaterial(std::shared_ptr<Model> model, std::shared_ptr<Material> material);
 
 namespace ModelInternal
 {

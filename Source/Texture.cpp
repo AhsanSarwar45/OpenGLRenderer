@@ -49,8 +49,8 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width
-        //           << ", height: " << height << "\n";
+        std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width
+                  << ", height: " << height << "\n";
 
         isLoaded = true;
     }

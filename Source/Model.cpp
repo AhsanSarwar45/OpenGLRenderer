@@ -193,6 +193,18 @@ std::shared_ptr<Model> LoadModel(const std::filesystem::path& path, ShaderProgra
     return model;
 }
 
+void SetMaterial(std::shared_ptr<Model> model, std::shared_ptr<Material> material)
+{
+    model->materials.push_back(material);
+
+    int materialId = model->materials.size() - 1;
+
+    for (auto& mesh : model->meshes)
+    {
+        mesh->materialId = materialId;
+    }
+}
+
 namespace ModelInternal
 {
 std::shared_ptr<Model> ParseScene(const aiScene* scene, const std::filesystem::path& path, bool flipTexture)
@@ -225,6 +237,26 @@ std::shared_ptr<Model> ParseScene(const aiScene* scene, const std::filesystem::p
         {
             material->textures.push_back(
                 LoadTexture(path.parent_path() / texturePath.C_Str(), "specular", flipTexture));
+        }
+        if (AI_SUCCESS == rawMaterial->GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath))
+        {
+
+            material->textures.push_back(LoadTexture(path.parent_path() / texturePath.C_Str(), "albedo", flipTexture));
+        }
+        if (AI_SUCCESS == rawMaterial->GetTexture(aiTextureType_METALNESS, 0, &texturePath))
+        {
+            material->textures.push_back(
+                LoadTexture(path.parent_path() / texturePath.C_Str(), "metalness", flipTexture));
+        }
+        if (AI_SUCCESS == rawMaterial->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texturePath))
+        {
+
+            material->textures.push_back(
+                LoadTexture(path.parent_path() / texturePath.C_Str(), "roughness", flipTexture));
+        }
+        if (AI_SUCCESS == rawMaterial->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &texturePath))
+        {
+            material->textures.push_back(LoadTexture(path.parent_path() / texturePath.C_Str(), "ao", flipTexture));
         }
 
         model->materials[i] = material;

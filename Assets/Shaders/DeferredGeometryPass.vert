@@ -5,15 +5,20 @@ layout(location = 2) in vec2 aTexCoords;
 layout(location = 3) in vec3 aTangent;
 layout(location = 4) in vec3 aBitangent;
 
-out vec3 FragPos;
-out vec2 TexCoords;
-out vec3 Normal;
-
 layout(std140) uniform Camera
 {
     mat4 projection;
     mat4 view;
 };
+
+out VertexData
+{
+    out vec2 TexCoords;
+    out vec3 FragPos;
+    out mat3 TBN;
+    out vec4 FragPosLightSpace;
+}
+vertexData;
 
 uniform mat4 model;
 
@@ -21,9 +26,14 @@ void main()
 {
     vec4 worldPos = model * vec4(aPos, 1.0);
 
-    FragPos   = worldPos.xyz;
-    TexCoords = aTexCoords;
-    Normal    = transpose(inverse(mat3(model))) * aNormal;
+    vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));
+    vec3 B = normalize(vec3(model * vec4(aBitangent, 0.0)));
+    vec3 N = normalize(vec3(model * vec4(aNormal, 0.0)));
+
+    vertexData.FragPos   = worldPos.xyz;
+    vertexData.TexCoords = aTexCoords;
+    vertexData.TBN       = mat3(T, B, N);
+    // vertexData.FragPosLightSpace = lightSpaceMatrix * vec4(vertexData.FragPos, 1.0);
 
     gl_Position = projection * view * worldPos;
 }
