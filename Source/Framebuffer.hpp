@@ -28,7 +28,7 @@ struct FramebufferTextureData
     unsigned int internalFormat;
 };
 
-GeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height);
+GeometryFramebuffer CreateBPGeometryBuffer(TextureDimensions width, TextureDimensions height);
 GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimensions width, TextureDimensions height);
 
 Framebuffer CreateFramebuffer();

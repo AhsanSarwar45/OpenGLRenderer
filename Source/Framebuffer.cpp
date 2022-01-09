@@ -61,7 +61,7 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
     }
 
     // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
-    glDrawBuffers(4, &attachments[0]);
+    glDrawBuffers(attachments.size(), &attachments[0]);
 
     // create and attach depth buffer (renderbuffer)
     glGenRenderbuffers(1, &gBuffer.depthRenderBuffer);
@@ -91,7 +91,7 @@ GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimensions width, TextureDime
     return CreateGeometryFramebuffer(framebufferTextures, width, height);
 }
 
-GeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, TextureDimensions height)
+GeometryFramebuffer CreateBPGeometryBuffer(TextureDimensions width, TextureDimensions height)
 {
     auto framebufferTextures = std::vector<FramebufferTextureData>(3);
 

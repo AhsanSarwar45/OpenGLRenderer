@@ -19,12 +19,14 @@ struct PointLight
     float linear;
     float quadratic;
 };
+
 const float PI         = 3.14159265359;
 const int   MAX_LIGHTS = 32;
 
 uniform PointLight pointLights[MAX_LIGHTS];
 uniform int        numPointLights;
-uniform vec3       viewPos;
+
+uniform vec3 viewPos;
 
 uniform vec3 ambientLight;
 
@@ -67,19 +69,17 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 void main()
 {
     // retrieve data from gbuffer
-    vec3 WorldPos = texture(gPosition, TexCoords).rgb;
+    vec3 fragPos = texture(gPosition, TexCoords).rgb;
 
-    vec3 albedo = texture(gAlbedo, TexCoords).rgb;
-    // albedo      = vec3(pow(albedo.r, 2.2), pow(albedo.g, 2.2), pow(albedo.b, 2.2));
-    vec3 normal = texture(gNormal, TexCoords).rgb;
-
+    vec3  albedo               = texture(gAlbedo, TexCoords).rgb;
+    vec3  normal               = texture(gNormal, TexCoords).rgb;
     vec3  metalnessRoughnessAO = texture(gMetalnessRoughnessAO, TexCoords).rgb;
     float metallic             = metalnessRoughnessAO.r;
     float roughness            = metalnessRoughnessAO.g;
     float ao                   = metalnessRoughnessAO.b;
 
     vec3 N = normalize(normal);
-    vec3 V = normalize(viewPos - WorldPos);
+    vec3 V = normalize(viewPos - fragPos);
 
     vec3 F0 = vec3(0.04);
     F0      = mix(F0, albedo, metallic);
@@ -89,9 +89,9 @@ void main()
     for (int i = 0; i < numPointLights; ++i)
     {
         // calculate per-light radiance
-        vec3  L           = normalize(pointLights[i].position - WorldPos);
+        vec3  L           = normalize(pointLights[i].position - fragPos);
         vec3  H           = normalize(V + L);
-        float distance    = length(pointLights[i].position - WorldPos);
+        float distance    = length(pointLights[i].position - fragPos);
         float attenuation = 1.0 / (distance * distance);
         vec3  radiance    = pointLights[i].color * attenuation * pointLights[i].power;
 

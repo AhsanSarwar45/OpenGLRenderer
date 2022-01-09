@@ -7,6 +7,7 @@
 
 #include <ImGui/imgui.h>
 
+#include "Aliases.hpp"
 #include "Billboard.hpp"
 #include "Camera.hpp"
 #include "Debug.hpp"
@@ -35,7 +36,15 @@ float shadowNearClip = 0.0f;
 float shadowFarClip  = 10.0f;
 float shadowMapOrtho = 5.0f;
 
+bool minimized = false;
+
 std::shared_ptr<Scene> scene = std::make_shared<Scene>();
+
+const char* renderingPipelines[] = {"PBR Deferred + Forward Shading", "BP Deferred + Forward Shading"};
+
+int currentPipeline = 0;
+
+void CheckMinimized(WindowDimension width, WindowDimension height) { minimized = (width == 0 || height == 0); }
 
 int main()
 {
@@ -43,8 +52,6 @@ int main()
     // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, materials, shaderProgram);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
-
-    printf("%d\n", sizeof(Vertex));
 
     Window window = Window("OpenGL", 1240, 720);
     Camera camera = Camera(&window);
@@ -77,25 +84,26 @@ int main()
     // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
     // floor.transform.position.y = -0.5;
 
-    std::shared_ptr<Material> gunMaterial = std::make_shared<Material>();
-    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
-    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
-    gunMaterial->textures.push_back(
+    std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
+    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
+    gunMaterialPBR->textures.push_back(
+        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
+    gunMaterialPBR->textures.push_back(
         LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
-    gunMaterial->textures.push_back(
+    gunMaterialPBR->textures.push_back(
         LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
-    gunMaterial->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
+    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
 
-    std::shared_ptr<Material> metalLined = std::make_shared<Material>();
-    metalLined->textures.push_back(
+    std::shared_ptr<Material> metalLinedPBR = std::make_shared<Material>();
+    metalLinedPBR->textures.push_back(
         LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
-    metalLined->textures.push_back(
+    metalLinedPBR->textures.push_back(
         LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
-    metalLined->textures.push_back(
+    metalLinedPBR->textures.push_back(
         LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
-    metalLined->textures.push_back(
+    metalLinedPBR->textures.push_back(
         LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
-    metalLined->textures.push_back(
+    metalLinedPBR->textures.push_back(
         LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
 
     // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
@@ -105,9 +113,9 @@ int main()
     std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
     std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
 
-    SetMaterial(gun, gunMaterial);
-    SetMaterial(sphere, metalLined);
-    SetMaterial(cube, metalLined);
+    SetMaterial(gun, gunMaterialPBR);
+    SetMaterial(sphere, metalLinedPBR);
+    SetMaterial(cube, metalLinedPBR);
 
     // sponza.transform.scale = glm::vec3(0.05);
 
@@ -155,12 +163,13 @@ int main()
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
     DeferredRenderData deferredRenderData =
-        CreateDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+        CreatePBRDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
 
     auto boundResizeFunction = std::bind(&ResizeFramebufferTextures, &deferredRenderData.gBuffer, std::placeholders::_1,
                                          std::placeholders::_2);
 
     window.AddFramebufferResizeCallback(boundResizeFunction);
+    window.AddFramebufferResizeCallback(CheckMinimized);
 
     while (window.IsRunning())
     {
@@ -203,9 +212,9 @@ int main()
 
                     ImGui::ColorEdit3("Color", (float*)(&light.color));
 
-                    ImGui::DragFloat("Power", &light.power, 0.003f, 0.01f);
-                    ImGui::DragFloat("Linear", &light.linear, 0.003f, 0.01f);
-                    ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f, 0.01f);
+                    ImGui::DragFloat("Power", &light.power, 0.05f);
+                    ImGui::DragFloat("Linear", &light.linear, 0.003f);
+                    ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f);
                     ImGui::TreePop();
                 }
                 lightIndex++;
@@ -268,6 +277,28 @@ int main()
             // }
             ImGui::TreePop();
         }
+        if (ImGui::TreeNode("Render Settings"))
+        {
+
+            ImGui::Combo("Render Pipeline", &currentPipeline, renderingPipelines, 2);
+            if (ImGui::IsItemEdited())
+            {
+                // printf("%d", currentPipeline);
+                switch (currentPipeline)
+                {
+                case 0:
+                    deferredRenderData =
+                        CreatePBRDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    break;
+                case 1:
+                    deferredRenderData =
+                        CreateBPDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    break;
+                }
+            }
+
+            ImGui::TreePop();
+        }
 
         ImGui::End();
 
@@ -287,11 +318,16 @@ int main()
         }
         ImGui::End();
 
+        ImGui::ShowDemoWindow();
+
         ResourceManager::GetInstance().CheckDirtyShaders();
 
-        RenderGeometryPass(scene, deferredRenderData);
-        RenderLightPass(scene, deferredRenderData, camera.GetPosition());
-        RenderForwardPass(scene, deferredRenderData);
+        if (!minimized)
+        {
+            RenderDSGeometryPass(scene, deferredRenderData);
+            RenderDSLightPass(scene, deferredRenderData, camera.GetPosition());
+            RenderDSForwardPass(scene, deferredRenderData);
+        }
 
         // ShaderSetInt(shadowShaderProgram, "shadowMap", 7);
         // glActiveTexture(GL_TEXTURE7);

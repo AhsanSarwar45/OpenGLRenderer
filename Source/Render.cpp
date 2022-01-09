@@ -20,18 +20,16 @@ void RenderQuad(const Quad& quad)
     glBindVertexArray(0);
 }
 
-DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const WindowDimension height)
+DeferredRenderData CreateDeferredRenderData(const GeometryFramebuffer gBuffer, const ShaderProgram geometryPassShader,
+                                            const ShaderProgram lightPassShader, const WindowDimension width,
+                                            const WindowDimension height)
 {
-    DeferredRenderData data;
-    data.geometryPassShader =
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
-                    "Geometry Pass");
-    data.lightPassShader =
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
-                    "Light Pass", false);
-
-    data.gBuffer    = CreatePBRGeometryBuffer(width, height);
-    data.screenQuad = CreateQuad();
+    DeferredRenderData data = {
+        .gBuffer            = gBuffer,
+        .screenQuad         = CreateQuad(),
+        .geometryPassShader = geometryPassShader,
+        .lightPassShader    = lightPassShader,
+    };
 
     UseShaderProgram(data.lightPassShader);
 
@@ -41,6 +39,26 @@ DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const W
     }
 
     return data;
+}
+DeferredRenderData CreatePBRDeferredRenderData(const WindowDimension width, const WindowDimension height)
+{
+    return CreateDeferredRenderData(
+        CreatePBRGeometryBuffer(width, height),
+        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
+                    "Geometry Pass"),
+        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
+                    "Light Pass", false),
+        width, height);
+}
+DeferredRenderData CreateBPDeferredRenderData(const WindowDimension width, const WindowDimension height)
+{
+    return CreateDeferredRenderData(
+        CreateBPGeometryBuffer(width, height),
+        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"},
+                    "Geometry Pass"),
+        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"},
+                    "Light Pass", false),
+        width, height);
 }
 
 void RenderModel(const std::shared_ptr<const Model> model) { RenderModel(model, model->shaderProgram); }
@@ -87,9 +105,8 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shad
     }
 }
 
-void RenderGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // todo remove
     glBindFramebuffer(GL_FRAMEBUFFER, data.gBuffer.id);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -99,7 +116,7 @@ void RenderGeometryPass(const std::shared_ptr<const Scene> scene, const Deferred
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos)
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     UseShaderProgram(data.lightPassShader);
@@ -129,7 +146,7 @@ void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRen
     // finally render quad
     RenderQuad(data.screenQuad);
 }
-void RenderForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, data.gBuffer.id);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer

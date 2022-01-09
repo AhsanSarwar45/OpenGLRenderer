@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "Aliases.hpp"
 #include "Framebuffer.hpp"
 #include "Quad.hpp"
 #include "Shader.hpp"
@@ -22,11 +23,15 @@ struct DeferredRenderData
     ShaderProgram lightPassShader;
 };
 
-DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const WindowDimension height);
+DeferredRenderData CreateDeferredRenderData(const GeometryFramebuffer gBuffer, const ShaderProgram vert,
+                                            const ShaderProgram frag, const WindowDimension width,
+                                            const WindowDimension height);
+DeferredRenderData CreatePBRDeferredRenderData(const WindowDimension width, const WindowDimension height);
+DeferredRenderData CreateBPDeferredRenderData(const WindowDimension width, const WindowDimension height);
 
-void RenderGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
-void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos);
-void RenderForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos);
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
 
 void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shaderProgram,
