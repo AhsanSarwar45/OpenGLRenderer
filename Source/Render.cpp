@@ -13,32 +13,9 @@
 #include "Scene.hpp"
 #include "Texture.hpp"
 
-ScreenQuad CreateScreenQuad()
+void RenderQuad(const Quad& quad)
 {
-    ScreenQuad screenQuad;
-
-    float vertices[20] = {
-        // positions        // texture Coords
-        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-        1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,
-    };
-    // setup plane VAO
-    glGenVertexArrays(1, &screenQuad.vao);
-    glGenBuffers(1, &screenQuad.vbo);
-    glBindVertexArray(screenQuad.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, screenQuad.vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    return screenQuad;
-}
-
-void RenderScreenQuad(const ScreenQuad& screenQuad)
-{
-    glBindVertexArray(screenQuad.vao);
+    glBindVertexArray(quad.vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
@@ -54,7 +31,7 @@ DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const W
                     "Light Pass", false);
 
     data.gBuffer    = CreatePBRGeometryBuffer(width, height);
-    data.screenQuad = CreateScreenQuad();
+    data.screenQuad = CreateQuad();
 
     UseShaderProgram(data.lightPassShader);
 
@@ -150,7 +127,7 @@ void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRen
     }
     ShaderSetFloat3(data.lightPassShader, "viewPos", cameraPos);
     // finally render quad
-    RenderScreenQuad(data.screenQuad);
+    RenderQuad(data.screenQuad);
 }
 void RenderForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
 {

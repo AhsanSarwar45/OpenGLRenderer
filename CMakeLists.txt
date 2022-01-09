@@ -51,6 +51,7 @@ add_executable(${PROJECT_NAME}
 "Source/Skybox.cpp"
 "Source/Framebuffer.cpp"
 "Source/Vertex.cpp"
+"Source/Quad.cpp"
 "Source/Render.cpp"
 "Source/Scene.cpp"
 "Source/FileWatcher.cpp"
