@@ -1,7 +1,8 @@
 #include "Framebuffer.hpp"
 
-#include <glad/glad.h>
 #include <vector>
+
+#include <glad/glad.h>
 
 #include "Texture.hpp"
 
@@ -36,8 +37,13 @@ Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions he
 GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures,
                                               TextureDimensions width, TextureDimensions height)
 {
+
     GeometryFramebuffer gBuffer;
+    gBuffer.frameBufferWidth  = width;
+    gBuffer.frameBufferHeight = height;
+
     gBuffer.id = CreateFrameBuffer();
+
     glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.id);
 
     int numTextures = framebufferTextures.size();
@@ -49,8 +55,8 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
     for (int i = 0; i < numTextures; i++)
     {
         FramebufferTextureData texture = framebufferTextures[i];
-        gBuffer.textures[i]            = {.name      = texture.name,
-                               .textureId = CreateFramebufferTexture(i, width, height, texture.internalFormat)};
+        gBuffer.textures[i]            = {.name        = texture.name,
+                               .textureData = CreateFramebufferTexture(i, width, height, texture.internalFormat)};
         attachments[i]                 = GL_COLOR_ATTACHMENT0 + i;
     }
 
@@ -58,11 +64,10 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
     glDrawBuffers(4, &attachments[0]);
 
     // create and attach depth buffer (renderbuffer)
-    unsigned int rboDepth;
-    glGenRenderbuffers(1, &rboDepth);
-    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glGenRenderbuffers(1, &gBuffer.depthRenderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, gBuffer.depthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gBuffer.depthRenderBuffer);
 
     // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -97,44 +102,62 @@ GeometryFramebuffer CreateBlinnPhongGeometryBuffer(TextureDimensions width, Text
     return CreateGeometryFramebuffer(framebufferTextures, width, height);
 }
 
-TextureId CreateFramebufferTexture(unsigned int index, TextureDimensions width, TextureDimensions height,
-                                   unsigned int internalFormat)
+TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimensions width, TextureDimensions height,
+                                             unsigned int internalFormat)
 {
-    TextureId textureId;
+    TextureInternalData textureData;
 
-    GLenum format, type;
+    textureData.internalFormat = internalFormat;
 
     if (internalFormat == GL_RGBA16F || internalFormat == GL_RGBA32F)
     {
-        format = GL_RGBA;
-        type   = GL_FLOAT;
+        textureData.format = GL_RGBA;
+        textureData.type   = GL_FLOAT;
     }
     else if (internalFormat == GL_RGB16F || internalFormat == GL_RGB32F)
     {
-        format = GL_RGB;
-        type   = GL_FLOAT;
+        textureData.format = GL_RGB;
+        textureData.type   = GL_FLOAT;
     }
     else if (internalFormat == GL_RGBA)
     {
-        format = GL_RGBA;
-        type   = GL_UNSIGNED_BYTE;
+        textureData.format = GL_RGBA;
+        textureData.type   = GL_UNSIGNED_BYTE;
     }
     else if (internalFormat == GL_RGB)
     {
-        format = GL_RGB;
-        type   = GL_UNSIGNED_BYTE;
+        textureData.format = GL_RGB;
+        textureData.type   = GL_UNSIGNED_BYTE;
     }
     else
     {
         printf("Framebuffer texture type not supported!\n");
     }
 
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, NULL);
+    glGenTextures(1, &textureData.id);
+    glBindTexture(GL_TEXTURE_2D, textureData.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, textureData.internalFormat, width, height, 0, textureData.format, textureData.type,
+                 NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, textureId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, textureData.id, 0);
 
-    return textureId;
+    return textureData;
+}
+
+void ResizeFramebufferTextures(GeometryFramebuffer* geometryFramebuffer, TextureDimensions width,
+                               TextureDimensions height)
+{
+    geometryFramebuffer->frameBufferWidth  = width;
+    geometryFramebuffer->frameBufferHeight = height;
+
+    for (const auto& texture : geometryFramebuffer->textures)
+    {
+        glBindTexture(GL_TEXTURE_2D, texture.textureData.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, texture.textureData.internalFormat, width, height, 0, texture.textureData.format,
+                     texture.textureData.type, NULL);
+    }
+
+    glBindRenderbuffer(GL_RENDERBUFFER, geometryFramebuffer->depthRenderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
 }

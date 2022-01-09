@@ -24,6 +24,14 @@ struct Texture
     bool              isLoaded;
 };
 
+struct TextureInternalData
+{
+    TextureId    id;
+    unsigned int internalFormat;
+    unsigned int format;
+    unsigned int type;
+};
+
 struct DepthTexture
 {
     TextureId         id;

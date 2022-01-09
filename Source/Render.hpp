@@ -20,8 +20,6 @@ struct ScreenQuad
 
 struct DeferredRenderData
 {
-    WindowDimension frameBufferWidth;
-    WindowDimension frameBufferHeight;
 
     GeometryFramebuffer gBuffer;
     ScreenQuad          screenQuad;

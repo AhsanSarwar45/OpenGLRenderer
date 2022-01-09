@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -10,6 +11,7 @@
 #include "Camera.hpp"
 #include "Debug.hpp"
 #include "FileWatcher.hpp"
+#include "Framebuffer.hpp"
 #include "Light.hpp"
 #include "Model.hpp"
 #include "Render.hpp"
@@ -18,6 +20,7 @@
 #include "Shader.hpp"
 #include "Skybox.hpp"
 #include "Texture.hpp"
+#include "Vertex.hpp"
 #include "Window.hpp"
 
 #include "glm/ext/matrix_float4x4.hpp"
@@ -37,9 +40,11 @@ std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 int main()
 {
 
-    // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, material, shader);
+    // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, materials, shaderProgram);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
+
+    printf("%d\n", sizeof(Vertex));
 
     Window window = Window("OpenGL", 1240, 720);
     Camera camera = Camera(&window);
@@ -151,6 +156,11 @@ int main()
 
     DeferredRenderData deferredRenderData =
         CreateDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+
+    auto boundResizeFunction = std::bind(&ResizeFramebufferTextures, &deferredRenderData.gBuffer, std::placeholders::_1,
+                                         std::placeholders::_2);
+
+    window.AddFramebufferResizeCallback(boundResizeFunction);
 
     while (window.IsRunning())
     {
@@ -268,7 +278,7 @@ int main()
             {
                 if (ImGui::TreeNode(texture.name))
                 {
-                    ImGui::Image((void*)(intptr_t)texture.textureId, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::Image((void*)(intptr_t)texture.textureData.id, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
                     ImGui::TreePop();
                 }
             }

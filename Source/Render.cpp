@@ -56,9 +56,6 @@ DeferredRenderData CreateDeferredRenderData(const WindowDimension width, const W
     data.gBuffer    = CreatePBRGeometryBuffer(width, height);
     data.screenQuad = CreateScreenQuad();
 
-    data.frameBufferWidth  = width;
-    data.frameBufferHeight = height;
-
     UseShaderProgram(data.lightPassShader);
 
     for (int i = 0; i < data.gBuffer.textures.size(); i++)
@@ -133,7 +130,7 @@ void RenderLightPass(const std::shared_ptr<const Scene> scene, const DeferredRen
     for (int i = 0; i < data.gBuffer.textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, data.gBuffer.textures[i].textureId);
+        glBindTexture(GL_TEXTURE_2D, data.gBuffer.textures[i].textureData.id);
     }
 
     ShaderSetInt(data.lightPassShader, "numPointLights", scene->pointLights.size());
@@ -160,8 +157,8 @@ void RenderForwardPass(const std::shared_ptr<const Scene> scene, const DeferredR
     glBindFramebuffer(GL_READ_FRAMEBUFFER, data.gBuffer.id);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 
-    glBlitFramebuffer(0, 0, data.frameBufferWidth, data.frameBufferHeight, 0, 0, data.frameBufferWidth,
-                      data.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, data.gBuffer.frameBufferWidth, data.gBuffer.frameBufferHeight, 0, 0,
+                      data.gBuffer.frameBufferWidth, data.gBuffer.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // for (const auto& pointLight : scene->pointLights)

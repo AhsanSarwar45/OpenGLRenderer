@@ -55,6 +55,11 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
         data->Height           = height;
 
         glViewport(0, 0, width, height);
+
+        for (const auto& function : data->m_FramebufferResizeCallbacks)
+        {
+            function(width, height);
+        }
     });
 
     glfwSetCursorPosCallback(m_Window, [](GLFWwindow* window, double xPos, double yPos) {

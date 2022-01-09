@@ -1,20 +1,25 @@
 #pragma once
 
-#include "Aliases.hpp"
 #include <vector>
 
-struct DepthTexture;
+#include "Aliases.hpp"
+#include "Texture.hpp"
 
 struct FramebufferTexture
 {
-    const char* name;
-    TextureId   textureId;
+    const char*         name;
+    TextureInternalData textureData;
 };
 
 struct GeometryFramebuffer
 {
-    Framebuffer                     id;
     std::vector<FramebufferTexture> textures;
+
+    Framebuffer  id;
+    Renderbuffer depthRenderBuffer;
+
+    WindowDimension frameBufferWidth;
+    WindowDimension frameBufferHeight;
 };
 
 struct FramebufferTextureData
@@ -34,5 +39,8 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
 Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
 Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions height);
 // TODO: Improve API.
-TextureId CreateFramebufferTexture(unsigned int index, TextureDimensions width, TextureDimensions height,
-                                   unsigned int internalFormat);
+TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimensions width, TextureDimensions height,
+                                             unsigned int internalFormat);
+
+void ResizeFramebufferTextures(GeometryFramebuffer* geometryFramebuffer, TextureDimensions width,
+                               TextureDimensions height);
