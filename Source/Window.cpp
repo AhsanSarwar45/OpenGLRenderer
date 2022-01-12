@@ -12,18 +12,16 @@
 
 #include <Utilities/DebugBreak.hpp>
 
-void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                                const GLchar* message, const void* userParam)
+void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message,
+                                const void* userParam)
 {
-    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, message = %s\n",
-            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, message);
-    debug_break();
+    fprintf(stderr, "GL CALLBACK: %s type = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, message);
+    // debug_break();
 }
 
 void ErrorCallback(int error, const char* description) { fprintf(stderr, "Error: %s\n", description); }
 
-Window::Window(const std::string& name, WindowDimension width, WindowDimension height)
-    : m_Properties({name, width, height, 0, 0})
+Window::Window(const std::string& name, WindowDimension width, WindowDimension height) : m_Properties({name, width, height, 0, 0})
 {
     // TODO if width and height are negative.
 

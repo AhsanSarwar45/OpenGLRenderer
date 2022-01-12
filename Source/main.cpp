@@ -58,7 +58,7 @@ int main()
 
     ResourceManager::GetInstance().Initialize();
 
-    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/BPForwardLit.frag"}, "Light");
+    ShaderProgram shaderProgram = ResourceManager::GetInstance().GetBPForwardLitShader();
     // ShaderProgram depthShaderProgram = LoadShaders(
     //     {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
     // ShaderProgram shadowShaderProgram =

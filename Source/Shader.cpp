@@ -8,13 +8,14 @@
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <vector>
 
 #include "ResourceManager.hpp"
 #include "Utilities/Hash.hpp"
 
 using namespace ShaderInternal;
 
-ShaderProgram LoadShaders(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform)
+ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform)
 {
     std::vector<ShaderStage> shaderStages;
     for (const auto& shaderStagePath : shaderStagePaths)
@@ -49,47 +50,11 @@ ShaderProgram LoadShaders(const std::vector<std::string>& shaderStagePaths, cons
     return LoadShaderStages(shaderStages, name, cameraTransform);
 }
 
-ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath,
-                         const char* name, bool cameraTransform)
-{
-    ShaderProgram shaderProgram = glCreateProgram();
-
-    ShaderStageId vertexShaderStage = CreateShaderStage(GL_VERTEX_SHADER);
-    CompileShaderStage(vertexShaderStage, GL_VERTEX_SHADER, ParseShaderStage(vertexShaderPath).c_str());
-
-    ShaderStageId fragmentShaderStage = CreateShaderStage(GL_FRAGMENT_SHADER);
-    CompileShaderStage(fragmentShaderStage, GL_FRAGMENT_SHADER, ParseShaderStage(fragmentShaderPath).c_str());
-
-    glAttachShader(shaderProgram, vertexShaderStage);
-    glAttachShader(shaderProgram, fragmentShaderStage);
-
-    LinkProgram(shaderProgram);
-    ValidateProgram(shaderProgram); // Todo handle return
-
-    glDetachShader(shaderProgram, vertexShaderStage);
-    glDetachShader(shaderProgram, fragmentShaderStage);
-
-    DeleteShaderStage(vertexShaderStage);
-    DeleteShaderStage(fragmentShaderStage);
-
-    glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
-
-    if (cameraTransform)
-    {
-        glUniformBlockBinding(shaderProgram, glGetUniformBlockIndex(shaderProgram, "Camera"), 0);
-    }
-
-    vertexShaderPath.make_preferred();
-    fragmentShaderPath.make_preferred();
-
-    // std::cout << "shader id: " << id << " filepath: " << fragmentShaderPath << "\n";
-
-    ResourceManager::GetInstance().AddShader(shaderProgram, {vertexShaderPath, GL_VERTEX_SHADER, vertexShaderStage});
-    ResourceManager::GetInstance().AddShader(shaderProgram,
-                                             {fragmentShaderPath, GL_FRAGMENT_SHADER, fragmentShaderStage});
-
-    return shaderProgram;
-}
+// ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath, const char* name,
+//                          bool cameraTransform)
+// {
+//     return LoadShaders({vertexShaderPath.string(), fragmentShaderPath.string()}, name, cameraTransform);
+// }
 
 void ShaderSetBool(ShaderProgram shaderProgram, const std::string& name, bool value)
 {
@@ -133,7 +98,7 @@ void UseShaderProgram(const ShaderProgram shaderProgram) { glUseProgram(shaderPr
 
 namespace ShaderInternal
 {
-ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, const char* name, bool cameraTransform)
+ShaderProgram LoadShaderStages(std::vector<ShaderStage>& shaderStages, const char* name, bool cameraTransform)
 {
     ShaderProgram shaderProgram = glCreateProgram();
 
@@ -149,7 +114,7 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
 
         shaderData.path.make_preferred();
 
-        ResourceManager::GetInstance().AddShader(shaderProgram, shaderData);
+        ResourceManager::GetInstance().AddShader(shaderProgram, shaderData.path, shaderStages);
     }
 
     // TODO safety issues
@@ -173,27 +138,48 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
     return shaderProgram;
 }
 
-bool ReloadShaderStage(const ShaderProgram shaderProgram, ShaderStage shaderStage)
+bool ReloadShaderStage(const ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
 {
-    shaderStage.id = CreateShaderStage(shaderStage.type);
-    CompileShaderStage(shaderStage.id, shaderStage.type, ParseShaderStage(shaderStage.path).c_str());
-
-    glAttachShader(shaderProgram, shaderStage.id);
-
-    if (!LinkProgram(shaderProgram))
+    for (auto& shaderData : shaderStages)
     {
-        glDetachShader(shaderProgram, shaderStage.id);
-        DeleteShaderStage(shaderStage.id);
-        return false;
-    }
-    glDetachShader(shaderProgram, shaderStage.id);
-    DeleteShaderStage(shaderStage.id);
-    if (!ValidateProgram(shaderProgram))
-    {
-        return false;
+        ShaderStageId shaderStageId = CreateShaderStage(shaderData.type);
+        CompileShaderStage(shaderStageId, shaderData.type, ParseShaderStage(shaderData.path).c_str());
+
+        shaderData.id = shaderStageId;
+
+        glAttachShader(shaderProgram, shaderStageId);
     }
 
-    return true;
+    // TODO safety issues
+    LinkProgram(shaderProgram);
+    ValidateProgram(shaderProgram);
+
+    for (auto& shaderData : shaderStages)
+    {
+        glDetachShader(shaderProgram, shaderData.id);
+        DeleteShaderStage(shaderData.id);
+    }
+
+    // CompileShaderStage(shaderStage.id, shaderStage.type, ParseShaderStage(shaderStage.path).c_str());
+
+    // PrintShaderStageSource(shaderStage.id);
+
+    // glAttachShader(shaderProgram, shaderStage.id);
+
+    // if (!LinkProgram(shaderProgram))
+    // {
+    //     glDetachShader(shaderProgram, shaderStage.id);
+    //     DeleteShaderStage(shaderStage.id);
+    //     return false;
+    // }
+    // glDetachShader(shaderProgram, shaderStage.id);
+    // DeleteShaderStage(shaderStage.id);
+    // if (!ValidateProgram(shaderProgram))
+    // {
+    //     return false;
+    // }
+
+    // return true;
 }
 bool LinkProgram(const ShaderProgram shaderProgram)
 {
@@ -296,8 +282,7 @@ void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
 {
     if (type == GL_FRAGMENT_SHADER)
     {
-        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER,
-                           ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str());
+        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str());
     }
 }
 void DeleteShaderProgram(ShaderProgram shaderProgram) { glDeleteProgram(shaderProgram); }

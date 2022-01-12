@@ -8,10 +8,9 @@
 
 #include "Aliases.hpp"
 
-ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath,
-                         const char* shaderProgramName, bool cameraTransform = true);
-ShaderProgram LoadShaders(const std::vector<std::string>& shaderStagePaths, const char* shaderProgramName,
-                          bool cameraTransform = true);
+// ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath, const char* shaderProgramName,
+//                          bool cameraTransform = true);
+ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* shaderProgramName, bool cameraTransform = true);
 
 struct ShaderStage
 {
@@ -40,7 +39,7 @@ namespace ShaderInternal
 ShaderProgram LoadShaderStages(std::vector<ShaderStage>& shaderStages, const char* name, bool cameraTransform = true);
 ShaderStageId LoadShaderStage(const std::filesystem::path& path, ShaderProgram shaderProgram, const ShaderType type);
 std::string   ParseShaderStage(const std::filesystem::path& path);
-bool          ReloadShaderStage(const ShaderProgram shaderProgram, ShaderStage shaderStage);
+bool          ReloadShaderStage(const ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStage);
 bool          CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std::string source);
 bool          LinkProgram(const ShaderProgram shaderProgram);
 bool          ValidateProgram(const ShaderProgram shaderProgram);

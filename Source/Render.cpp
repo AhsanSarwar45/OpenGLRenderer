@@ -46,19 +46,13 @@ DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgra
 }
 DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDSRenderData(
-        CreatePBRGeometryBuffer(width, height),
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"}, "Geometry Pass"),
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"}, "Light Pass", false),
-        width, height);
+    return CreateDSRenderData(CreatePBRGeometryBuffer(width, height), ResourceManager::GetInstance().GetPBR_DS_GeometryShader(),
+                              ResourceManager::GetInstance().GetPBR_DS_LightingShader(), width, height);
 }
 DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDSRenderData(
-        CreateBPGeometryBuffer(width, height),
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"}, "Geometry Pass"),
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"}, "Light Pass", false), width,
-        height);
+    return CreateDSRenderData(CreateBPGeometryBuffer(width, height), ResourceManager::GetInstance().GetBP_DS_GeometryShader(),
+                              ResourceManager::GetInstance().GetBP_DS_LightingShader(), width, height);
 }
 
 void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData)
