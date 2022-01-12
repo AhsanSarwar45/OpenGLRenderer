@@ -40,7 +40,7 @@ bool minimized = false;
 
 std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
-const char* renderingPipelines[] = {"PBR Deferred + Forward Shading", "BP Deferred + Forward Shading"};
+const char* renderingPipelines[] = {"PBR Deferred + Forward Shading", "BP Deferred + Forward Shading", "BP Forward Shading"};
 
 int currentPipeline = 0;
 
@@ -54,11 +54,11 @@ int main()
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
     Window window = Window("OpenGL", 1240, 720);
-    Camera camera = Camera(&window);
+    scene->camera = std::make_shared<Camera>(&window);
 
     ResourceManager::GetInstance().Initialize();
 
-    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/Lit.vert", "../Assets/Shaders/Lit.frag"}, "Light");
+    ShaderProgram shaderProgram = LoadShaders({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/BPForwardLit.frag"}, "Light");
     // ShaderProgram depthShaderProgram = LoadShaders(
     //     {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
     // ShaderProgram shadowShaderProgram =
@@ -86,25 +86,17 @@ int main()
 
     std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
     gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
-    gunMaterialPBR->textures.push_back(
-        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
-    gunMaterialPBR->textures.push_back(
-        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
-    gunMaterialPBR->textures.push_back(
-        LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
+    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
+    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
+    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
     gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
 
     std::shared_ptr<Material> metalLinedPBR = std::make_shared<Material>();
-    metalLinedPBR->textures.push_back(
-        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
-    metalLinedPBR->textures.push_back(
-        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
-    metalLinedPBR->textures.push_back(
-        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
-    metalLinedPBR->textures.push_back(
-        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
-    metalLinedPBR->textures.push_back(
-        LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
+    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
+    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
+    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
+    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
+    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
 
     // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
     // std::shared_ptr<Model> backpack =
@@ -125,11 +117,8 @@ int main()
     scene->models.push_back(sphere);
     scene->models.push_back(cube);
 
-    scene->pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .power     = 20.0f,
-                                  .linear    = 0.0f,
-                                  .quadratic = 0.0f});
+    scene->pointLights.push_back(
+        {.position = glm::vec3(1.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 1.0f, 1.0f), .power = 20.0f, .linear = 0.0f, .quadratic = 0.0f});
 
     scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
                                   .color     = glm::vec3(1.0f, 1.0f, 1.0f),
@@ -137,11 +126,8 @@ int main()
                                   .linear    = 0.0f,
                                   .quadratic = 0.0f});
 
-    scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .power     = 20.0f,
-                                  .linear    = 0.0f,
-                                  .quadratic = 0.0f});
+    scene->pointLights.push_back(
+        {.position = glm::vec3(2.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 1.0f, 1.0f), .power = 20.0f, .linear = 0.0f, .quadratic = 0.0f});
 
     float xPos = 0.0f;
     for (auto& model : scene->models)
@@ -162,19 +148,31 @@ int main()
 
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
-    DeferredRenderData deferredRenderData =
-        CreatePBRDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+    std::shared_ptr<DSRenderData> dsRenderData = std::make_shared<DSRenderData>();
+    *dsRenderData                              = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+    ForwardRenderData forwardRenderData        = {.forwardPassShader = ResourceManager::GetInstance().GetBPForwardLitShader()};
 
-    auto boundResizeFunction = std::bind(&ResizeFramebufferTextures, &deferredRenderData.gBuffer, std::placeholders::_1,
-                                         std::placeholders::_2);
+    // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
+    //     ResizeFramebufferTextures(&DSRenderData, width, height);
+    // };
+    auto boundResizeFunction = std::bind(&ResizeFramebufferTextures, dsRenderData, std::placeholders::_1, std::placeholders::_2);
 
     window.AddFramebufferResizeCallback(boundResizeFunction);
     window.AddFramebufferResizeCallback(CheckMinimized);
 
+    std::vector<RenderPass> renderPasses;
+
+    const std::vector<RenderPass> deferredRenderPipeline = {
+        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSGeometryPass(scene, dsRenderData); },
+        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSLightPass(scene, dsRenderData); },
+        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }};
+
+    renderPasses = deferredRenderPipeline;
+
     while (window.IsRunning())
     {
         window.Update();
-        camera.Update(window.GetDeltaTime());
+        scene->camera->Update(window.GetDeltaTime());
 
         ImGui::Begin("Stats");
 
@@ -229,9 +227,9 @@ int main()
         }
         if (ImGui::TreeNode("Camera"))
         {
-            ImGui::DragFloat("Speed", camera.GetSpeedPtr(), 0.03f);
-            ImGui::DragFloat("Near Clip", camera.GetNearClipPtr(), 0.01f);
-            ImGui::DragFloat("Far Clip", camera.GetFarClipPtr(), 1.0f);
+            ImGui::DragFloat("Speed", scene->camera->GetSpeedPtr(), 0.03f);
+            ImGui::DragFloat("Near Clip", scene->camera->GetNearClipPtr(), 0.01f);
+            ImGui::DragFloat("Far Clip", scene->camera->GetFarClipPtr(), 1.0f);
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Shadows"))
@@ -279,21 +277,28 @@ int main()
         }
         if (ImGui::TreeNode("Render Settings"))
         {
-
-            ImGui::Combo("Render Pipeline", &currentPipeline, renderingPipelines, 2);
+            int prevPipeline = currentPipeline;
+            ImGui::Combo("Render Pipeline", &currentPipeline, renderingPipelines,
+                         (int)(sizeof(renderingPipelines) / sizeof(*(renderingPipelines))));
             if (ImGui::IsItemEdited())
             {
+
                 // printf("%d", currentPipeline);
                 switch (currentPipeline)
                 {
                 case 0:
-                    deferredRenderData =
-                        CreatePBRDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    DeleteDSRenderData(dsRenderData);
+                    *dsRenderData = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    renderPasses  = deferredRenderPipeline;
                     break;
                 case 1:
-                    deferredRenderData =
-                        CreateBPDeferredRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    DeleteDSRenderData(dsRenderData);
+                    *dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    renderPasses  = deferredRenderPipeline;
                     break;
+                case 2:
+                    renderPasses = {
+                        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderBPForward(scene, forwardRenderData); }};
                 }
             }
 
@@ -305,7 +310,7 @@ int main()
         ImGui::Begin("Debug");
         if (ImGui::TreeNode("G-Buffer"))
         {
-            for (const auto& texture : deferredRenderData.gBuffer.textures)
+            for (const auto& texture : dsRenderData->gBuffer.textures)
             {
                 if (ImGui::TreeNode(texture.name))
                 {
@@ -318,15 +323,16 @@ int main()
         }
         ImGui::End();
 
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
 
         ResourceManager::GetInstance().CheckDirtyShaders();
 
         if (!minimized)
         {
-            RenderDSGeometryPass(scene, deferredRenderData);
-            RenderDSLightPass(scene, deferredRenderData, camera.GetPosition());
-            RenderDSForwardPass(scene, deferredRenderData);
+            for (const auto& pass : renderPasses)
+            {
+                pass(scene);
+            }
         }
 
         // ShaderSetInt(shadowShaderProgram, "shadowMap", 7);

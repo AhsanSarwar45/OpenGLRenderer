@@ -48,4 +48,7 @@ void          PrintShaderStageSource(const ShaderStageId shaderStageId);
 void          SetToFallback(const ShaderStage shaderStage);
 void          SetToFallback(const ShaderStageId shaderStageId, const ShaderType type);
 ShaderStageId CreateShaderStage(const ShaderType type);
+
+void DeleteShaderProgram(ShaderProgram shaderProgram);
+void DeleteShaderStage(ShaderStageId shaderStage);
 } // namespace ShaderInternal

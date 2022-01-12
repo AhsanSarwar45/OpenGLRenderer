@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 
 #include "Aliases.hpp"
@@ -13,7 +14,10 @@ struct Model;
 struct Material;
 struct Mesh;
 
-struct DeferredRenderData
+using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
+
+// Deferred Shading Render Data
+struct DSRenderData
 {
 
     GeometryFramebuffer gBuffer;
@@ -23,18 +27,26 @@ struct DeferredRenderData
     ShaderProgram lightPassShader;
 };
 
-DeferredRenderData CreateDeferredRenderData(const GeometryFramebuffer gBuffer, const ShaderProgram vert,
-                                            const ShaderProgram frag, const WindowDimension width,
-                                            const WindowDimension height);
-DeferredRenderData CreatePBRDeferredRenderData(const WindowDimension width, const WindowDimension height);
-DeferredRenderData CreateBPDeferredRenderData(const WindowDimension width, const WindowDimension height);
+// Forward Shading Render Data
+struct ForwardRenderData
+{
+    ShaderProgram forwardPassShader;
+};
 
-void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
-void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos);
-void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data);
+DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgram vert, ShaderProgram frag, WindowDimension width,
+                                WindowDimension height);
+DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height);
+DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height);
+
+void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData);
+
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
+
+void RenderBPForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& data);
 
 void RenderQuad(const Quad& screenQuad);
-void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shaderProgram,
-                const std::shared_ptr<const Material> material);
-void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram shader);
+void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
+void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shader);
 void RenderModel(const std::shared_ptr<const Model> model);

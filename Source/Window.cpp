@@ -17,7 +17,7 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 {
     fprintf(stderr, "GL CALLBACK: %s type = 0x%x, message = %s\n",
             (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, message);
-    // debug_break();
+    debug_break();
 }
 
 void ErrorCallback(int error, const char* description) { fprintf(stderr, "Error: %s\n", description); }

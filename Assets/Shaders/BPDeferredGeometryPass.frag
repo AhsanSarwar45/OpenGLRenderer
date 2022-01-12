@@ -17,7 +17,6 @@ struct Material
     sampler2D albedo;
     sampler2D normal;
     sampler2D specular;
-    sampler2D roughness;
 };
 
 uniform Material material;

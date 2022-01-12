@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <glad/glad.h>
+#include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
@@ -14,7 +15,7 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
 
     std::filesystem::path filePathStr = path;
 
-    TextureId      id;
+    TextureId      textureId;
     int            width, height;
     int            componentCount;
     unsigned char* data = stbi_load(filePathStr.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
@@ -39,8 +40,8 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
             dataFormat     = GL_RGBA;
         }
 
-        glGenTextures(1, &id);
-        glBindTexture(GL_TEXTURE_2D, id);
+        textureId = CreateTexture();
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -61,13 +62,16 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
 
     stbi_image_free(data);
 
-    return {.path           = path.string().c_str(),
+    std::string pathStr  = path.string();
+    const char* pathCStr = pathStr.c_str();
+
+    return {.path           = pathCStr,
             .name           = name,
-            .id             = id,
+            .id             = textureId,
             .type           = type,
-            .width          = width,
-            .height         = height,
-            .componentCount = componentCount,
+            .width          = static_cast<TextureDimension>(width),
+            .height         = static_cast<TextureDimension>(height),
+            .componentCount = static_cast<uint8_t>(componentCount),
             .isLoaded       = isLoaded};
 }
 
@@ -76,10 +80,9 @@ Texture LoadTexture(const std::filesystem::path& path, const char* name, bool fl
     return LoadTexture(path, TextureType::Color, name, flipTexture);
 }
 
-DepthTexture CreateDepthTexture(TextureDimensions width, TextureDimensions height)
+DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
 {
-    TextureId depthMapId;
-    glGenTextures(1, &depthMapId);
+    TextureId depthMapId = CreateTexture();
     glBindTexture(GL_TEXTURE_2D, depthMapId);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -95,6 +98,15 @@ DepthTexture CreateDepthTexture(TextureDimensions width, TextureDimensions heigh
         .height = height,
     };
 }
+
+TextureId CreateTexture()
+{
+    TextureId texture;
+    glGenTextures(1, &texture);
+
+    return texture;
+}
+void DeleteTexture(TextureId textureId) { glDeleteTextures(1, &textureId); }
 
 void BindTexture(const unsigned int id, const unsigned int slot)
 {

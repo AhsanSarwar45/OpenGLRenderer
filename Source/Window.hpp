@@ -18,7 +18,7 @@ struct WindowProperties
     double OffsetX;
     double OffsetY;
 
-    std::vector<std::function<void(TextureDimensions width, TextureDimensions height)>> m_FramebufferResizeCallbacks;
+    std::vector<std::function<void(TextureDimension width, TextureDimension height)>> m_FramebufferResizeCallbacks;
 };
 
 class Window
@@ -37,7 +37,7 @@ class Window
     GLFWwindow*      GetWindowPtr() { return m_Window; }
 
     inline void
-    AddFramebufferResizeCallback(std::function<void(TextureDimensions width, TextureDimensions height)> function)
+    AddFramebufferResizeCallback(std::function<void(TextureDimension width, TextureDimension height)> function)
     {
         m_Properties.m_FramebufferResizeCallbacks.push_back(function);
     }

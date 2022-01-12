@@ -66,6 +66,12 @@ ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem
     LinkProgram(shaderProgram);
     ValidateProgram(shaderProgram); // Todo handle return
 
+    glDetachShader(shaderProgram, vertexShaderStage);
+    glDetachShader(shaderProgram, fragmentShaderStage);
+
+    DeleteShaderStage(vertexShaderStage);
+    DeleteShaderStage(fragmentShaderStage);
+
     glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
 
     if (cameraTransform)
@@ -151,6 +157,12 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
     LinkProgram(shaderProgram);
     ValidateProgram(shaderProgram);
 
+    for (auto& shaderData : shaderStages)
+    {
+        glDetachShader(shaderProgram, shaderData.id);
+        DeleteShaderStage(shaderData.id);
+    }
+
     glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
 
     if (cameraTransform)
@@ -163,12 +175,19 @@ ShaderProgram LoadShaderStages(std::vector<struct ShaderStage>& shaderStages, co
 
 bool ReloadShaderStage(const ShaderProgram shaderProgram, ShaderStage shaderStage)
 {
+    shaderStage.id = CreateShaderStage(shaderStage.type);
     CompileShaderStage(shaderStage.id, shaderStage.type, ParseShaderStage(shaderStage.path).c_str());
+
+    glAttachShader(shaderProgram, shaderStage.id);
 
     if (!LinkProgram(shaderProgram))
     {
+        glDetachShader(shaderProgram, shaderStage.id);
+        DeleteShaderStage(shaderStage.id);
         return false;
     }
+    glDetachShader(shaderProgram, shaderStage.id);
+    DeleteShaderStage(shaderStage.id);
     if (!ValidateProgram(shaderProgram))
     {
         return false;
@@ -281,5 +300,7 @@ void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
                            ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str());
     }
 }
+void DeleteShaderProgram(ShaderProgram shaderProgram) { glDeleteProgram(shaderProgram); }
+void DeleteShaderStage(ShaderStageId shaderStage) { glDeleteShader(shaderStage); }
 
 } // namespace ShaderInternal

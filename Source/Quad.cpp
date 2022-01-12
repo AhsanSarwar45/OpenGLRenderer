@@ -23,3 +23,9 @@ Quad CreateQuad()
 
     return quad;
 }
+
+void DeleteQuad(Quad quad)
+{
+    glDeleteVertexArrays(1, &quad.vao);
+    glDeleteBuffers(1, &quad.vbo);
+}

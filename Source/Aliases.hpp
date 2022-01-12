@@ -6,8 +6,8 @@ using WindowDimension = uint16_t;
 using Framebuffer     = unsigned int;
 using Renderbuffer    = unsigned int;
 
-using TextureDimensions = uint16_t;
-using TextureId         = unsigned int;
+using TextureDimension = uint16_t;
+using TextureId        = unsigned int;
 
 using ShaderProgram = unsigned int;
 

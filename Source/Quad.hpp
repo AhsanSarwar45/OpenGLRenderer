@@ -7,3 +7,4 @@ struct Quad
 };
 
 Quad CreateQuad();
+void DeleteQuad(Quad quad);

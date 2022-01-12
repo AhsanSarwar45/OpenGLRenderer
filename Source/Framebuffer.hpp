@@ -5,6 +5,8 @@
 #include "Aliases.hpp"
 #include "Texture.hpp"
 
+struct DSRenderData;
+
 struct FramebufferTexture
 {
     const char*         name;
@@ -28,19 +30,22 @@ struct FramebufferTextureData
     unsigned int internalFormat;
 };
 
-GeometryFramebuffer CreateBPGeometryBuffer(TextureDimensions width, TextureDimensions height);
-GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimensions width, TextureDimensions height);
+GeometryFramebuffer CreateBPGeometryBuffer(TextureDimension width, TextureDimension height);
+GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimension width, TextureDimension height);
 
 Framebuffer CreateFramebuffer();
+void        DeleteFramebuffer(Framebuffer framebuffer);
 
-GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures,
-                                              TextureDimensions width, TextureDimensions height);
+void DeleteRenderbuffer(Renderbuffer renderbuffer);
+
+GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures, TextureDimension width,
+                                              TextureDimension height);
+void                DeleteGeometryFramebuffer(const GeometryFramebuffer& geometryBuffer);
 
 Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
-Framebuffer CreateDepthFramebuffer(TextureDimensions width, TextureDimensions height);
+Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
 // TODO: Improve API.
-TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimensions width, TextureDimensions height,
+TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
                                              unsigned int internalFormat);
 
-void ResizeFramebufferTextures(GeometryFramebuffer* geometryFramebuffer, TextureDimensions width,
-                               TextureDimensions height);
+void ResizeFramebufferTextures(const std::shared_ptr<DSRenderData> renderData, TextureDimension width, TextureDimension height);

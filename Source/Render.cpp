@@ -1,16 +1,21 @@
 #include "Render.hpp"
 
-#include <iostream>
+#include <memory>
 
 #include <glad/glad.h>
-#include <memory>
+#include <iostream>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
+#include "Aliases.hpp"
+#include "Framebuffer.hpp"
 #include "Material.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
+#include "ResourceManager.hpp"
 #include "Scene.hpp"
+#include "Shader.hpp"
 #include "Texture.hpp"
 
 void RenderQuad(const Quad& quad)
@@ -20,11 +25,10 @@ void RenderQuad(const Quad& quad)
     glBindVertexArray(0);
 }
 
-DeferredRenderData CreateDeferredRenderData(const GeometryFramebuffer gBuffer, const ShaderProgram geometryPassShader,
-                                            const ShaderProgram lightPassShader, const WindowDimension width,
-                                            const WindowDimension height)
+DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgram geometryPassShader, ShaderProgram lightPassShader,
+                                WindowDimension width, WindowDimension height)
 {
-    DeferredRenderData data = {
+    DSRenderData data = {
         .gBuffer            = gBuffer,
         .screenQuad         = CreateQuad(),
         .geometryPassShader = geometryPassShader,
@@ -40,37 +44,41 @@ DeferredRenderData CreateDeferredRenderData(const GeometryFramebuffer gBuffer, c
 
     return data;
 }
-DeferredRenderData CreatePBRDeferredRenderData(const WindowDimension width, const WindowDimension height)
+DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDeferredRenderData(
+    return CreateDSRenderData(
         CreatePBRGeometryBuffer(width, height),
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"},
-                    "Geometry Pass"),
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
-                    "Light Pass", false),
+        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"}, "Geometry Pass"),
+        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"}, "Light Pass", false),
         width, height);
 }
-DeferredRenderData CreateBPDeferredRenderData(const WindowDimension width, const WindowDimension height)
+DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDeferredRenderData(
+    return CreateDSRenderData(
         CreateBPGeometryBuffer(width, height),
-        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"},
-                    "Geometry Pass"),
-        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"},
-                    "Light Pass", false),
-        width, height);
+        LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"}, "Geometry Pass"),
+        LoadShaders({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"}, "Light Pass", false), width,
+        height);
+}
+
+void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData)
+{
+    const DSRenderData data = *renderData.get();
+    DeleteGeometryFramebuffer(data.gBuffer);
+    DeleteQuad(data.screenQuad);
+    ShaderInternal::DeleteShaderProgram(data.geometryPassShader);
+    ShaderInternal::DeleteShaderProgram(data.lightPassShader);
 }
 
 void RenderModel(const std::shared_ptr<const Model> model) { RenderModel(model, model->shaderProgram); }
 
-void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram shaderProgram)
+void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram)
 {
     Transform transform = model->transform;
 
     glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
 
-    glm::mat4 modelMatrix =
-        glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
+    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
 
     UseShaderProgram(shaderProgram);
     ShaderSetMat4(shaderProgram, "model", modelMatrix);
@@ -82,8 +90,7 @@ void RenderModel(const std::shared_ptr<const Model> model, const ShaderProgram s
     }
 }
 
-void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shaderProgram,
-                const std::shared_ptr<const Material> material)
+void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material)
 {
 
     int index = 0;
@@ -105,8 +112,9 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, const ShaderProgram shad
     }
 }
 
-void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData)
 {
+    const DSRenderData data = *renderData.get();
     glBindFramebuffer(GL_FRAMEBUFFER, data.gBuffer.id);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -116,8 +124,10 @@ void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const Deferr
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data, glm::vec3 cameraPos)
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData)
 {
+    const DSRenderData data = *renderData.get();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     UseShaderProgram(data.lightPassShader);
 
@@ -142,17 +152,19 @@ void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DeferredR
 
         index++;
     }
-    ShaderSetFloat3(data.lightPassShader, "viewPos", cameraPos);
+    ShaderSetFloat3(data.lightPassShader, "viewPos", scene->camera->GetPosition());
     // finally render quad
     RenderQuad(data.screenQuad);
 }
-void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DeferredRenderData& data)
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData)
 {
+    const DSRenderData data = *renderData.get();
+
     glBindFramebuffer(GL_READ_FRAMEBUFFER, data.gBuffer.id);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 
-    glBlitFramebuffer(0, 0, data.gBuffer.frameBufferWidth, data.gBuffer.frameBufferHeight, 0, 0,
-                      data.gBuffer.frameBufferWidth, data.gBuffer.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, data.gBuffer.frameBufferWidth, data.gBuffer.frameBufferHeight, 0, 0, data.gBuffer.frameBufferWidth,
+                      data.gBuffer.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // for (const auto& pointLight : scene->pointLights)
@@ -160,6 +172,41 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const Deferre
     //     bulb->transform.position = pointLight.position;
     //     RenderModel(bulb);
     // }
+
+    DrawSkybox(scene->skybox);
+}
+
+void RenderBPForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& data)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    ShaderProgram shaderProgram = data.forwardPassShader;
+
+    UseShaderProgram(shaderProgram);
+
+    ShaderSetInt(shaderProgram, "numPointLights", scene->pointLights.size());
+    ShaderSetFloat3(shaderProgram, "ambientLight", scene->ambientLight);
+    // send light relevant uniforms
+    int index = 0;
+    for (const auto& pointLight : scene->pointLights)
+    {
+        std::string indexStr = std::to_string(index);
+        ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].position", pointLight.position);
+        ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].color", pointLight.color);
+        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].power", pointLight.power);
+        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].linear", pointLight.linear);
+        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
+
+        index++;
+    }
+    ShaderSetFloat3(shaderProgram, "viewPos", scene->camera->GetPosition());
+
+    for (const auto& model : scene->models)
+    {
+        RenderModel(model, shaderProgram);
+    }
 
     DrawSkybox(scene->skybox);
 }
