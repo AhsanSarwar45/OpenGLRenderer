@@ -25,34 +25,36 @@ void RenderQuad(const Quad& quad)
     glBindVertexArray(0);
 }
 
-DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgram geometryPassShader, ShaderProgram lightPassShader,
-                                WindowDimension width, WindowDimension height)
-{
-    DSRenderData data = {
-        .gBuffer            = gBuffer,
-        .screenQuad         = CreateQuad(),
-        .geometryPassShader = geometryPassShader,
-        .lightPassShader    = lightPassShader,
-    };
-
-    UseShaderProgram(data.lightPassShader);
-
-    for (int i = 0; i < data.gBuffer.textures.size(); i++)
-    {
-        ShaderSetInt(data.lightPassShader, data.gBuffer.textures[i].name, i);
-    }
-
-    return data;
-}
+// DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgram geometryPassShader, ShaderProgram lightPassShader,
+//                                 WindowDimension width, WindowDimension height)
+// {
+//     return data;
+// }
 DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDSRenderData(CreatePBRGeometryBuffer(width, height), ResourceManager::GetInstance().GetPBR_DS_GeometryShader(),
-                              ResourceManager::GetInstance().GetPBR_DS_LightingShader(), width, height);
+    GeometryFramebuffer gBuffer      = CreatePBRGeometryBuffer(width, height);
+    const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
+    ShaderProgram lightPassShader = LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
+                                               "Light Pass", false, initFunction);
+    return {
+        .gBuffer            = gBuffer,
+        .screenQuad         = CreateQuad(),
+        .geometryPassShader = ResourceManager::GetInstance().GetPBR_DS_GeometryShader(),
+        .lightPassShader    = lightPassShader,
+    };
 }
 DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height)
 {
-    return CreateDSRenderData(CreateBPGeometryBuffer(width, height), ResourceManager::GetInstance().GetBP_DS_GeometryShader(),
-                              ResourceManager::GetInstance().GetBP_DS_LightingShader(), width, height);
+    GeometryFramebuffer gBuffer      = CreateBPGeometryBuffer(width, height);
+    const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
+    ShaderProgram lightPassShader = LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"},
+                                               "Light Pass", false, initFunction);
+    return {
+        .gBuffer            = gBuffer,
+        .screenQuad         = CreateQuad(),
+        .geometryPassShader = ResourceManager::GetInstance().GetBP_DS_GeometryShader(),
+        .lightPassShader    = lightPassShader,
+    };
 }
 
 void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData)
@@ -60,8 +62,18 @@ void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData)
     const DSRenderData data = *renderData.get();
     DeleteGeometryFramebuffer(data.gBuffer);
     DeleteQuad(data.screenQuad);
-    ShaderInternal::DeleteShaderProgram(data.geometryPassShader);
+    // ShaderInternal::DeleteShaderProgram(data.geometryPassShader);
     ShaderInternal::DeleteShaderProgram(data.lightPassShader);
+}
+
+void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures)
+{
+    UseShaderProgram(lightPassShader);
+
+    for (int i = 0; i < textures.size(); i++)
+    {
+        ShaderSetInt(lightPassShader, textures[i].name, i);
+    }
 }
 
 void RenderModel(const std::shared_ptr<const Model> model) { RenderModel(model, model->shaderProgram); }

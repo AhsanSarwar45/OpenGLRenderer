@@ -1,6 +1,8 @@
 #include "Shader.hpp"
 
 #include <fstream>
+
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string.h>
@@ -15,7 +17,8 @@
 
 using namespace ShaderInternal;
 
-ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform)
+ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform,
+                         std::function<void(ShaderProgram)> initFunction)
 {
     std::vector<ShaderStage> shaderStages;
     for (const auto& shaderStagePath : shaderStagePaths)
@@ -47,7 +50,30 @@ ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const
         shaderStages.push_back({.path = shaderStagePath, .type = shaderType});
     }
 
-    return LoadShaderStages(shaderStages, name, cameraTransform);
+    ShaderProgram shaderProgram = glCreateProgram();
+
+    LoadShaderStages(shaderProgram, shaderStages);
+
+    if (initFunction)
+    {
+        initFunction(shaderProgram);
+    }
+
+    for (auto& shaderData : shaderStages)
+    {
+        shaderData.path.make_preferred();
+
+        ResourceManager::GetInstance().AddShader(shaderProgram, shaderData.path, shaderStages, initFunction);
+    }
+
+    glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
+
+    if (cameraTransform)
+    {
+        glUniformBlockBinding(shaderProgram, glGetUniformBlockIndex(shaderProgram, "Camera"), 0);
+    }
+
+    return shaderProgram;
 }
 
 // ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath, const char* name,
@@ -98,89 +124,33 @@ void UseShaderProgram(const ShaderProgram shaderProgram) { glUseProgram(shaderPr
 
 namespace ShaderInternal
 {
-ShaderProgram LoadShaderStages(std::vector<ShaderStage>& shaderStages, const char* name, bool cameraTransform)
+void LoadShaderStages(ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
 {
-    ShaderProgram shaderProgram = glCreateProgram();
-
+    bool vertexCompilationFailed = false;
     // find references to existing shaders, and create ones that didn't exist previously.
     for (auto& shaderData : shaderStages)
     {
         ShaderStageId shaderStageId = CreateShaderStage(shaderData.type);
-        CompileShaderStage(shaderStageId, shaderData.type, ParseShaderStage(shaderData.path).c_str());
-
-        shaderData.id = shaderStageId;
-
-        glAttachShader(shaderProgram, shaderStageId);
-
-        shaderData.path.make_preferred();
-
-        ResourceManager::GetInstance().AddShader(shaderProgram, shaderData.path, shaderStages);
-    }
-
-    // TODO safety issues
-
-    LinkProgram(shaderProgram);
-    ValidateProgram(shaderProgram);
-
-    for (auto& shaderData : shaderStages)
-    {
-        glDetachShader(shaderProgram, shaderData.id);
-        DeleteShaderStage(shaderData.id);
-    }
-
-    glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
-
-    if (cameraTransform)
-    {
-        glUniformBlockBinding(shaderProgram, glGetUniformBlockIndex(shaderProgram, "Camera"), 0);
-    }
-
-    return shaderProgram;
-}
-
-bool ReloadShaderStage(const ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
-{
-    for (auto& shaderData : shaderStages)
-    {
-        ShaderStageId shaderStageId = CreateShaderStage(shaderData.type);
-        CompileShaderStage(shaderStageId, shaderData.type, ParseShaderStage(shaderData.path).c_str());
+        if (!vertexCompilationFailed)
+        {
+            if (!CompileShaderStage(shaderStageId, shaderData.type, ParseShaderStage(shaderData.path).c_str()))
+            {
+                vertexCompilationFailed = shaderData.type == GL_VERTEX_SHADER;
+            }
+        }
+        else
+        {
+            SetToFallback(shaderStageId, shaderData.type);
+        }
 
         shaderData.id = shaderStageId;
 
         glAttachShader(shaderProgram, shaderStageId);
     }
 
-    // TODO safety issues
-    LinkProgram(shaderProgram);
-    ValidateProgram(shaderProgram);
-
-    for (auto& shaderData : shaderStages)
-    {
-        glDetachShader(shaderProgram, shaderData.id);
-        DeleteShaderStage(shaderData.id);
-    }
-
-    // CompileShaderStage(shaderStage.id, shaderStage.type, ParseShaderStage(shaderStage.path).c_str());
-
-    // PrintShaderStageSource(shaderStage.id);
-
-    // glAttachShader(shaderProgram, shaderStage.id);
-
-    // if (!LinkProgram(shaderProgram))
-    // {
-    //     glDetachShader(shaderProgram, shaderStage.id);
-    //     DeleteShaderStage(shaderStage.id);
-    //     return false;
-    // }
-    // glDetachShader(shaderProgram, shaderStage.id);
-    // DeleteShaderStage(shaderStage.id);
-    // if (!ValidateProgram(shaderProgram))
-    // {
-    //     return false;
-    // }
-
-    // return true;
+    LinkAndValidateProgram(shaderProgram, shaderStages);
 }
+
 bool LinkProgram(const ShaderProgram shaderProgram)
 {
     glLinkProgram(shaderProgram);
@@ -222,6 +192,24 @@ bool ValidateProgram(const ShaderProgram shaderProgram)
     return true;
 }
 
+bool LinkAndValidateProgram(const ShaderProgram shaderProgram, const std::vector<ShaderStage>& shaderStages)
+{
+    bool linkSuccess = LinkProgram(shaderProgram);
+
+    DeleteShaderStages(shaderProgram, shaderStages);
+
+    if (linkSuccess)
+    {
+        bool validateSuccess = ValidateProgram(shaderProgram);
+        if (linkSuccess)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::string ParseShaderStage(const std::filesystem::path& path)
 {
     std::ifstream stream(path);
@@ -243,10 +231,11 @@ std::string ParseShaderStage(const std::filesystem::path& path)
 
 ShaderStageId CreateShaderStage(const ShaderType type) { return glCreateShader(type); }
 
-bool CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std::string source)
+bool CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std::string source, bool needFallback)
 {
     const char* src = source.c_str();
     glShaderSource(shaderStageId, 1, &src, nullptr);
+
     glCompileShader(shaderStageId);
 
     int result;
@@ -259,7 +248,11 @@ bool CompileShaderStage(const ShaderStageId shaderStageId, ShaderType type, std:
         glGetShaderInfoLog(shaderStageId, length, &length, message);
         std::cout << "Failed to compile shader (id: " << shaderStageId << ")\n ";
         std::cout << message << "\n";
-        SetToFallback(shaderStageId, type);
+        if (needFallback)
+        {
+            SetToFallback(shaderStageId, type);
+        }
+
         return false;
     }
 
@@ -273,19 +266,35 @@ void PrintShaderStageSource(const ShaderStageId shaderStage)
     char* source = (char*)alloca(length * sizeof(char));
     glGetShaderSource(shaderStage, length, &length, source);
 
-    std::cout << source;
+    std::cout << "Shader Source (Shader Stage ID: " << shaderStage << "): " << source;
 }
 
 void SetToFallback(const ShaderStage shaderStage) { SetToFallback(shaderStage.id, shaderStage.type); }
 
 void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
 {
+    if (type == GL_VERTEX_SHADER)
+    {
+
+        CompileShaderStage(shaderStageId, GL_VERTEX_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.vert").c_str(), false);
+    }
     if (type == GL_FRAGMENT_SHADER)
     {
-        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str());
+        CompileShaderStage(shaderStageId, GL_VERTEX_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str(), false);
     }
 }
 void DeleteShaderProgram(ShaderProgram shaderProgram) { glDeleteProgram(shaderProgram); }
+
+void DeleteShaderStages(ShaderProgram shaderProgram, const std::vector<ShaderStage>& shaderStages)
+{
+
+    for (auto& shaderData : shaderStages)
+    {
+        glDetachShader(shaderProgram, shaderData.id);
+        DeleteShaderStage(shaderData.id);
+    }
+}
+
 void DeleteShaderStage(ShaderStageId shaderStage) { glDeleteShader(shaderStage); }
 
 } // namespace ShaderInternal

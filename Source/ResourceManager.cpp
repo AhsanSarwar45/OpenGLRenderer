@@ -36,19 +36,30 @@ void ResourceManager::AddDirtyShader(const std::filesystem::path& path)
 
 void ResourceManager::CheckDirtyShaders()
 {
+    if (m_DirtyShaderStages.empty())
+    {
+        return;
+    }
+
     for (auto& dirtShader : m_DirtyShaderStages)
     {
         for (auto& shaderProgram : dirtShader.linkedShaderPrograms)
         {
-            ShaderInternal::ReloadShaderStage(shaderProgram, dirtShader.shaderStages);
+            ShaderInternal::LoadShaderStages(shaderProgram.id, dirtShader.shaderStages);
+            if(shaderProgram.init)
+            {
+                shaderProgram.init(shaderProgram.id);
+            }
+           
         }
     }
     m_DirtyShaderStages.clear();
 }
 
 // TODO: Very unclear
-void ResourceManager::AddShader(ShaderProgram shaderProgram, const std::filesystem::path& path, const std::vector<ShaderStage>& shaderStage)
+void ResourceManager::AddShader(ShaderProgram shaderProgram, const std::filesystem::path& path, const std::vector<ShaderStage>& shaderStage,
+                                const std::function<void(ShaderProgram)>& initFunction)
 {
     m_ShaderStages[path.string()].shaderStages = shaderStage;
-    m_ShaderStages[path.string()].linkedShaderPrograms.push_back(shaderProgram);
+    m_ShaderStages[path.string()].linkedShaderPrograms.push_back({shaderProgram, initFunction});
 }

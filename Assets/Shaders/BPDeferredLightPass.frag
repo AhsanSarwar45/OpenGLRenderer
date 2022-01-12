@@ -55,7 +55,7 @@ void main()
         float attenuation = 1.0 / (distance * distance);
         diffuse *= attenuation;
         spec *= attenuation;
-        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 5.0);
+        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 4.0);
     }
     FragColor = vec4(lighting, 1.0);
 }

@@ -46,7 +46,7 @@ void main()
     vec3 normal = texture(material.normal, fragData.TexCoords).rgb;
     normal      = normalize(normal * 2.0 - 1.0);
     normal      = normalize(fragData.TBN * normal);
-    // vec3  albedo   = texture(albedo, TexCoords).rgb;
+    // vec3 albedo = texture(material.albedo, fragData.TexCoords).rgb;
     vec3  albedo   = pow(texture(material.albedo, fragData.TexCoords).rgb, vec3(2.2));
     float specular = texture(material.specular, fragData.TexCoords).r;
 
@@ -69,7 +69,7 @@ void main()
         float attenuation = 1.0 / (distance * distance);
         diffuse *= attenuation;
         spec *= attenuation;
-        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 5.0);
+        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 4.0);
     }
     FragColor = vec4(lighting, 1.0);
 }

@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -6,12 +7,19 @@
 #include "Quad.hpp"
 #include "Shader.hpp"
 
+struct ShaderProgramLookup
+{
+    ShaderProgram                      id;
+    std::function<void(ShaderProgram)> init;
+};
+
 // Todo awful naming cmon man
 struct ShaderLookup
 {
-    std::vector<ShaderStage>   shaderStages;
-    std::vector<ShaderProgram> linkedShaderPrograms;
+    std::vector<ShaderStage>         shaderStages;
+    std::vector<ShaderProgramLookup> linkedShaderPrograms;
 };
+
 
 class ResourceManager
 {
@@ -29,7 +37,8 @@ class ResourceManager
 
     void Initialize();
 
-    void AddShader(ShaderProgram shaderProgram, const std::filesystem::path& path, const std::vector<ShaderStage>& shaderStage);
+    void AddShader(ShaderProgram shaderProgram, const std::filesystem::path& path, const std::vector<ShaderStage>& shaderStage,
+                   const std::function<void(ShaderProgram)>& initFunction);
 
     void AddDirtyShader(const std::filesystem::path& path);
     void CheckDirtyShaders();

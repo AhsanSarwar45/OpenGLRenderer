@@ -44,6 +44,8 @@ void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const std::s
 void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
 void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
 
+void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures);
+
 void RenderBPForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& data);
 
 void RenderQuad(const Quad& screenQuad);
