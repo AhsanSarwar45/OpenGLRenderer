@@ -8,17 +8,19 @@ void ResourceManager::Initialize()
     m_SkyboxShader = LoadShader({"../Assets/Shaders/Skybox.vert", "../Assets/Shaders/Skybox.frag"}, "Skybox", false);
     // m_BillboardShader =
     //     LoadShader("../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/Billboard.frag", "Billboard");
-    m_BP_ForwardLitShader = LoadShader({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/BPForwardLit.frag"}, "Forward");
+    m_BP_ForwardLitShader = LoadShader({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/BPForwardLit.frag"}, "BP Forward");
+
+    m_PBR_ForwardLitShader = LoadShader({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/PBRForwardLit.frag"}, "PBR Forward");
 
     m_PBR_DS_GeometryShader =
-        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"}, "Geometry Pass");
+        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"}, "PBR Geometry Pass");
     m_PBR_DS_LightingShader =
-        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"}, "Light Pass", false);
+        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"}, "PBR Light Pass", false);
 
     m_BP_DS_GeometryShader =
-        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"}, "Geometry Pass");
+        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"}, "BP Geometry Pass");
     m_BP_DS_LightingShader =
-        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"}, "Light Pass", false);
+        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"}, "BP Light Pass", false);
 
     m_ScreenQuad = CreateQuad();
 }
@@ -46,11 +48,10 @@ void ResourceManager::CheckDirtyShaders()
         for (auto& shaderProgram : dirtShader.linkedShaderPrograms)
         {
             ShaderInternal::LoadShaderStages(shaderProgram.id, dirtShader.shaderStages);
-            if(shaderProgram.init)
+            if (shaderProgram.init)
             {
                 shaderProgram.init(shaderProgram.id);
             }
-           
         }
     }
     m_DirtyShaderStages.clear();

@@ -35,14 +35,15 @@ struct TextureInternalData
 struct DepthTexture
 {
     TextureId        id;
-    TextureDimension width;
+    TextureDimension width; // TODO: Don't need these
     TextureDimension height;
 };
 
 Texture      LoadTexture(const std::filesystem::path& path, const char* name = "diffuse", bool flipTexture = false);
-Texture      LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse",
-                         bool flipTexture = false);
+Texture      LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse", bool flipTexture = false);
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height);
+
+DepthTexture CreateCubeMapTexture(TextureDimension resolution);
 
 TextureId CreateTexture();
 void      DeleteTexture(TextureId textureId);

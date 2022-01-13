@@ -280,7 +280,11 @@ void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
     }
     if (type == GL_FRAGMENT_SHADER)
     {
-        CompileShaderStage(shaderStageId, GL_VERTEX_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str(), false);
+        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str(), false);
+    }
+    if (type == GL_GEOMETRY_SHADER)
+    {
+        CompileShaderStage(shaderStageId, GL_GEOMETRY_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.geom").c_str(), false);
     }
 }
 void DeleteShaderProgram(ShaderProgram shaderProgram) { glDeleteProgram(shaderProgram); }

@@ -31,13 +31,14 @@ class Window
     void Render();
     bool IsRunning() { return !glfwWindowShouldClose(m_Window); }
 
-    WindowProperties GetProperties() const { return m_Properties; }
-    float            GetDeltaTime() const { return m_DeltaTime; }
-    bool             IsFocused() const { return m_Focused; }
-    GLFWwindow*      GetWindowPtr() { return m_Window; }
+    inline WindowProperties GetProperties() const { return m_Properties; }
+    inline float            GetDeltaTime() const { return m_DeltaTime; }
+    inline bool             IsFocused() const { return m_Focused; }
+    inline GLFWwindow*      GetWindowPtr() { return m_Window; }
 
-    inline void
-    AddFramebufferResizeCallback(std::function<void(TextureDimension width, TextureDimension height)> function)
+    inline void SetVSync(bool value) { glfwSwapInterval(value); }
+
+    inline void AddFramebufferResizeCallback(std::function<void(TextureDimension width, TextureDimension height)> function)
     {
         m_Properties.m_FramebufferResizeCallbacks.push_back(function);
     }

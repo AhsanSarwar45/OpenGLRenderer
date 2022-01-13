@@ -18,7 +18,7 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
     TextureId      textureId;
     int            width, height;
     int            componentCount;
-    unsigned char* data = stbi_load(filePathStr.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
+    unsigned char* data     = stbi_load(filePathStr.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
     bool           isLoaded = false;
     if (data)
     {
@@ -50,8 +50,8 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width
-                  << ", height: " << height << "\n";
+        std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width << ", height: " << height
+                  << "\n";
 
         isLoaded = true;
     }
@@ -96,6 +96,29 @@ DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
         .id     = depthMapId,
         .width  = width,
         .height = height,
+    };
+}
+
+DepthTexture CreateCubeMapTexture(TextureDimension resolution)
+{
+
+    TextureId depthCubeMapId = CreateTexture();
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMapId);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, resolution, resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                     NULL);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return {
+        .id     = depthCubeMapId,
+        .width  = resolution,
+        .height = resolution,
     };
 }
 

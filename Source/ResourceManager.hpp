@@ -20,7 +20,6 @@ struct ShaderLookup
     std::vector<ShaderProgramLookup> linkedShaderPrograms;
 };
 
-
 class ResourceManager
 {
   public:
@@ -45,7 +44,9 @@ class ResourceManager
 
     inline ShaderProgram GetSkyboxShader() const { return m_SkyboxShader; }
     inline ShaderProgram GetBillboardShader() const { return m_BillboardShader; }
-    inline ShaderProgram GetBPForwardLitShader() const { return m_BP_ForwardLitShader; }
+
+    inline ShaderProgram GetBP_ForwardLitShader() const { return m_BP_ForwardLitShader; }
+    inline ShaderProgram GetPBR_ForwardLitShader() const { return m_PBR_ForwardLitShader; }
 
     inline ShaderProgram GetBP_DS_LightingShader() const { return m_BP_DS_LightingShader; }
     inline ShaderProgram GetBP_DS_GeometryShader() const { return m_BP_DS_GeometryShader; }
@@ -53,16 +54,23 @@ class ResourceManager
     inline ShaderProgram GetPBR_DS_GeometryShader() const { return m_PBR_DS_GeometryShader; }
     inline ShaderProgram GetPBR_DS_LightingShader() const { return m_PBR_DS_LightingShader; }
 
+    inline Quad GetScreenQuad() const { return m_ScreenQuad; }
+
   private:
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
     std::vector<ShaderLookup>                     m_DirtyShaderStages;
     ShaderProgram                                 m_SkyboxShader;
     ShaderProgram                                 m_BillboardShader;
-    ShaderProgram                                 m_BP_ForwardLitShader;
-    ShaderProgram                                 m_BP_DS_GeometryShader;
-    ShaderProgram                                 m_BP_DS_LightingShader;
-    ShaderProgram                                 m_PBR_DS_GeometryShader;
-    ShaderProgram                                 m_PBR_DS_LightingShader;
-    ShaderStageId                                 m_FallbackFragmentStage;
-    Quad                                          m_ScreenQuad;
+
+    ShaderProgram m_BP_ForwardLitShader;
+    ShaderProgram m_PBR_ForwardLitShader;
+
+    ShaderProgram m_BP_DS_GeometryShader;
+    ShaderProgram m_BP_DS_LightingShader;
+    ShaderProgram m_PBR_DS_GeometryShader;
+    ShaderProgram m_PBR_DS_LightingShader;
+
+    // ShaderStageId m_FallbackFragmentStage;
+
+    Quad m_ScreenQuad;
 };

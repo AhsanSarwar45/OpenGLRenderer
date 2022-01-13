@@ -34,6 +34,12 @@ Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension heig
     return CreateDepthFramebuffer(depthTexture);
 }
 
+Framebuffer Create3DDepthFramebuffer(TextureDimension resolution)
+{
+    DepthTexture depthTexture = CreateCubeMapTexture(resolution);
+    return CreateDepthFramebuffer(depthTexture);
+}
+
 void DeleteFramebuffer(Framebuffer framebuffer) { glDeleteFramebuffers(1, &framebuffer); }
 
 void DeleteRenderbuffer(Renderbuffer renderbuffer) { glDeleteRenderbuffers(1, &renderbuffer); }

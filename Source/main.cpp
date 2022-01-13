@@ -1,3 +1,4 @@
+
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -8,6 +9,7 @@
 #include <ImGui/imgui.h>
 
 #include "Aliases.hpp"
+#include "Benchmark.hpp"
 #include "Billboard.hpp"
 #include "Camera.hpp"
 #include "Debug.hpp"
@@ -40,8 +42,6 @@ bool minimized = false;
 
 std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
-const char* renderingPipelines[] = {"PBR Deferred + Forward Shading", "BP Deferred + Forward Shading", "BP Forward Shading"};
-
 int currentPipeline = 0;
 
 void CheckMinimized(WindowDimension width, WindowDimension height) { minimized = (width == 0 || height == 0); }
@@ -54,35 +54,15 @@ int main()
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
     Window window = Window("OpenGL", 1240, 720);
+
     scene->camera = std::make_shared<Camera>(&window);
 
     ResourceManager::GetInstance().Initialize();
 
-    ShaderProgram shaderProgram = ResourceManager::GetInstance().GetBPForwardLitShader();
-    // ShaderProgram depthShaderProgram = LoadShaders(
-    //     {"../Assets/Shaders/SimpleDepthShader.vert", "../Assets/Shaders/SimpleDepthShader.frag"}, "Depth", false);
-    // ShaderProgram shadowShaderProgram =
-    //     LoadShaders({"../Assets/Shaders/ShadowMapLit.vert", "../Assets/Shaders/ShadowMapLit.frag"}, "LitShadow");
-    // ShaderProgram geometryPassShader =
-    //     LoadShaders({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/DeferredGeometryPass.frag"},
-    //                 "Geometry Pass");
-    // ShaderProgram lightPassShader = LoadShaders(
-    //     {"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/DeferredLightPass.frag"}, "Light Pass",
-    //     false);
-
-    // Shader outlineShader = LoadShader("../Assets/Shaders/Lit.vert", "../Assets/Shaders/SingleColor.frag",
-    // "Outline");
+    ShaderProgram shaderProgram = ResourceManager::GetInstance().GetBP_ForwardLitShader();
 
     scene->skybox       = LoadSkybox("../Assets/Skyboxes/skybox");
     scene->ambientLight = glm::vec3(0.4f);
-
-    // Model floor = LoadModelOBJ("../Assets/Models/WoodenBox/cube.obj", shadowShaderProgram, "Floor");
-    // std::shared_ptr<Model> bulb = LoadModel("../Assets/Models/WoodenBox/cube.obj", lightShaderProgram, "Bulb");
-
-    // bulb->transform.scale = glm::vec3(0.2f);
-
-    // floor.transform.scale      = glm::vec3(20.0, 0.1, 20.0);
-    // floor.transform.position.y = -0.5;
 
     std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
     gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
@@ -98,21 +78,19 @@ int main()
     metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
     metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
 
-    // Model sponza   = LoadModelOBJ("../Assets/Models/sponza/sponza.obj", shadowShaderProgram, "Sponza");
-    // std::shared_ptr<Model> backpack =
-    //     LoadModel("../Assets/Models/backpack/backpack.obj", geometryPassShader, "Backpack", false);
     std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", shaderProgram, "Gun", true);
     std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
     std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
+
+    cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
+    cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
+
+    sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
 
     SetMaterial(gun, gunMaterialPBR);
     SetMaterial(sphere, metalLinedPBR);
     SetMaterial(cube, metalLinedPBR);
 
-    // sponza.transform.scale = glm::vec3(0.05);
-
-    // models.push_back(sponza);
-    // models.push_back(backpack);
     scene->models.push_back(gun);
     scene->models.push_back(sphere);
     scene->models.push_back(cube);
@@ -129,12 +107,12 @@ int main()
     scene->pointLights.push_back(
         {.position = glm::vec3(2.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 1.0f, 1.0f), .power = 20.0f, .linear = 0.0f, .quadratic = 0.0f});
 
-    float xPos = 0.0f;
-    for (auto& model : scene->models)
-    {
-        model->transform.position.x = xPos;
-        xPos += 4.0f;
-    }
+    // float xPos = 0.0f;
+    // for (auto& model : scene->models)
+    // {
+    //     model->transform.position.x = xPos;
+    //     xPos += 4.0f;
+    // }
 
     efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
 
@@ -150,7 +128,8 @@ int main()
 
     std::shared_ptr<DSRenderData> dsRenderData = std::make_shared<DSRenderData>();
     *dsRenderData                              = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-    ForwardRenderData forwardRenderData        = {.forwardPassShader = ResourceManager::GetInstance().GetBPForwardLitShader()};
+    std::shared_ptr<ForwardRenderData> forwardRenderData = std::make_shared<ForwardRenderData>();
+    *forwardRenderData                                   = CreatePBRForwardRenderData();
 
     // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
     //     ResizeFramebufferTextures(&DSRenderData, width, height);
@@ -167,7 +146,27 @@ int main()
         [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSLightPass(scene, dsRenderData); },
         [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }};
 
+    const std::vector<RenderPass> forwardRenderPipeline = {
+        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForward(scene, forwardRenderData); }};
+
     renderPasses = deferredRenderPipeline;
+
+    std::vector<RenderingPipeline> renderingPipelines = {{"PBR Deferred + Forward Shading", deferredRenderPipeline},
+                                                         {"BP Deferred + Forward Shading", deferredRenderPipeline},
+                                                         {"BP Forward Shading", forwardRenderPipeline},
+                                                         {"PBR Forward Shading", forwardRenderPipeline}};
+
+    std::vector<const char*> pipelineNames;
+
+    for (const auto& pipeline : renderingPipelines)
+    {
+        pipelineNames.push_back(pipeline.name);
+    }
+
+    int numPipelines = pipelineNames.size();
+
+    BenchmarkData benchmark = {
+        .dsRenderData = dsRenderData, .forwardRenderData = forwardRenderData, .duration = 5.0f, .renderingPipelines = renderingPipelines};
 
     while (window.IsRunning())
     {
@@ -176,7 +175,30 @@ int main()
 
         ImGui::Begin("Stats");
 
-        ImGui::LabelText("FPS", "%f", 1.0f / window.GetDeltaTime());
+        ImGui::LabelText("FPS", "%.1f", 1.0f / window.GetDeltaTime());
+
+        if (ImGui::Button(benchmark.isRunning ? "Running Benchmark..." : "Run Benchmark"))
+        {
+            benchmark.isRunning = true;
+            window.SetVSync(false);
+            benchmark.results.clear();
+            benchmark.beginTime = std::chrono::steady_clock::now();
+        }
+
+        for (const auto& result : benchmark.results)
+        {
+            if (ImGui::TreeNode(result.name))
+            {
+                ImGui::LabelText("Total Time (s)", "%.2f", result.totalTime);
+                ImGui::LabelText("Average Time (ms)", "%.2f", result.averageTime);
+                ImGui::LabelText("Frame Count", "%i", result.frameCount);
+                ImGui::LabelText("Average FPS", "%.1f", result.averageFPS);
+                // ImGui::LabelText("Highest FPS", "%.1f", result.highestFPS);
+                // ImGui::LabelText("Lowest FPS", "%.1f", result.lowestFPS);
+
+                ImGui::TreePop();
+            }
+        }
 
         ImGui::End();
 
@@ -278,30 +300,31 @@ int main()
         if (ImGui::TreeNode("Render Settings"))
         {
             int prevPipeline = currentPipeline;
-            ImGui::Combo("Render Pipeline", &currentPipeline, renderingPipelines,
-                         (int)(sizeof(renderingPipelines) / sizeof(*(renderingPipelines))));
+            ImGui::Combo("Render Pipeline", &currentPipeline, &pipelineNames[0], numPipelines);
             if (ImGui::IsItemEdited())
             {
 
-                // printf("%d", currentPipeline);
+                renderPasses = renderingPipelines[currentPipeline].renderPasses;
+                printf("%d", currentPipeline);
                 switch (currentPipeline)
                 {
                 case 0:
                     DeleteDSRenderData(dsRenderData);
                     *dsRenderData = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                    renderPasses  = deferredRenderPipeline;
                     break;
                 case 1:
                     DeleteDSRenderData(dsRenderData);
                     *dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                    renderPasses  = deferredRenderPipeline;
                     break;
                 case 2:
-                    renderPasses = {
-                        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderBPForward(scene, forwardRenderData); }};
+                    *forwardRenderData = CreateBPForwardRenderData();
+                    ;
+                    break;
+                case 3:
+                    *forwardRenderData = CreatePBRForwardRenderData();
+                    break;
                 }
             }
-
             ImGui::TreePop();
         }
 
@@ -326,6 +349,11 @@ int main()
         // ImGui::ShowDemoWindow();
 
         ResourceManager::GetInstance().CheckDirtyShaders();
+
+        if (benchmark.isRunning)
+        {
+            currentPipeline = RunBenchmark(benchmark, window, renderPasses);
+        }
 
         if (!minimized)
         {

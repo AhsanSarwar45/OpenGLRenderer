@@ -44,6 +44,7 @@ void                DeleteGeometryFramebuffer(const GeometryFramebuffer& geometr
 
 Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
 Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
+Framebuffer Create3DDepthFramebuffer(TextureDimension resolution);
 // TODO: Improve API.
 TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
                                              unsigned int internalFormat);

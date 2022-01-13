@@ -38,7 +38,7 @@ DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height
                                                "Light Pass", false, initFunction);
     return {
         .gBuffer            = gBuffer,
-        .screenQuad         = CreateQuad(),
+        .screenQuad         = ResourceManager::GetInstance().GetScreenQuad(),
         .geometryPassShader = ResourceManager::GetInstance().GetPBR_DS_GeometryShader(),
         .lightPassShader    = lightPassShader,
     };
@@ -51,17 +51,21 @@ DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height)
                                                "Light Pass", false, initFunction);
     return {
         .gBuffer            = gBuffer,
-        .screenQuad         = CreateQuad(),
+        .screenQuad         = ResourceManager::GetInstance().GetScreenQuad(),
         .geometryPassShader = ResourceManager::GetInstance().GetBP_DS_GeometryShader(),
         .lightPassShader    = lightPassShader,
     };
 }
 
+ForwardRenderData CreatePBRForwardRenderData() { return {.forwardPassShader = ResourceManager::GetInstance().GetPBR_ForwardLitShader()}; }
+
+ForwardRenderData CreateBPForwardRenderData() { return {.forwardPassShader = ResourceManager::GetInstance().GetBP_ForwardLitShader()}; }
+
 void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData)
 {
     const DSRenderData data = *renderData.get();
     DeleteGeometryFramebuffer(data.gBuffer);
-    DeleteQuad(data.screenQuad);
+    // DeleteQuad(data.screenQuad);
     // ShaderInternal::DeleteShaderProgram(data.geometryPassShader);
     ShaderInternal::DeleteShaderProgram(data.lightPassShader);
 }
@@ -143,22 +147,8 @@ void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const std::shar
         glBindTexture(GL_TEXTURE_2D, data.gBuffer.textures[i].textureData.id);
     }
 
-    ShaderSetInt(data.lightPassShader, "numPointLights", scene->pointLights.size());
-    ShaderSetFloat3(data.lightPassShader, "ambientLight", scene->ambientLight);
-    // send light relevant uniforms
-    int index = 0;
-    for (const auto& pointLight : scene->pointLights)
-    {
-        std::string indexStr = std::to_string(index);
-        ShaderSetFloat3(data.lightPassShader, "pointLights[" + indexStr + "].position", pointLight.position);
-        ShaderSetFloat3(data.lightPassShader, "pointLights[" + indexStr + "].color", pointLight.color);
-        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].power", pointLight.power);
-        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].linear", pointLight.linear);
-        ShaderSetFloat(data.lightPassShader, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
+    SetSceneUniforms(scene, data.lightPassShader);
 
-        index++;
-    }
-    ShaderSetFloat3(data.lightPassShader, "viewPos", scene->camera->GetPosition());
     // finally render quad
     RenderQuad(data.screenQuad);
 }
@@ -182,32 +172,15 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::sh
     DrawSkybox(scene->skybox);
 }
 
-void RenderBPForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& data)
+void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    ShaderProgram shaderProgram = data.forwardPassShader;
+    ShaderProgram shaderProgram = renderData->forwardPassShader;
 
-    UseShaderProgram(shaderProgram);
-
-    ShaderSetInt(shaderProgram, "numPointLights", scene->pointLights.size());
-    ShaderSetFloat3(shaderProgram, "ambientLight", scene->ambientLight);
-    // send light relevant uniforms
-    int index = 0;
-    for (const auto& pointLight : scene->pointLights)
-    {
-        std::string indexStr = std::to_string(index);
-        ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].position", pointLight.position);
-        ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].color", pointLight.color);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].power", pointLight.power);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].linear", pointLight.linear);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
-
-        index++;
-    }
-    ShaderSetFloat3(shaderProgram, "viewPos", scene->camera->GetPosition());
+    SetSceneUniforms(scene, shaderProgram);
 
     for (const auto& model : scene->models)
     {
@@ -216,3 +189,31 @@ void RenderBPForward(const std::shared_ptr<const Scene> scene, const ForwardRend
 
     DrawSkybox(scene->skybox);
 }
+
+// void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData) {
+
+//     float     near_plane = 1.0f;
+//     float     far_plane  = 25.0f;
+//     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
+//     std::vector<glm::mat4> shadowTransforms;
+//     shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+//     shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,
+//     0.0f))); shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f,
+//     0.0f, 1.0f))); shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f,
+//     0.0f, -1.0f))); shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f,
+//     -1.0f, 0.0f))); shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, -1.0f),
+//     glm::vec3(0.0f, -1.0f, 0.0f)));
+
+//     // 1. render scene to depth cubemap
+//     // --------------------------------
+//     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+//     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+//     glClear(GL_DEPTH_BUFFER_BIT);
+//     simpleDepthShader.use();
+//     for (unsigned int i = 0; i < 6; ++i)
+//         simpleDepthShader.setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+//     simpleDepthShader.setFloat("far_plane", far_plane);
+//     simpleDepthShader.setVec3("lightPos", lightPos);
+//     renderScene(simpleDepthShader);
+//     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+// }
