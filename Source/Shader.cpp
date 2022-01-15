@@ -103,6 +103,14 @@ void ShaderSetFloat4(ShaderProgram shaderProgram, const std::string& name, float
 {
     glUniform4f(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z, w);
 }
+void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y)
+{
+    glUniform2f(glGetUniformLocation(shaderProgram, uniformName.c_str()), x, y);
+}
+void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec2& vec)
+{
+    ShaderSetFloat2(shaderProgram, uniformName.c_str(), vec.x, vec.y);
+}
 void ShaderSetInt3(ShaderProgram shaderProgram, const std::string& name, int x, int y, int z)
 {
     glUniform3i(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z);

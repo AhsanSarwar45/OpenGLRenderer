@@ -24,6 +24,12 @@ struct GeometryFramebuffer
     WindowDimension frameBufferHeight;
 };
 
+struct DepthFramebuffer
+{
+    Framebuffer  framebuffer;
+    DepthTexture depthTexture;
+};
+
 struct FramebufferTextureData
 {
     const char*  name;
@@ -42,9 +48,9 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
                                               TextureDimension height);
 void                DeleteGeometryFramebuffer(const GeometryFramebuffer& geometryBuffer);
 
-Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
-Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
-Framebuffer Create3DDepthFramebuffer(TextureDimension resolution);
+DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
+DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
+DepthFramebuffer Create3DDepthFramebuffer(TextureDimension resolution);
 // TODO: Improve API.
 TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
                                              unsigned int internalFormat);

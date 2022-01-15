@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Billboard.hpp"
 #include "Quad.hpp"
 #include "Shader.hpp"
 
@@ -56,6 +57,12 @@ class ResourceManager
 
     inline Quad GetScreenQuad() const { return m_ScreenQuad; }
 
+    inline ShaderProgram GetShadowShader() const { return m_ShadowShader; }
+
+    inline const char* GetOpenGLVersion() const { return m_OpenGLVersion; }
+
+    inline std::shared_ptr<Billboard> GetLightBillboard() const { return m_LightBillboard; }
+
   private:
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
     std::vector<ShaderLookup>                     m_DirtyShaderStages;
@@ -64,13 +71,18 @@ class ResourceManager
 
     ShaderProgram m_BP_ForwardLitShader;
     ShaderProgram m_PBR_ForwardLitShader;
+    ShaderProgram m_ShadowShader;
 
     ShaderProgram m_BP_DS_GeometryShader;
     ShaderProgram m_BP_DS_LightingShader;
     ShaderProgram m_PBR_DS_GeometryShader;
     ShaderProgram m_PBR_DS_LightingShader;
 
+    const char* m_OpenGLVersion;
+
     // ShaderStageId m_FallbackFragmentStage;
 
     Quad m_ScreenQuad;
+
+    std::shared_ptr<Billboard> m_LightBillboard;
 };

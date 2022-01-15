@@ -13,6 +13,7 @@ struct Scene;
 struct Model;
 struct Material;
 struct Mesh;
+struct Billboard;
 
 using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 
@@ -31,7 +32,11 @@ struct DSRenderData
 struct ForwardRenderData
 {
     ShaderProgram forwardPassShader;
-    DepthTexture  shadowTexture;
+    ShaderProgram depthPassShader;
+
+    DepthFramebuffer depthFramebuffer;
+    WindowDimension  width;
+    WindowDimension  height;
 };
 
 struct RenderingPipeline
@@ -44,8 +49,10 @@ struct RenderingPipeline
 DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height);
 DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height);
 
-ForwardRenderData CreatePBRForwardRenderData();
-ForwardRenderData CreateBPForwardRenderData();
+ForwardRenderData CreatePBRForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
+ForwardRenderData CreateBPForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
+
+void ResizeForwardViewport(const std::shared_ptr<ForwardRenderData> renderData, TextureDimension width, TextureDimension height);
 
 void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData);
 
@@ -62,3 +69,5 @@ void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shader);
 void RenderModel(const std::shared_ptr<const Model> model);
+void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram);
+void RenderBillboard(const std::shared_ptr<const Billboard> billboard);

@@ -129,7 +129,7 @@ int main()
     std::shared_ptr<DSRenderData> dsRenderData = std::make_shared<DSRenderData>();
     *dsRenderData                              = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     std::shared_ptr<ForwardRenderData> forwardRenderData = std::make_shared<ForwardRenderData>();
-    *forwardRenderData                                   = CreatePBRForwardRenderData();
+    *forwardRenderData = CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
 
     // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
     //     ResizeFramebufferTextures(&DSRenderData, width, height);
@@ -317,11 +317,11 @@ int main()
                     *dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
                     break;
                 case 2:
-                    *forwardRenderData = CreateBPForwardRenderData();
+                    *forwardRenderData = CreateBPForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
                     ;
                     break;
                 case 3:
-                    *forwardRenderData = CreatePBRForwardRenderData();
+                    *forwardRenderData = CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
                     break;
                 }
             }

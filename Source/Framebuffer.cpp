@@ -15,26 +15,25 @@ Framebuffer CreateFrameBuffer()
     return fbo;
 }
 
-Framebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
+DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
 {
-    Framebuffer fbo = CreateFrameBuffer();
+    Framebuffer depthFramebuffer = CreateFrameBuffer();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture.id, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthFramebuffer);
     glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture.id, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    return fbo;
+    return {depthFramebuffer, depthTexture};
 }
 
-Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height)
+DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height)
 {
     DepthTexture depthTexture = CreateDepthTexture(width, height);
     return CreateDepthFramebuffer(depthTexture);
 }
 
-Framebuffer Create3DDepthFramebuffer(TextureDimension resolution)
+DepthFramebuffer Create3DDepthFramebuffer(TextureDimension resolution)
 {
     DepthTexture depthTexture = CreateCubeMapTexture(resolution);
     return CreateDepthFramebuffer(depthTexture);

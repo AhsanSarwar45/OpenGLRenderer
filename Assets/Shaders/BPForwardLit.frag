@@ -29,12 +29,24 @@ struct PointLight
     float quadratic;
 };
 
+struct DirectionalLight
+{
+    vec3 direction;
+
+    vec3 color;
+
+    float power;
+};
+
 uniform Material material;
 
 const int MAX_LIGHTS = 32;
 
-uniform PointLight pointLights[MAX_LIGHTS];
-uniform int        numPointLights;
+uniform PointLight       pointLights[MAX_LIGHTS];
+uniform DirectionalLight directionalLights[MAX_LIGHTS];
+
+uniform int numPointLights;
+uniform int numDirectionalLights;
 
 uniform vec3 viewPos;
 
@@ -51,8 +63,10 @@ void main()
     float specular = texture(material.specular, fragData.TexCoords).r;
 
     // then calculate lighting as usual
-    vec3 lighting = (albedo + specular) * ambientLight; // hard-coded ambient component
-    vec3 viewDir  = normalize(viewPos - fragData.FragPos);
+    vec3 lighting = (albedo + specular) * ambientLight;
+
+    vec3 viewDir = normalize(viewPos - fragData.FragPos);
+
     for (int i = 0; i < numPointLights; ++i)
     {
         // diffuse
@@ -71,5 +85,20 @@ void main()
         spec *= attenuation;
         lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 4.0);
     }
+
+    for (int i = 0; i < numDirectionalLights; ++i)
+    {
+        // diffuse
+        vec3 lightDir = normalize(directionalLights[i].direction);
+        vec3 diffuse  = max(dot(normal, lightDir), 0.0) * albedo;
+
+        // specular
+        vec3  halfwayDir = normalize(lightDir + viewDir);
+        float spec       = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
+        spec *= specular;
+
+        lighting += (diffuse + spec) * directionalLights[i].color * (directionalLights[i].power / 4.0);
+    }
+
     FragColor = vec4(lighting, 1.0);
 }

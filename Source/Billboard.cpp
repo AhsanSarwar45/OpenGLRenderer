@@ -17,11 +17,10 @@ Billboard LoadBillboard(const std::filesystem::path& texturePath)
     Billboard billboard;
     billboard.shader = ResourceManager::GetInstance().GetBillboardShader();
 
-    float transparentVertices[] = {
-        // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
-        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, -0.5f, 0.0f, 1.0f, 1.0f,
+    float transparentVertices[] = {// positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+                                   0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 1.0f, 1.0f, -0.5f, 0.0f, 1.0f, 1.0f,
 
-        0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.5f,  0.0f, 1.0f, 0.0f};
+                                   0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 0.5f,  0.0f, 1.0f, 0.0f};
 
     glGenVertexArrays(1, &billboard.vao);
     glGenBuffers(1, &billboard.vbo);
@@ -37,26 +36,4 @@ Billboard LoadBillboard(const std::filesystem::path& texturePath)
     billboard.texture = LoadTexture(texturePath);
 
     return billboard;
-}
-
-void DrawBillboard(const Billboard& billboard)
-{
-    glDisable(GL_CULL_FACE);
-
-    Transform transform   = billboard.transform;
-    glm::mat4 modelMatrix = glm::mat4(1.0f);
-    modelMatrix           = glm::translate(modelMatrix, transform.position);
-    modelMatrix           = glm::scale(modelMatrix, transform.scale);
-
-    UseShaderProgram(billboard.shader);
-    ShaderSetMat4(billboard.shader, "model", modelMatrix);
-
-    BindTexture(billboard.texture.id, 0);
-    ShaderSetInt(billboard.shader, "material.diffuse", 0);
-
-    glBindVertexArray(billboard.vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
-
-    glEnable(GL_CULL_FACE);
 }

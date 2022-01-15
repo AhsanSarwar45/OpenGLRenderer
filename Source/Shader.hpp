@@ -29,6 +29,8 @@ void UseShaderProgram(const ShaderProgram shaderProgram);
 void ShaderSetBool(ShaderProgram shaderProgram, const std::string& uniformName, bool value);
 void ShaderSetInt(ShaderProgram shaderProgram, const std::string& uniformName, int value);
 void ShaderSetFloat(ShaderProgram shaderProgram, const std::string& uniformName, float value);
+void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y);
+void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec2& vec);
 void ShaderSetInt3(ShaderProgram shaderProgram, const std::string& uniformName, int x, int y, int z);
 void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y, float z);
 void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec3& vec);

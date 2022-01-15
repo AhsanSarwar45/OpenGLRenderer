@@ -52,10 +52,12 @@ int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<Rende
                 *benchmarkData.dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
                 break;
             case 2:
-                *benchmarkData.forwardRenderData = CreateBPForwardRenderData();
+                *benchmarkData.forwardRenderData =
+                    CreateBPForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
                 break;
             case 3:
-                *benchmarkData.forwardRenderData = CreatePBRForwardRenderData();
+                *benchmarkData.forwardRenderData =
+                    CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
                 break;
             }
         }
