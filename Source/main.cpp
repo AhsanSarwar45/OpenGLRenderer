@@ -143,9 +143,11 @@ int main()
     // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
     //     ResizeFramebufferTextures(&DSRenderData, width, height);
     // };
-    auto boundResizeFunction = std::bind(&ResizeFramebufferTextures, dsRenderData, std::placeholders::_1, std::placeholders::_2);
+    auto dsBoundResizeFunction      = std::bind(&ResizeFramebufferTextures, dsRenderData, std::placeholders::_1, std::placeholders::_2);
+    auto forwardBoundResizeFunction = std::bind(&ResizeForwardViewport, forwardRenderData, std::placeholders::_1, std::placeholders::_2);
 
-    window.AddFramebufferResizeCallback(boundResizeFunction);
+    window.AddFramebufferResizeCallback(dsBoundResizeFunction);
+    window.AddFramebufferResizeCallback(forwardBoundResizeFunction);
     window.AddFramebufferResizeCallback(CheckMinimized);
 
     std::vector<RenderPass> renderPasses;
