@@ -49,13 +49,12 @@ void main()
         float spec       = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
         spec *= specular;
         // attenuation
-        float distance = length(pointLights[i].position - fragPos);
-        // float attenuation =
-        //     1.0 / (1.0 + pointLights[i].linear * distance + pointLights[i].quadratic * distance * distance);
-        float attenuation = 1.0 / (distance * distance);
+        float distance    = length(pointLights[i].position - fragPos);
+        float attenuation = 1.0 / (1.0 + pointLights[i].linear * distance + pointLights[i].quadratic * distance * distance);
+        // float attenuation = 1.0 / (distance * distance);
         diffuse *= attenuation;
         spec *= attenuation;
-        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 4.0);
+        lighting += (diffuse + spec) * pointLights[i].color * pointLights[i].power;
     }
     FragColor = vec4(lighting, 1.0);
 }

@@ -95,17 +95,26 @@ int main()
     scene->models.push_back(sphere);
     scene->models.push_back(cube);
 
-    scene->pointLights.push_back(
-        {.position = glm::vec3(1.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 1.0f, 1.0f), .power = 20.0f, .linear = 0.0f, .quadratic = 0.0f});
+    float defaultLinearAttenuation    = 8.0f;
+    float defaultQuadraticAttenuation = 0.1f;
+
+    scene->pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .power     = 20.0f,
+                                  .linear    = defaultLinearAttenuation,
+                                  .quadratic = defaultQuadraticAttenuation});
 
     scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
                                   .color     = glm::vec3(1.0f, 1.0f, 1.0f),
                                   .power     = 20.0f,
-                                  .linear    = 0.0f,
-                                  .quadratic = 0.0f});
+                                  .linear    = defaultLinearAttenuation,
+                                  .quadratic = defaultQuadraticAttenuation});
 
-    scene->pointLights.push_back(
-        {.position = glm::vec3(2.0f, 1.0f, 1.0f), .color = glm::vec3(1.0f, 1.0f, 1.0f), .power = 20.0f, .linear = 0.0f, .quadratic = 0.0f});
+    scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
+                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+                                  .power     = 20.0f,
+                                  .linear    = defaultLinearAttenuation,
+                                  .quadratic = defaultQuadraticAttenuation});
 
     // float xPos = 0.0f;
     // for (auto& model : scene->models)

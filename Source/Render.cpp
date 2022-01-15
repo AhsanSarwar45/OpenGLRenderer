@@ -210,6 +210,15 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::sh
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     DrawSkybox(scene->skybox);
+
+    std::shared_ptr<Billboard> lightBillboard = ResourceManager::GetInstance().GetLightBillboard();
+
+    for (const auto& pointLight : scene->pointLights)
+    {
+        lightBillboard->position = pointLight.position;
+
+        RenderBillboard(lightBillboard);
+    }
 }
 
 void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData)
