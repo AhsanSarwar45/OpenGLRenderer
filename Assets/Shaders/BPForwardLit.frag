@@ -58,8 +58,8 @@ void main()
     vec3 normal = texture(material.normal, fragData.TexCoords).rgb;
     normal      = normalize(normal * 2.0 - 1.0);
     normal      = normalize(fragData.TBN * normal);
-    // vec3 albedo = texture(material.albedo, fragData.TexCoords).rgb;
-    vec3  albedo   = pow(texture(material.albedo, fragData.TexCoords).rgb, vec3(2.2));
+    vec3 albedo = texture(material.albedo, fragData.TexCoords).rgb;
+    // vec3  albedo   = pow(texture(material.albedo, fragData.TexCoords).rgb, vec3(2.2));
     float specular = texture(material.specular, fragData.TexCoords).r;
 
     // then calculate lighting as usual
@@ -78,12 +78,12 @@ void main()
         float spec       = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
         spec *= specular;
         // attenuation
-        float distance    = length(pointLights[i].position - fragData.FragPos);
-        float attenuation = 1.0 / (1.0 + pointLights[i].linear * distance + pointLights[i].quadratic * distance * distance);
-        // float attenuation = 1.0 / (distance);
+        float distance = length(pointLights[i].position - fragData.FragPos);
+        // float attenuation = 1.0 / (1.0 + pointLights[i].linear * distance + pointLights[i].quadratic * distance * distance);
+        float attenuation = 1.0 / (distance);
         diffuse *= attenuation;
         spec *= attenuation;
-        lighting += (diffuse + spec) * pointLights[i].color * pointLights[i].power;
+        lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 25.0f);
     }
 
     for (int i = 0; i < numDirectionalLights; ++i)
