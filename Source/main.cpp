@@ -98,23 +98,26 @@ int main()
     float defaultLinearAttenuation    = 8.0f;
     float defaultQuadraticAttenuation = 0.1f;
 
-    scene->pointLights.push_back({.position  = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+    scene->pointLights.push_back({.position  = {1.0f, 1.0f, 1.0f},
+                                  .color     = {1.0f, 1.0f, 1.0f},
                                   .power     = 20.0f,
                                   .linear    = defaultLinearAttenuation,
                                   .quadratic = defaultQuadraticAttenuation});
 
-    scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
-                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .power     = 20.0f,
-                                  .linear    = defaultLinearAttenuation,
-                                  .quadratic = defaultQuadraticAttenuation});
+    // scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
+    //                               .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+    //                               .power     = 20.0f,
+    //                               .linear    = defaultLinearAttenuation,
+    //                               .quadratic = defaultQuadraticAttenuation});
 
-    scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-                                  .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-                                  .power     = 20.0f,
-                                  .linear    = defaultLinearAttenuation,
-                                  .quadratic = defaultQuadraticAttenuation});
+    // scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
+    //                               .color     = glm::vec3(1.0f, 1.0f, 1.0f),
+    //                               .power     = 20.0f,
+    //                               .linear    = defaultLinearAttenuation,
+    //                               .quadratic = defaultQuadraticAttenuation});
+
+    scene->sunLights.push_back(
+        {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 
     // float xPos = 0.0f;
     // for (auto& model : scene->models)
@@ -155,10 +158,10 @@ int main()
     const std::vector<RenderPass> deferredRenderPipeline = {
         [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSGeometryPass(scene, dsRenderData); },
         [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSLightPass(scene, dsRenderData); },
-        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }};
+        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }, RenderTransparentPass};
 
     const std::vector<RenderPass> forwardRenderPipeline = {
-        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForward(scene, forwardRenderData); }};
+        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForward(scene, forwardRenderData); }, RenderTransparentPass};
 
     renderPasses = deferredRenderPipeline;
 
@@ -234,21 +237,47 @@ int main()
         }
         if (ImGui::TreeNode("Lights"))
         {
-            int lightIndex = 0;
-            for (auto& light : scene->pointLights)
+            if (ImGui::TreeNode("Point Lights"))
             {
-                if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
+                int lightIndex = 0;
+                for (auto& light : scene->pointLights)
                 {
-                    ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
+                    if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
+                    {
+                        ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
 
-                    ImGui::ColorEdit3("Color", (float*)(&light.color));
+                        ImGui::ColorEdit3("Color", (float*)(&light.color));
 
-                    ImGui::DragFloat("Power", &light.power, 0.05f);
-                    ImGui::DragFloat("Linear", &light.linear, 0.003f);
-                    ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f);
-                    ImGui::TreePop();
+                        ImGui::DragFloat("Power", &light.power, 0.05f);
+                        ImGui::DragFloat("Linear", &light.linear, 0.003f);
+                        ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f);
+                        ImGui::TreePop();
+                    }
+                    lightIndex++;
                 }
-                lightIndex++;
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Sun Lights"))
+            {
+                int lightIndex = 0;
+                for (auto& light : scene->sunLights)
+                {
+                    if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
+                    {
+                        ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
+
+                        glm::vec3 rotation = glm::degrees(light.direction);
+                        ImGui::DragFloat3("Direction", (float*)(&rotation), 0.3f);
+                        light.direction = glm::radians(rotation);
+
+                        ImGui::ColorEdit3("Color", (float*)(&light.color));
+
+                        ImGui::DragFloat("Power", &light.power, 0.05f);
+                        ImGui::TreePop();
+                    }
+                    lightIndex++;
+                }
+                ImGui::TreePop();
             }
             ImGui::TreePop();
         }

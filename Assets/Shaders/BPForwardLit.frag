@@ -29,7 +29,7 @@ struct PointLight
     float quadratic;
 };
 
-struct DirectionalLight
+struct SunLight
 {
     vec3 direction;
 
@@ -42,11 +42,11 @@ uniform Material material;
 
 const int MAX_LIGHTS = 32;
 
-uniform PointLight       pointLights[MAX_LIGHTS];
-uniform DirectionalLight directionalLights[MAX_LIGHTS];
+uniform PointLight pointLights[MAX_LIGHTS];
+uniform SunLight   sunLights[MAX_LIGHTS];
 
 uniform int numPointLights;
-uniform int numDirectionalLights;
+uniform int numSunLights;
 
 uniform vec3 viewPos;
 
@@ -86,10 +86,10 @@ void main()
         lighting += (diffuse + spec) * pointLights[i].color * (pointLights[i].power / 25.0f);
     }
 
-    for (int i = 0; i < numDirectionalLights; ++i)
+    for (int i = 0; i < numSunLights; ++i)
     {
         // diffuse
-        vec3 lightDir = normalize(directionalLights[i].direction);
+        vec3 lightDir = normalize(sunLights[i].direction);
         vec3 diffuse  = max(dot(normal, lightDir), 0.0) * albedo;
 
         // specular
@@ -97,7 +97,7 @@ void main()
         float spec       = pow(max(dot(normal, halfwayDir), 0.0), 16.0);
         spec *= specular;
 
-        lighting += (diffuse + spec) * directionalLights[i].color * (directionalLights[i].power / 4.0);
+        lighting += (diffuse + spec) * sunLights[i].color * (sunLights[i].power / 25.0);
     }
 
     FragColor = vec4(lighting, 1.0);

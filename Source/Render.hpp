@@ -62,6 +62,8 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::sh
 
 void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures);
 
+void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
+
 void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData);
 void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData);
 
@@ -69,5 +71,4 @@ void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shader);
 void RenderModel(const std::shared_ptr<const Model> model);
-void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram);
-void RenderBillboard(const std::shared_ptr<const Billboard> billboard);
+void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram, TextureId textureId);

@@ -144,19 +144,17 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProg
     }
 }
 
-void RenderBillboard(const std::shared_ptr<const Billboard> billboardPtr, ShaderProgram shaderProgram)
+void RenderBillboard(const std::shared_ptr<const Billboard> billboardPtr, ShaderProgram shaderProgram, TextureId textureId)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     const Billboard billboard = *billboardPtr;
 
-    UseShaderProgram(shaderProgram);
-
     ShaderSetFloat3(shaderProgram, "billboardPos", billboard.position);
     ShaderSetFloat2(shaderProgram, "billboardScale", billboard.scale);
 
-    BindTexture(billboard.texture.id, 0);
+    BindTexture(textureId, 0);
     ShaderSetInt(shaderProgram, "material.albedo", 0);
 
     glBindVertexArray(billboard.vao);
@@ -165,8 +163,6 @@ void RenderBillboard(const std::shared_ptr<const Billboard> billboardPtr, Shader
 
     glDisable(GL_BLEND);
 }
-
-void RenderBillboard(const std::shared_ptr<const Billboard> billboard) { RenderBillboard(billboard, billboard->shader); }
 
 void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData)
 {
@@ -210,14 +206,31 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::sh
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     DrawSkybox(scene->skybox);
+}
 
-    std::shared_ptr<Billboard> lightBillboard = ResourceManager::GetInstance().GetLightBillboard();
+void RenderTransparentPass(const std::shared_ptr<const Scene> scene)
+{
+
+    std::shared_ptr<Billboard> lightBillboard = ResourceManager::GetInstance().GetBillboard();
+
+    ShaderProgram billboardShader         = ResourceManager::GetInstance().GetBillboardShader();
+    TextureId     pointLightTexture       = ResourceManager::GetInstance().GetPointLightIcon();
+    TextureId     directionalLightTexture = ResourceManager::GetInstance().GetSunLightIcon();
+
+    UseShaderProgram(billboardShader);
 
     for (const auto& pointLight : scene->pointLights)
     {
         lightBillboard->position = pointLight.position;
 
-        RenderBillboard(lightBillboard);
+        RenderBillboard(lightBillboard, billboardShader, pointLightTexture);
+    }
+
+    for (const auto& sunLight : scene->sunLights)
+    {
+        lightBillboard->position = sunLight.position;
+
+        RenderBillboard(lightBillboard, billboardShader, directionalLightTexture);
     }
 }
 
@@ -240,15 +253,6 @@ void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_p
     }
 
     DrawSkybox(scene->skybox);
-
-    std::shared_ptr<Billboard> lightBillboard = ResourceManager::GetInstance().GetLightBillboard();
-
-    for (const auto& pointLight : scene->pointLights)
-    {
-        lightBillboard->position = pointLight.position;
-
-        RenderBillboard(lightBillboard);
-    }
 }
 
 void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData)

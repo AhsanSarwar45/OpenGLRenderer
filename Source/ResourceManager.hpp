@@ -61,7 +61,11 @@ class ResourceManager
 
     inline const char* GetOpenGLVersion() const { return m_OpenGLVersion; }
 
-    inline std::shared_ptr<Billboard> GetLightBillboard() const { return m_LightBillboard; }
+    inline std::shared_ptr<Billboard> GetBillboard() const { return m_Billboard; }
+
+    TextureId GetSunLightIcon() const { return m_SunLightIcon; }
+
+    TextureId GetPointLightIcon() const { return m_PointLightIcon; }
 
   private:
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
@@ -82,7 +86,10 @@ class ResourceManager
 
     // ShaderStageId m_FallbackFragmentStage;
 
+    TextureId m_PointLightIcon;
+    TextureId m_SunLightIcon;
+
     Quad m_ScreenQuad;
 
-    std::shared_ptr<Billboard> m_LightBillboard;
+    std::shared_ptr<Billboard> m_Billboard;
 };

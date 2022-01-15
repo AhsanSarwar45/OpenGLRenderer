@@ -2,6 +2,7 @@
 #include "Billboard.hpp"
 #include "Quad.hpp"
 #include "Shader.hpp"
+#include "Texture.hpp"
 #include <memory>
 #include <vector>
 
@@ -28,9 +29,12 @@ void ResourceManager::Initialize()
 
     m_ScreenQuad = CreateQuad();
 
-    m_LightBillboard        = std::make_shared<Billboard>();
-    *m_LightBillboard       = LoadBillboard("../Assets/Images/BulbIcon2.png");
-    m_LightBillboard->scale = {0.5f, 0.5f};
+    m_PointLightIcon = LoadTexture("../Assets/Images/BulbIcon2.png").id;
+    m_SunLightIcon   = LoadTexture("../Assets/Images/sunIcon.png").id;
+
+    m_Billboard        = std::make_shared<Billboard>();
+    *m_Billboard       = CreateBillboard();
+    m_Billboard->scale = {0.5f, 0.5f};
 }
 
 void ResourceManager::AddDirtyShader(const std::filesystem::path& path)
