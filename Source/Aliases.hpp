@@ -13,3 +13,5 @@ using ShaderProgram = unsigned int;
 
 using ShaderStageId = unsigned int;
 using ShaderType    = unsigned int; // TODO rename this
+
+using UniformLocation = unsigned int;

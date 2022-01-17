@@ -8,7 +8,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-Texture LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name, bool flipTexture)
+TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture)
 {
 
     stbi_set_flip_vertically_on_load(flipTexture);
@@ -69,20 +69,16 @@ Texture LoadTexture(const std::filesystem::path& path, const TextureType type, c
     std::string pathStr  = path.string();
     const char* pathCStr = pathStr.c_str();
 
-    return {.path           = pathCStr,
-            .name           = name,
-            .id             = textureId,
+    return {.id             = textureId,
             .type           = type,
             .width          = static_cast<TextureDimension>(width),
             .height         = static_cast<TextureDimension>(height),
             .componentCount = static_cast<uint8_t>(componentCount),
-            .isLoaded       = isLoaded};
+            .isLoaded       = isLoaded,
+            .isFlipped      = flipTexture};
 }
 
-Texture LoadTexture(const std::filesystem::path& path, const char* name, bool flipTexture)
-{
-    return LoadTexture(path, TextureType::Color, name, flipTexture);
-}
+TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture) { return LoadTexture(path, TextureType::Color, flipTexture); }
 
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
 {

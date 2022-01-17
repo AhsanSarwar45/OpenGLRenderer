@@ -46,11 +46,9 @@ struct RenderingPipeline
     std::vector<RenderPass> renderPasses;
 };
 
-DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height);
-DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height);
+DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height);
 
-ForwardRenderData CreatePBRForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
-ForwardRenderData CreateBPForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
+ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
 
 void ResizeForwardViewport(const std::shared_ptr<ForwardRenderData> renderData, TextureDimension width, TextureDimension height);
 
@@ -70,5 +68,4 @@ void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std
 void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shader);
-void RenderModel(const std::shared_ptr<const Model> model);
 void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram, TextureId textureId);

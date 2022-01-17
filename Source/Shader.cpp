@@ -9,7 +9,7 @@
 #include <string>
 
 #include <glad/glad.h>
-#include <glm/gtc/type_ptr.hpp>
+
 #include <vector>
 
 #include "ResourceManager.hpp"
@@ -82,58 +82,13 @@ ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const
 //     return LoadShaders({vertexShaderPath.string(), fragmentShaderPath.string()}, name, cameraTransform);
 // }
 
-void ShaderSetBool(ShaderProgram shaderProgram, const std::string& name, bool value)
-{
-    glUniform1i(glGetUniformLocation(shaderProgram, name.c_str()), (int)value);
-}
-void ShaderSetInt(ShaderProgram shaderProgram, const std::string& name, int value)
-{
-    glUniform1i(glGetUniformLocation(shaderProgram, name.c_str()), value);
-}
-void ShaderSetFloat(ShaderProgram shaderProgram, const std::string& name, float value)
-{
-    glUniform1f(glGetUniformLocation(shaderProgram, name.c_str()), value);
-}
-
-void ShaderSetInt4(ShaderProgram shaderProgram, const std::string& name, int x, int y, int z, int w)
-{
-    glUniform4i(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z, w);
-}
-void ShaderSetFloat4(ShaderProgram shaderProgram, const std::string& name, float x, float y, float z, float w)
-{
-    glUniform4f(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z, w);
-}
-void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y)
-{
-    glUniform2f(glGetUniformLocation(shaderProgram, uniformName.c_str()), x, y);
-}
-void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec2& vec)
-{
-    ShaderSetFloat2(shaderProgram, uniformName.c_str(), vec.x, vec.y);
-}
-void ShaderSetInt3(ShaderProgram shaderProgram, const std::string& name, int x, int y, int z)
-{
-    glUniform3i(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z);
-}
-void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& name, float x, float y, float z)
-{
-    glUniform3f(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z);
-}
-void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& name, const glm::vec3& vec)
-{
-    glUniform3f(glGetUniformLocation(shaderProgram, name.c_str()), vec.x, vec.y, vec.z);
-}
-void ShaderSetMat4(ShaderProgram shaderProgram, const std::string& name, const glm::mat4& matrix)
-{
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
-}
-
 void UseShaderProgram(const ShaderProgram shaderProgram) { glUseProgram(shaderProgram); }
 
 namespace ShaderInternal
 {
 void LoadShaderStages(ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
 {
+    printf("loaded!");
     bool vertexCompilationFailed = false;
     // find references to existing shaders, and create ones that didn't exist previously.
     for (auto& shaderData : shaderStages)
@@ -284,15 +239,15 @@ void SetToFallback(const ShaderStageId shaderStageId, const ShaderType type)
     if (type == GL_VERTEX_SHADER)
     {
 
-        CompileShaderStage(shaderStageId, GL_VERTEX_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.vert").c_str(), false);
+        CompileShaderStage(shaderStageId, GL_VERTEX_SHADER, ParseShaderStage("../Assets/Shaders/Fallback/Fallback.vert").c_str(), false);
     }
     if (type == GL_FRAGMENT_SHADER)
     {
-        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.frag").c_str(), false);
+        CompileShaderStage(shaderStageId, GL_FRAGMENT_SHADER, ParseShaderStage("../Assets/Shaders/Fallback/Fallback.frag").c_str(), false);
     }
     if (type == GL_GEOMETRY_SHADER)
     {
-        CompileShaderStage(shaderStageId, GL_GEOMETRY_SHADER, ParseShaderStage("../Assets/Shaders/Fallback.geom").c_str(), false);
+        CompileShaderStage(shaderStageId, GL_GEOMETRY_SHADER, ParseShaderStage("../Assets/Shaders/Fallback/Fallback.geom").c_str(), false);
     }
 }
 void DeleteShaderProgram(ShaderProgram shaderProgram) { glDeleteProgram(shaderProgram); }

@@ -12,16 +12,15 @@ enum class TextureType
     NonColor
 };
 
-struct Texture
+struct TextureAsset
 {
-    const char*      path;
-    const char*      name;
     TextureId        id;
     TextureType      type;
     TextureDimension width;
     TextureDimension height;
     uint8_t          componentCount;
     bool             isLoaded;
+    bool             isFlipped;
 };
 
 struct TextureInternalData
@@ -39,8 +38,8 @@ struct DepthTexture
     TextureDimension height;
 };
 
-Texture      LoadTexture(const std::filesystem::path& path, const char* name = "diffuse", bool flipTexture = false);
-Texture      LoadTexture(const std::filesystem::path& path, const TextureType type, const char* name = "diffuse", bool flipTexture = false);
+TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture = false);
+TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture = false);
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height);
 
 DepthTexture CreateCubeMapTexture(TextureDimension resolution);

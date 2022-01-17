@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <ImGui/imgui.h>
+// #include <filewatch/FileWatch.hpp>
 
 #include "Aliases.hpp"
 #include "Benchmark.hpp"
@@ -16,6 +17,7 @@
 #include "FileWatcher.hpp"
 #include "Framebuffer.hpp"
 #include "Light.hpp"
+#include "Material.hpp"
 #include "Model.hpp"
 #include "Render.hpp"
 #include "ResourceManager.hpp"
@@ -48,7 +50,7 @@ void CheckMinimized(WindowDimension width, WindowDimension height) { minimized =
 
 int main()
 {
-
+    std::vector<std::shared_ptr<Material>> materials;
     // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, materials, shaderProgram);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
@@ -59,41 +61,55 @@ int main()
 
     ResourceManager::GetInstance().Initialize();
 
-    ShaderProgram shaderProgram = ResourceManager::GetInstance().GetBP_ForwardLitShader();
-
     scene->skybox       = LoadSkybox("../Assets/Skyboxes/skybox");
     scene->ambientLight = glm::vec3(0.4f);
 
-    std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
-    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
-    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
-    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
-    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
-    gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
+    // std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
+    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
+    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
+    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
+    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
+    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
 
-    std::shared_ptr<Material> metalLinedPBR = std::make_shared<Material>();
-    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
-    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
-    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
-    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness", true));
-    metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
+    // std::shared_ptr<Material> metalLinedPBR = std::make_shared<Material>();
+    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
+    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
+    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
+    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness",
+    // true)); metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
 
-    std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", shaderProgram, "Gun", true);
-    std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
-    std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
+    std::shared_ptr<Material> gunMaterialPBR = CreateMaterial(ResourceManager::GetInstance().GetDSGeometryShader());
+    SetMaterialTexture(gunMaterialPBR, "albedoMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", true).id);
+    SetMaterialTexture(gunMaterialPBR, "normalMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", true).id);
+    SetMaterialTexture(gunMaterialPBR, "metalnessMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", true).id);
+    SetMaterialTexture(gunMaterialPBR, "roughnessMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", true).id);
+    SetMaterialTexture(gunMaterialPBR, "aoMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", true).id);
 
-    cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
-    cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
+    materials.push_back(gunMaterialPBR);
 
-    sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
+    // gunMaterialPBR->albedoMap                   = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true).id;
+    // gunMaterialPBR->normalMap                   = LoadTexture("../Assets/Models/9mmfbx/source/unGS_NormalGL.png", "normal", true).id;
+    // gunMaterialPBR->roughnessMap                = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness",
+    // true).id; gunMaterialPBR->metalnessMap                = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png",
+    // "roughness", true).id; gunMaterialPBR->aoMap                       = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png",
+    // "ao", true).id;
+
+    std::shared_ptr<Model> gun = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
+    // std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
+    // std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
+
+    // cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
+    // cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
+
+    // sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
 
     SetMaterial(gun, gunMaterialPBR);
-    SetMaterial(sphere, metalLinedPBR);
-    SetMaterial(cube, metalLinedPBR);
+    // SetMaterial(sphere, metalLinedPBR);
+    // SetMaterial(cube, metalLinedPBR);
 
     scene->models.push_back(gun);
-    scene->models.push_back(sphere);
-    scene->models.push_back(cube);
+    // scene->models.push_back(sphere);
+    // scene->models.push_back(cube);
 
     float defaultLinearAttenuation    = 8.0f;
     float defaultQuadraticAttenuation = 0.1f;
@@ -134,14 +150,19 @@ int main()
 
     fileWatcher->watch();
 
+    // filewatch::FileWatch<std::filesystem::path> watch(L"../Assets/Shaders",
+    //                                                   [](const std::filesystem::path& path, const filewatch::Event change_type) {
+    //                                                       std::wcout << std::filesystem::absolute(path) << L"\n";
+    //                                                   });
+
     // DepthTexture depthMap = CreateDepthTexture(2048, 2048);
 
     // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
 
-    std::shared_ptr<DSRenderData> dsRenderData = std::make_shared<DSRenderData>();
-    *dsRenderData                              = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+    std::shared_ptr<DSRenderData> dsRenderData           = std::make_shared<DSRenderData>();
+    *dsRenderData                                        = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     std::shared_ptr<ForwardRenderData> forwardRenderData = std::make_shared<ForwardRenderData>();
-    *forwardRenderData = CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+    *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
 
     // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
     //     ResizeFramebufferTextures(&DSRenderData, width, height);
@@ -165,10 +186,8 @@ int main()
 
     renderPasses = deferredRenderPipeline;
 
-    std::vector<RenderingPipeline> renderingPipelines = {{"PBR Deferred + Forward Shading", deferredRenderPipeline},
-                                                         {"BP Deferred + Forward Shading", deferredRenderPipeline},
-                                                         {"BP Forward Shading", forwardRenderPipeline},
-                                                         {"PBR Forward Shading", forwardRenderPipeline}};
+    std::vector<RenderingPipeline> renderingPipelines = {{"Deferred + Forward Shading", deferredRenderPipeline},
+                                                         {"Forward Shading", forwardRenderPipeline}};
 
     std::vector<const char*> pipelineNames;
 
@@ -301,40 +320,23 @@ int main()
             ImGui::DragFloat("Ortho Size", &shadowMapOrtho, 1.0f);
             ImGui::TreePop();
         }
-        if (ImGui::TreeNode("Material"))
+        if (ImGui::TreeNode("Materials"))
         {
-            // int total = -1;
-            // glGetProgramiv(shaderProgram, GL_ACTIVE_UNIFORMS, &total);
-            // for (int i = 0; i < total; ++i)
-            // {
-            //     int    name_len = -1, num = -1;
-            //     GLenum type = GL_ZERO;
-            //     char   name[100];
-            //     glGetActiveUniform(shaderProgram, GLuint(i), sizeof(name) - 1, &name_len, &num, &type, name);
-            //     name[name_len]  = 0;
-            //     GLuint location = glGetUniformLocation(shaderProgram, name);
+            int materialIndex = 0;
+            for (auto& material : materials)
+            {
+                if (ImGui::TreeNode(std::to_string(materialIndex).c_str()))
+                {
+                    for (auto& textureUnifrom : material->textureUniforms)
+                    {
+                        ImGui::Text("%s", textureUnifrom.name.c_str());
+                        ImGui::Image((void*)(intptr_t)textureUnifrom.textureId, ImVec2(52, 52), ImVec2(0, 1), ImVec2(1, 0));
+                    }
 
-            //     std::string typeString;
-
-            //     if (type == GL_FLOAT_MAT4)
-            //         typeString = "mat4";
-            //     else if (type == GL_FLOAT_VEC3)
-            //         typeString = "vec3";
-            //     else if (type == GL_FLOAT_VEC4)
-            //         typeString = "vec4";
-            //     else if (type == GL_FLOAT)
-            //         typeString = "float";
-            //     else if (type == GL_INT)
-            //         typeString = "int";
-            //     else if (type == GL_BOOL)
-            //         typeString = "bool";
-            //     else if (type == GL_SAMPLER_2D)
-            //         typeString = "sampler2d";
-            //     else
-            //         typeString = type;
-
-            //     ImGui::Text("Uniform Info Name: %s, Location: %d, Type:%s", name, location, typeString.c_str());
-            // }
+                    ImGui::TreePop();
+                }
+                materialIndex++;
+            }
             ImGui::TreePop();
         }
         if (ImGui::TreeNode("Render Settings"))
@@ -345,23 +347,16 @@ int main()
             {
 
                 renderPasses = renderingPipelines[currentPipeline].renderPasses;
-                printf("%d", currentPipeline);
                 switch (currentPipeline)
                 {
                 case 0:
-                    DeleteDSRenderData(dsRenderData);
-                    *dsRenderData = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                    SetMaterialShader(gunMaterialPBR, ResourceManager::GetInstance().GetDSGeometryShader());
+                    // DeleteDSRenderData(dsRenderData);
+                    // *dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
                     break;
                 case 1:
-                    DeleteDSRenderData(dsRenderData);
-                    *dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                    break;
-                case 2:
-                    *forwardRenderData = CreateBPForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
-                    ;
-                    break;
-                case 3:
-                    *forwardRenderData = CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+                    // *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+                    SetMaterialShader(gunMaterialPBR, ResourceManager::GetInstance().GetForwardLitShader());
                     break;
                 }
             }

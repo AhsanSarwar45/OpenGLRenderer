@@ -36,8 +36,7 @@ struct FramebufferTextureData
     unsigned int internalFormat;
 };
 
-GeometryFramebuffer CreateBPGeometryBuffer(TextureDimension width, TextureDimension height);
-GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimension width, TextureDimension height);
+GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height);
 
 Framebuffer CreateFramebuffer();
 void        DeleteFramebuffer(Framebuffer framebuffer);

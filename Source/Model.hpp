@@ -18,14 +18,10 @@ struct Model
     Transform                              transform;
     std::vector<std::shared_ptr<Mesh>>     meshes;
     std::vector<std::shared_ptr<Material>> materials;
-    ShaderProgram                          shaderProgram;
 };
 
-std::shared_ptr<Model> LoadModelOBJ(const std::filesystem::path& path, ShaderProgram shaderProgram,
-                                    const std::string& name = "Model", bool flipTexture = false);
-
-std::shared_ptr<Model> LoadModel(const std::filesystem::path& path, ShaderProgram shaderProgram,
-                                 const std::string& name = "Model", bool flipTexture = false);
+std::shared_ptr<Model> LoadModel(const std::filesystem::path& path, std::shared_ptr<Material> material, const std::string& name = "Model",
+                                 bool flipTexture = false);
 
 void SetMaterial(std::shared_ptr<Model> model, std::shared_ptr<Material> material);
 

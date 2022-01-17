@@ -8,24 +8,20 @@
 
 void ResourceManager::Initialize()
 {
-    m_SkyboxShader    = LoadShader({"../Assets/Shaders/Skybox.vert", "../Assets/Shaders/Skybox.frag"}, "Skybox", false);
-    m_BillboardShader = LoadShader({"../Assets/Shaders/Billboard.vert", "../Assets/Shaders/Billboard.frag"}, "Billboard");
+    m_SkyboxShader = LoadShader({"../Assets/Shaders/Skybox/Skybox.vert", "../Assets/Shaders/Skybox/Skybox.frag"}, "Skybox", false);
+    m_BillboardShader =
+        LoadShader({"../Assets/Shaders/Billboard/Billboard.vert", "../Assets/Shaders/Billboard/Billboard.frag"}, "Billboard");
 
-    m_BP_ForwardLitShader  = LoadShader({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/BPForwardLit.frag"}, "BP Forward");
-    m_PBR_ForwardLitShader = LoadShader({"../Assets/Shaders/ForwardLit.vert", "../Assets/Shaders/PBRForwardLit.frag"}, "PBR Forward");
+    m_ForwardLitShader = LoadShader({"../Assets/Shaders/Forward/ForwardLit.vert", "../Assets/Shaders/Forward/ForwardLit.frag"}, "Forward");
 
-    m_ShadowShader = LoadShader(
-        {"../Assets/Shaders/DepthPass.vert", "../Assets/Shaders/DepthPass.frag", "../Assets/Shaders/DepthPass.geom"}, "PBR Forward", false);
+    m_ShadowShader = LoadShader({"../Assets/Shaders/ShadowMap/DepthPass.vert", "../Assets/Shaders/ShadowMap/DepthPass.frag",
+                                 "../Assets/Shaders/ShadowMap/DepthPass.geom"},
+                                "Forward", false);
 
-    m_PBR_DS_GeometryShader =
-        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/PBRDeferredGeometryPass.frag"}, "PBR Geometry Pass");
-    m_PBR_DS_LightingShader =
-        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"}, "PBR Light Pass", false);
-
-    m_BP_DS_GeometryShader =
-        LoadShader({"../Assets/Shaders/DeferredGeometryPass.vert", "../Assets/Shaders/BPDeferredGeometryPass.frag"}, "BP Geometry Pass");
-    m_BP_DS_LightingShader =
-        LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"}, "BP Light Pass", false);
+    m_DSGeometryShader = LoadShader(
+        {"../Assets/Shaders/Deferred/DeferredGeometryPass.vert", "../Assets/Shaders/Deferred/DeferredGeometryPass.frag"}, "Geometry Pass");
+    m_DSLightingShader = LoadShader(
+        {"../Assets/Shaders/Deferred/DeferredLightPass.vert", "../Assets/Shaders/Deferred/DeferredLightPass.frag"}, "Light Pass", false);
 
     m_ScreenQuad = CreateQuad();
 

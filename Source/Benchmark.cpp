@@ -45,19 +45,11 @@ int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<Rende
             {
             case 0:
                 DeleteDSRenderData(benchmarkData.dsRenderData);
-                *benchmarkData.dsRenderData = CreatePBRDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+                *benchmarkData.dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
                 break;
             case 1:
-                DeleteDSRenderData(benchmarkData.dsRenderData);
-                *benchmarkData.dsRenderData = CreateBPDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                break;
-            case 2:
                 *benchmarkData.forwardRenderData =
-                    CreateBPForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
-                break;
-            case 3:
-                *benchmarkData.forwardRenderData =
-                    CreatePBRForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+                    CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
                 break;
             }
         }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(OpenGLV2)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -35,6 +35,7 @@ add_subdirectory("Vendor/glm")
 add_subdirectory("Vendor/GLFW")
 add_subdirectory("Vendor/Glad")
 add_subdirectory("Vendor/efsw")
+# add_subdirectory("Vendor/filewatch")
 add_subdirectory("Vendor/assimp")
 # add_subdirectory("Vendor/rttr")
 
@@ -55,6 +56,8 @@ add_executable(${PROJECT_NAME}
 "Source/Quad.cpp"
 "Source/Render.cpp"
 "Source/Scene.cpp"
+"Source/Uniform.cpp"
+"Source/Material.cpp"
 "Source/FileWatcher.cpp"
 "Source/Billboard.cpp"
 "Source/ResourceManager.cpp"
@@ -80,10 +83,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC "Vendor")
 target_include_directories(${PROJECT_NAME} PUBLIC "Vendor/ImGui")
 
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
-target_link_libraries(${PROJECT_NAME} PUBLIC stdc++fs)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
 target_link_libraries(${PROJECT_NAME} PUBLIC glad)
-target_link_libraries(${PROJECT_NAME} PUBLIC tinyobjloader)
 target_link_libraries(${PROJECT_NAME} PUBLIC efsw)
+target_link_libraries(${PROJECT_NAME} PUBLIC tinyobjloader)
 target_link_libraries(${PROJECT_NAME} PUBLIC assimp)
-# target_link_libraries(${PROJECT_NAME} PUBLIC Core_Lib)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+target_link_libraries(${PROJECT_NAME} PUBLIC stdc++fs)
+endif()

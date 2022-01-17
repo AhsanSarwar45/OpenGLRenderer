@@ -10,14 +10,11 @@ in VertexData
 }
 fragData;
 
-struct Material
-{
-    sampler2D albedo;
-    sampler2D normal;
-    sampler2D metalness;
-    sampler2D roughness;
-    sampler2D ao;
-};
+uniform sampler2D albedoMap;
+uniform sampler2D normalMap;
+uniform sampler2D metalnessMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D aoMap;
 
 struct PointLight
 {
@@ -30,8 +27,6 @@ struct PointLight
     float linear;
     float quadratic;
 };
-
-uniform Material material;
 
 const float PI         = 3.14159265359;
 const int   MAX_LIGHTS = 32;
@@ -82,14 +77,14 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 void main()
 {
 
-    vec3 normal = texture(material.normal, fragData.TexCoords).rgb;
+    vec3 normal = texture(normalMap, fragData.TexCoords).rgb;
     normal      = normalize(normal * 2.0 - 1.0);
     normal      = normalize(fragData.TBN * normal);
-    // vec3 albedo = texture(material.albedo, fragData.TexCoords).rgb;
-    vec3  albedo    = pow(texture(material.albedo, fragData.TexCoords).rgb, vec3(2.2));
-    float metallic  = texture(material.metalness, fragData.TexCoords).r;
-    float roughness = texture(material.roughness, fragData.TexCoords).r;
-    float ao        = texture(material.ao, fragData.TexCoords).r;
+    // vec3 albedo = texture(albedo, fragData.TexCoords).rgb;
+    vec3  albedo    = pow(texture(albedoMap, fragData.TexCoords).rgb, vec3(2.2));
+    float metallic  = texture(metalnessMap, fragData.TexCoords).r;
+    float roughness = texture(roughnessMap, fragData.TexCoords).r;
+    float ao        = texture(aoMap, fragData.TexCoords).r;
 
     vec3 fragPos = fragData.FragPos;
 

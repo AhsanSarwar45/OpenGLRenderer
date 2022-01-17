@@ -10,3 +10,6 @@
 [submodule "Vendor/assimp"]
 	path = Vendor/assimp
 	url = https://github.com/assimp/assimp
+[submodule "Vendor/filewatch"]
+	path = Vendor/filewatch
+	url = https://github.com/ThomasMonkman/filewatch

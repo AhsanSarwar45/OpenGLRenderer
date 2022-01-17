@@ -97,7 +97,7 @@ void DeleteGeometryFramebuffer(const GeometryFramebuffer& geometryBuffer)
     }
 }
 
-GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimension width, TextureDimension height)
+GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height)
 {
     auto framebufferTextures = std::vector<FramebufferTextureData>(4);
 
@@ -105,17 +105,6 @@ GeometryFramebuffer CreatePBRGeometryBuffer(TextureDimension width, TextureDimen
     framebufferTextures[1] = {"gNormal", GL_RGBA16F};
     framebufferTextures[2] = {"gAlbedo", GL_RGBA};
     framebufferTextures[3] = {"gMetalnessRoughnessAO", GL_RGBA};
-
-    return CreateGeometryFramebuffer(framebufferTextures, width, height);
-}
-
-GeometryFramebuffer CreateBPGeometryBuffer(TextureDimension width, TextureDimension height)
-{
-    auto framebufferTextures = std::vector<FramebufferTextureData>(3);
-
-    framebufferTextures[0] = {"gPosition", GL_RGBA16F};
-    framebufferTextures[1] = {"gNormal", GL_RGBA16F};
-    framebufferTextures[2] = {"gAlbedoSpec", GL_RGBA};
 
     return CreateGeometryFramebuffer(framebufferTextures, width, height);
 }

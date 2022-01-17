@@ -27,50 +27,24 @@ void RenderQuad(const Quad& quad)
     glBindVertexArray(0);
 }
 
-// DSRenderData CreateDSRenderData(const GeometryFramebuffer& gBuffer, ShaderProgram geometryPassShader, ShaderProgram lightPassShader,
-//                                 WindowDimension width, WindowDimension height)
-// {
-//     return data;
-// }
-DSRenderData CreatePBRDSRenderData(WindowDimension width, WindowDimension height)
+DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height)
 {
-    GeometryFramebuffer gBuffer      = CreatePBRGeometryBuffer(width, height);
+    GeometryFramebuffer gBuffer      = CreateGeometryBuffer(width, height);
     const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
-    ShaderProgram lightPassShader = LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/PBRDeferredLightPass.frag"},
-                                               "Light Pass", false, initFunction);
+    ShaderProgram       lightPassShader =
+        LoadShader({"../Assets/Shaders/Deferred/DeferredLightPass.vert", "../Assets/Shaders/Deferred/DeferredLightPass.frag"}, "Light Pass",
+                   false, initFunction);
     return {
         .gBuffer            = gBuffer,
         .screenQuad         = ResourceManager::GetInstance().GetScreenQuad(),
-        .geometryPassShader = ResourceManager::GetInstance().GetPBR_DS_GeometryShader(),
-        .lightPassShader    = lightPassShader,
-    };
-}
-DSRenderData CreateBPDSRenderData(WindowDimension width, WindowDimension height)
-{
-    GeometryFramebuffer gBuffer      = CreateBPGeometryBuffer(width, height);
-    const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
-    ShaderProgram lightPassShader = LoadShader({"../Assets/Shaders/DeferredLightPass.vert", "../Assets/Shaders/BPDeferredLightPass.frag"},
-                                               "Light Pass", false, initFunction);
-    return {
-        .gBuffer            = gBuffer,
-        .screenQuad         = ResourceManager::GetInstance().GetScreenQuad(),
-        .geometryPassShader = ResourceManager::GetInstance().GetBP_DS_GeometryShader(),
+        .geometryPassShader = ResourceManager::GetInstance().GetDSGeometryShader(),
         .lightPassShader    = lightPassShader,
     };
 }
 
-ForwardRenderData CreatePBRForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution)
+ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution)
 {
-    return {.forwardPassShader = ResourceManager::GetInstance().GetPBR_ForwardLitShader(),
-            .depthPassShader   = ResourceManager::GetInstance().GetShadowShader(),
-            .depthFramebuffer  = Create3DDepthFramebuffer(shadowResolution),
-            .width             = width,
-            .height            = height};
-}
-
-ForwardRenderData CreateBPForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution)
-{
-    return {.forwardPassShader = ResourceManager::GetInstance().GetBP_ForwardLitShader(),
+    return {.forwardPassShader = ResourceManager::GetInstance().GetForwardLitShader(),
             .depthPassShader   = ResourceManager::GetInstance().GetShadowShader(),
             .depthFramebuffer  = Create3DDepthFramebuffer(shadowResolution),
             .width             = width,
@@ -102,8 +76,6 @@ void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<Frame
     }
 }
 
-void RenderModel(const std::shared_ptr<const Model> model) { RenderModel(model, model->shaderProgram); }
-
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram)
 {
     Transform transform = model->transform;
@@ -112,13 +84,14 @@ void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderP
 
     glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
 
-    UseShaderProgram(shaderProgram);
-    ShaderSetMat4(shaderProgram, "model", modelMatrix);
-
     // printf("%s\n", model->name);
     for (auto& mesh : model->meshes)
     {
-        RenderMesh(mesh, shaderProgram, model->materials[mesh->materialId]);
+        std::shared_ptr<Material> material = model->materials[mesh->materialId];
+        UseShaderProgram(material->shaderProgram);
+        ShaderSetMat4(material->shaderProgram, "model", modelMatrix);
+
+        RenderMesh(mesh, material->shaderProgram, material);
     }
 }
 
@@ -126,11 +99,11 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProg
 {
 
     int index = 0;
-    for (auto& texture : material->textures)
+    for (auto& textureUniform : material->textureUniforms)
     {
         // printf("%d: %s\n", mesh->materialId, texture.name);
-        ShaderSetInt(shaderProgram, ("material." + std::string(texture.name)).c_str(), index);
-        BindTexture(texture.id, index);
+        ShaderSetInt(shaderProgram, textureUniform.location, index);
+        BindTexture(textureUniform.textureId, index);
         index++;
     }
 
@@ -138,7 +111,7 @@ void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProg
     glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
-    for (int i = 0; i < material->textures.size(); i++)
+    for (int i = 0; i < material->textureUniforms.size(); i++)
     {
         UnBindTexture(i);
     }
@@ -244,8 +217,8 @@ void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_p
 
     SetSceneUniforms(scene, shaderProgram);
 
-    glActiveTexture(GL_TEXTURE0 + 7);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->depthFramebuffer.depthTexture.id);
+    // glActiveTexture(GL_TEXTURE0 + 7);
+    // glBindTexture(GL_TEXTURE_CUBE_MAP, renderData->depthFramebuffer.depthTexture.id);
 
     for (const auto& model : scene->models)
     {

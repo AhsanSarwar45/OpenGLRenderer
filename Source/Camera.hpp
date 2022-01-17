@@ -7,18 +7,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // Default camera values
-const float YAW         = -90.0f;
-const float PITCH       = 0.0f;
-const float SPEED       = 10.0f;
-const float SENSITIVITY = 0.15f;
-const float ZOOM        = 45.0f;
-const float NEAR        = 0.1f;
-const float FAR         = 1000.0f;
+#define YAW         -90.0f
+#define PITCH       0.0f
+#define SPEED       10.0f
+#define SENSITIVITY 0.15f
+#define ZOOM        45.0f
+#define NEAR_CLIP   0.1f
+#define FAR_CLIP    1000.0f
 
 class Camera
 {
   public:
-    Camera(Window* window, float nearClip = NEAR, float farClip = FAR, glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+    Camera(Window* window, float nearClip = NEAR_CLIP, float farClip = FAR_CLIP, glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
            glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
     Camera(Window* window, float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
     ~Camera();

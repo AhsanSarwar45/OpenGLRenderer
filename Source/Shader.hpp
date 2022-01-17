@@ -25,19 +25,6 @@ struct ShaderStage
 // use/activate the shader
 void UseShaderProgram(const ShaderProgram shaderProgram);
 
-// utility uniform functions
-void ShaderSetBool(ShaderProgram shaderProgram, const std::string& uniformName, bool value);
-void ShaderSetInt(ShaderProgram shaderProgram, const std::string& uniformName, int value);
-void ShaderSetFloat(ShaderProgram shaderProgram, const std::string& uniformName, float value);
-void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y);
-void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec2& vec);
-void ShaderSetInt3(ShaderProgram shaderProgram, const std::string& uniformName, int x, int y, int z);
-void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y, float z);
-void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec3& vec);
-void ShaderSetInt4(ShaderProgram shaderProgram, const std::string& uniformName, int x, int y, int z, int w);
-void ShaderSetFloat4(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y, float z, float w);
-void ShaderSetMat4(ShaderProgram shaderProgram, const std::string& uniformName, const glm::mat4& matrix);
-
 namespace ShaderInternal
 {
 

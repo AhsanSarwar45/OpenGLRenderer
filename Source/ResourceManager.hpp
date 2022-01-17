@@ -46,14 +46,10 @@ class ResourceManager
     inline ShaderProgram GetSkyboxShader() const { return m_SkyboxShader; }
     inline ShaderProgram GetBillboardShader() const { return m_BillboardShader; }
 
-    inline ShaderProgram GetBP_ForwardLitShader() const { return m_BP_ForwardLitShader; }
-    inline ShaderProgram GetPBR_ForwardLitShader() const { return m_PBR_ForwardLitShader; }
+    inline ShaderProgram GetForwardLitShader() const { return m_ForwardLitShader; }
 
-    inline ShaderProgram GetBP_DS_LightingShader() const { return m_BP_DS_LightingShader; }
-    inline ShaderProgram GetBP_DS_GeometryShader() const { return m_BP_DS_GeometryShader; }
-
-    inline ShaderProgram GetPBR_DS_GeometryShader() const { return m_PBR_DS_GeometryShader; }
-    inline ShaderProgram GetPBR_DS_LightingShader() const { return m_PBR_DS_LightingShader; }
+    inline ShaderProgram GetDSGeometryShader() const { return m_DSGeometryShader; }
+    inline ShaderProgram GetDSLightingShader() const { return m_DSLightingShader; }
 
     inline Quad GetScreenQuad() const { return m_ScreenQuad; }
 
@@ -63,9 +59,9 @@ class ResourceManager
 
     inline std::shared_ptr<Billboard> GetBillboard() const { return m_Billboard; }
 
-    TextureId GetSunLightIcon() const { return m_SunLightIcon; }
+    inline TextureId GetSunLightIcon() const { return m_SunLightIcon; }
 
-    TextureId GetPointLightIcon() const { return m_PointLightIcon; }
+    inline TextureId GetPointLightIcon() const { return m_PointLightIcon; }
 
   private:
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
@@ -73,14 +69,11 @@ class ResourceManager
     ShaderProgram                                 m_SkyboxShader;
     ShaderProgram                                 m_BillboardShader;
 
-    ShaderProgram m_BP_ForwardLitShader;
-    ShaderProgram m_PBR_ForwardLitShader;
+    ShaderProgram m_ForwardLitShader;
     ShaderProgram m_ShadowShader;
 
-    ShaderProgram m_BP_DS_GeometryShader;
-    ShaderProgram m_BP_DS_LightingShader;
-    ShaderProgram m_PBR_DS_GeometryShader;
-    ShaderProgram m_PBR_DS_LightingShader;
+    ShaderProgram m_DSGeometryShader;
+    ShaderProgram m_DSLightingShader;
 
     const char* m_OpenGLVersion;
 
