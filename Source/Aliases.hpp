@@ -15,3 +15,9 @@ using ShaderStageId = unsigned int;
 using ShaderType    = unsigned int; // TODO rename this
 
 using UniformLocation = unsigned int;
+
+using VertexBuffer  = unsigned int;
+using VertexArray   = unsigned int;
+using ElementBuffer = unsigned int;
+
+using MaterialId = uint32_t;

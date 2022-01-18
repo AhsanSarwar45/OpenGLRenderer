@@ -7,7 +7,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 
-void InitializeMesh(std::shared_ptr<Mesh> mesh)
+void InitializeMesh(std::shared_ptr<Mesh> mesh, const MeshData& data, MeshType meshType)
 {
     glGenVertexArrays(1, &mesh->vao);
     glGenBuffers(1, &mesh->vbo);
@@ -16,11 +16,10 @@ void InitializeMesh(std::shared_ptr<Mesh> mesh)
     glBindVertexArray(mesh->vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Vertex), &mesh->vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.vertices.size() * sizeof(Vertex), &data.vertices[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), &mesh->indices[0],
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(unsigned int), &data.indices[0], GL_STATIC_DRAW);
 
     // vertex positions
     glEnableVertexAttribArray(0);
@@ -39,4 +38,6 @@ void InitializeMesh(std::shared_ptr<Mesh> mesh)
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
 
     glBindVertexArray(0);
+
+    mesh->numIndices = data.indices.size();
 }

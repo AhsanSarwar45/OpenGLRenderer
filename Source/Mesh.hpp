@@ -2,24 +2,36 @@
 
 #include <array>
 #include <memory>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
+#include "Aliases.hpp"
 #include "Material.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Vertex.hpp"
 
-struct Mesh
+enum class MeshType
+{
+    Static,
+    Dynamic
+};
+
+struct MeshData
 {
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
-
-    unsigned int vao;
-    unsigned int vbo;
-    unsigned int ebo;
-
-    int materialId;
 };
 
-void InitializeMesh(std::shared_ptr<Mesh> mesh);
+struct Mesh
+{
+    VertexArray   vao;
+    VertexBuffer  vbo;
+    ElementBuffer ebo;
+
+    MaterialId   materialId;
+    unsigned int numIndices;
+};
+
+void InitializeMesh(std::shared_ptr<Mesh> mesh, const MeshData& data, MeshType meshType = MeshType::Static);

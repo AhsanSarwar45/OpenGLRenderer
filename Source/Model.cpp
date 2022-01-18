@@ -120,8 +120,7 @@ std::shared_ptr<Mesh> ParseMesh(const aiMesh* rawMesh)
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>();
     mesh->materialId           = rawMesh->mMaterialIndex;
 
-    mesh->vertices = std::vector<Vertex>(rawMesh->mNumVertices);
-    mesh->indices  = std::vector<unsigned>(rawMesh->mNumFaces * 3);
+    MeshData meshData = {.vertices = std::vector<Vertex>(rawMesh->mNumVertices), .indices = std::vector<unsigned>(rawMesh->mNumFaces * 3)};
 
     const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
 
@@ -133,13 +132,11 @@ std::shared_ptr<Mesh> ParseMesh(const aiMesh* rawMesh)
         const aiVector3D* tangent   = &(rawMesh->mTangents[i]);
         const aiVector3D* bitangent = &(rawMesh->mBitangents[i]);
 
-        Vertex vertex = {.Position  = glm::vec3(pos->x, pos->y, pos->z),
-                         .Normal    = glm::vec3(normal->x, normal->y, normal->z),
-                         .TexCoord  = glm::vec2(texCoord->x, texCoord->y),
-                         .Tangent   = glm::vec3(tangent->x, tangent->y, tangent->z),
-                         .Bitangent = glm::vec3(bitangent->x, bitangent->y, bitangent->z)};
-
-        mesh->vertices[i] = vertex;
+        meshData.vertices[i].Position  = {pos->x, pos->y, pos->z};
+        meshData.vertices[i].Normal    = {normal->x, normal->y, normal->z};
+        meshData.vertices[i].TexCoord  = {texCoord->x, texCoord->y};
+        meshData.vertices[i].Tangent   = {tangent->x, tangent->y, tangent->z};
+        meshData.vertices[i].Bitangent = {bitangent->x, bitangent->y, bitangent->z};
     }
 
     for (unsigned int i = 0; i < rawMesh->mNumFaces; i++)
@@ -148,12 +145,12 @@ std::shared_ptr<Mesh> ParseMesh(const aiMesh* rawMesh)
 
         int startIndex = 3 * i;
 
-        mesh->indices[(startIndex) + 0] = face.mIndices[0];
-        mesh->indices[(startIndex) + 1] = face.mIndices[1];
-        mesh->indices[(startIndex) + 2] = face.mIndices[2];
+        meshData.indices[(startIndex) + 0] = face.mIndices[0];
+        meshData.indices[(startIndex) + 1] = face.mIndices[1];
+        meshData.indices[(startIndex) + 2] = face.mIndices[2];
     }
 
-    InitializeMesh(mesh);
+    InitializeMesh(mesh, meshData);
 
     // printf("id %d, num vertices %d, num indices %d\n", mesh->materialId, mesh->vertices.size(),
     // mesh->indices.size());
