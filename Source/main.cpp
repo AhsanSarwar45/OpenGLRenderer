@@ -111,14 +111,11 @@ int main()
     // scene->models.push_back(sphere);
     // scene->models.push_back(cube);
 
-    float defaultLinearAttenuation    = 8.0f;
-    float defaultQuadraticAttenuation = 0.1f;
-
-    scene->pointLights.push_back({.position  = {1.0f, 1.0f, 1.0f},
-                                  .color     = {1.0f, 1.0f, 1.0f},
-                                  .power     = 20.0f,
-                                  .linear    = defaultLinearAttenuation,
-                                  .quadratic = defaultQuadraticAttenuation});
+    scene->pointLights.push_back({
+        .position = {1.0f, 1.0f, 1.0f},
+        .color    = {1.0f, 1.0f, 1.0f},
+        .power    = 20.0f,
+    });
 
     // scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
     //                               .color     = glm::vec3(1.0f, 1.0f, 1.0f),
@@ -268,8 +265,6 @@ int main()
                         ImGui::ColorEdit3("Color", (float*)(&light.color));
 
                         ImGui::DragFloat("Power", &light.power, 0.05f);
-                        ImGui::DragFloat("Linear", &light.linear, 0.003f);
-                        ImGui::DragFloat("Quadratic", &light.quadratic, 0.003f);
                         ImGui::TreePop();
                     }
                     lightIndex++;

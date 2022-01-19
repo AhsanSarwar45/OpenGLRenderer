@@ -23,9 +23,15 @@ struct PointLight
     vec3 color;
 
     float power;
+};
 
-    float linear;
-    float quadratic;
+struct SunLight
+{
+    vec3 direction;
+
+    vec3 color;
+
+    float power;
 };
 
 const float PI         = 3.14159265359;
@@ -34,17 +40,20 @@ const int   MAX_LIGHTS = 32;
 uniform PointLight pointLights[MAX_LIGHTS];
 uniform int        numPointLights;
 
+uniform SunLight sunLights[MAX_LIGHTS];
+uniform int      numSunLights;
+
 uniform vec3 viewPos;
 
 uniform vec3 ambientLight;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) { return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0); }
 
-float DistributionGGX(vec3 N, vec3 H, float roughness)
+float DistributionGGX(vec3 normal, vec3 halfwayDir, float roughness)
 {
     float a      = roughness * roughness;
     float a2     = a * a;
-    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH  = max(dot(normal, halfwayDir), 0.0);
     float NdotH2 = NdotH * NdotH;
 
     float num   = a2;
@@ -74,6 +83,54 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
+vec3 CalculateLighting(PointLight pointLight, vec3 viewDir, vec3 lightDir, vec3 radiance, vec3 normal, vec3 albedo, float metallness,
+                       float roughness, vec3 F0)
+{
+    vec3 halfwayDir = normalize(viewDir + lightDir);
+
+    // cook-torrance brdf
+    float NDF = DistributionGGX(normal, halfwayDir, roughness);
+    float G   = GeometrySmith(normal, viewDir, lightDir, roughness);
+    vec3  F   = fresnelSchlick(max(dot(halfwayDir, viewDir), 0.0), F0);
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallness;
+
+    vec3  numerator   = NDF * G * F;
+    float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+    vec3  specular    = numerator / denominator;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(normal, lightDir), 0.0);
+    return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
+vec3 CalculateSunLighting(SunLight sunLight, vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0)
+{
+    vec3 lightDir = normalize(sunLight.direction);
+
+    vec3 halfwayDir = normalize(viewDir + lightDir);
+    vec3 radiance   = sunLight.color * sunLight.power;
+
+    // cook-torrance brdf
+    float NDF = DistributionGGX(normal, halfwayDir, roughness);
+    float G   = GeometrySmith(normal, viewDir, lightDir, roughness);
+    vec3  F   = fresnelSchlick(max(dot(halfwayDir, viewDir), 0.0), F0);
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallness;
+
+    vec3  numerator   = NDF * G * F;
+    float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
+    vec3  specular    = numerator / denominator;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(normal, lightDir), 0.0);
+    return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
 void main()
 {
 
@@ -82,45 +139,40 @@ void main()
     normal      = normalize(fragData.TBN * normal);
     // vec3 albedo = texture(albedo, fragData.TexCoords).rgb;
     vec3  albedo    = pow(texture(albedoMap, fragData.TexCoords).rgb, vec3(2.2));
-    float metallic  = texture(metalnessMap, fragData.TexCoords).r;
+    float metalness = texture(metalnessMap, fragData.TexCoords).r;
     float roughness = texture(roughnessMap, fragData.TexCoords).r;
     float ao        = texture(aoMap, fragData.TexCoords).r;
 
-    vec3 fragPos = fragData.FragPos;
-
-    vec3 N = normalize(normal);
-    vec3 V = normalize(viewPos - fragPos);
+    vec3 viewDir = normalize(viewPos - fragData.FragPos);
 
     vec3 F0 = vec3(0.04);
-    F0      = mix(F0, albedo, metallic);
+    F0      = mix(F0, albedo, metalness);
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
+
     for (int i = 0; i < numPointLights; ++i)
     {
-        // calculate per-light radiance
-        vec3  L           = normalize(pointLights[i].position - fragPos);
-        vec3  H           = normalize(V + L);
-        float distance    = length(pointLights[i].position - fragPos);
+        PointLight pointLight   = pointLights[i];
+        vec3       lightFragVec = pointLight.position - fragData.FragPos;
+        vec3       lightDir     = normalize(lightFragVec);
+
+        float distance    = length(lightFragVec);
         float attenuation = 1.0 / (distance * distance);
-        vec3  radiance    = pointLights[i].color * attenuation * pointLights[i].power;
+        vec3  radiance    = pointLight.color * attenuation * pointLight.power;
 
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, roughness);
-        float G   = GeometrySmith(N, V, L, roughness);
-        vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+        Lo += CalculateLighting(pointLights[i], viewDir, lightDir, radiance, normal, albedo, metalness, roughness, F0);
+    }
 
-        vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;
+    for (int i = 0; i < numSunLights; ++i)
+    {
+        SunLight sunLight = sunLights[i];
+        vec3     lightDir = normalize(sunLight.direction);
 
-        vec3  numerator   = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3  specular    = numerator / denominator;
+        vec3 halfwayDir = normalize(viewDir + lightDir);
+        vec3 radiance   = sunLight.color * sunLight.power;
 
-        // add to outgoing radiance Lo
-        float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+        Lo += CalculateLighting(pointLights[i], viewDir, lightDir, radiance, normal, albedo, metalness, roughness, F0);
     }
 
     vec3 ambient = ambientLight * albedo * ao;

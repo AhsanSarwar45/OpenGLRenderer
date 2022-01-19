@@ -16,8 +16,6 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
         ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].position", pointLight.position);
         ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].color", pointLight.color);
         ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].power", pointLight.power);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].linear", pointLight.linear);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].quadratic", pointLight.quadratic);
 
         index++;
     }
