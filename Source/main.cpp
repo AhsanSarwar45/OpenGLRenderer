@@ -36,10 +36,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-float shadowNearClip = 0.0f;
-float shadowFarClip  = 10.0f;
-float shadowMapOrtho = 5.0f;
-
 bool minimized = false;
 
 std::shared_ptr<Scene> scene = std::make_shared<Scene>();
@@ -87,6 +83,18 @@ int main()
 
     materials.push_back(gunMaterialPBR);
 
+    std::shared_ptr<Material> metalMaterial = CreateMaterial(ResourceManager::GetInstance().GetDSGeometryShader());
+    SetMaterialTexture(metalMaterial, "albedoMap", LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", true).id);
+    SetMaterialTexture(metalMaterial, "normalMap",
+                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", true).id);
+    SetMaterialTexture(metalMaterial, "metalnessMap",
+                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", true).id);
+    SetMaterialTexture(metalMaterial, "roughnessMap",
+                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", true).id);
+    SetMaterialTexture(metalMaterial, "aoMap", LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", true).id);
+
+    materials.push_back(metalMaterial);
+
     // gunMaterialPBR->albedoMap                   = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true).id;
     // gunMaterialPBR->normalMap                   = LoadTexture("../Assets/Models/9mmfbx/source/unGS_NormalGL.png", "normal", true).id;
     // gunMaterialPBR->roughnessMap                = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness",
@@ -94,26 +102,32 @@ int main()
     // "roughness", true).id; gunMaterialPBR->aoMap                       = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png",
     // "ao", true).id;
 
-    std::shared_ptr<Model> gun = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
-    // std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", shaderProgram, "Sphere", true);
-    // std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", shaderProgram, "Cube", true);
+    std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
+    std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", metalMaterial, "Sphere", true);
+    std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", metalMaterial, "Cube", true);
 
-    // cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
-    // cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
+    cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
+    cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
 
-    // sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
+    sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
 
     SetMaterial(gun, gunMaterialPBR);
-    // SetMaterial(sphere, metalLinedPBR);
-    // SetMaterial(cube, metalLinedPBR);
+    SetMaterial(sphere, metalMaterial);
+    SetMaterial(cube, metalMaterial);
 
     scene->models.push_back(gun);
-    // scene->models.push_back(sphere);
-    // scene->models.push_back(cube);
+    scene->models.push_back(sphere);
+    scene->models.push_back(cube);
 
     scene->pointLights.push_back({
         .position = {1.0f, 1.0f, 1.0f},
         .color    = {1.0f, 1.0f, 1.0f},
+        .power    = 20.0f,
+    });
+
+    scene->pointLights.push_back({
+        .position = {-1.0f, 1.0f, 1.0f},
+        .color    = {1.0f, 0.0f, 0.0f},
         .power    = 20.0f,
     });
 
@@ -131,6 +145,8 @@ int main()
 
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
+    scene->sunLights.push_back(
+        {.position = {4.0f, 4.0f, 4.0f}, .direction = {2.0f, 2.0f, 2.0f}, .color = {1.0f, 0.0f, 1.0f}, .power = 10.0f});
 
     // float xPos = 0.0f;
     // for (auto& model : scene->models)
@@ -159,7 +175,7 @@ int main()
     std::shared_ptr<DSRenderData> dsRenderData           = std::make_shared<DSRenderData>();
     *dsRenderData                                        = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     std::shared_ptr<ForwardRenderData> forwardRenderData = std::make_shared<ForwardRenderData>();
-    *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+    *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 1024, 4);
 
     // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
     //     ResizeFramebufferTextures(&DSRenderData, width, height);
@@ -179,6 +195,7 @@ int main()
         [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }, RenderTransparentPass};
 
     const std::vector<RenderPass> forwardRenderPipeline = {
+        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForwardShadowPass(scene, forwardRenderData); },
         [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForward(scene, forwardRenderData); }, RenderTransparentPass};
 
     renderPasses = deferredRenderPipeline;
@@ -287,6 +304,15 @@ int main()
                         ImGui::ColorEdit3("Color", (float*)(&light.color));
 
                         ImGui::DragFloat("Power", &light.power, 0.05f);
+
+                        if (ImGui::TreeNode("Shadows"))
+                        {
+                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &light.shadowMapOrtho, 1.0f);
+                            ImGui::TreePop();
+                        }
                         ImGui::TreePop();
                     }
                     lightIndex++;
@@ -308,13 +334,7 @@ int main()
             ImGui::DragFloat("Far Clip", scene->camera->GetFarClipPtr(), 1.0f);
             ImGui::TreePop();
         }
-        if (ImGui::TreeNode("Shadows"))
-        {
-            ImGui::DragFloat("Near Clip", &shadowNearClip, 0.01f);
-            ImGui::DragFloat("Far Clip", &shadowFarClip, 1.0f);
-            ImGui::DragFloat("Ortho Size", &shadowMapOrtho, 1.0f);
-            ImGui::TreePop();
-        }
+
         if (ImGui::TreeNode("Materials"))
         {
             int materialIndex = 0;
@@ -345,13 +365,20 @@ int main()
                 switch (currentPipeline)
                 {
                 case 0:
-                    SetMaterialShader(gunMaterialPBR, ResourceManager::GetInstance().GetDSGeometryShader());
+                    for (const auto& material : materials)
+                    {
+                        SetMaterialShader(material, ResourceManager::GetInstance().GetDSGeometryShader());
+                    }
+
                     // DeleteDSRenderData(dsRenderData);
                     // *dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
                     break;
                 case 1:
                     // *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
-                    SetMaterialShader(gunMaterialPBR, ResourceManager::GetInstance().GetForwardLitShader());
+                    for (const auto& material : materials)
+                    {
+                        SetMaterialShader(material, ResourceManager::GetInstance().GetForwardSunShader());
+                    }
                     break;
                 }
             }

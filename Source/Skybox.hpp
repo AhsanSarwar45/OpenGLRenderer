@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <string.h>
+#include <filesystem>
 #include <string>
 
 #include "Shader.hpp"
@@ -16,7 +16,7 @@ struct Skybox
     unsigned int textureId;
 };
 
-Skybox LoadSkybox(const std::string& path);
+Skybox LoadSkybox(const std::filesystem::path& directoryPath);
 
 void DeleteSkybox(Skybox& skybox);
 

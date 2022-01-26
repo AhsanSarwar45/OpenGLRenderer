@@ -2,9 +2,11 @@
 
 #include <functional>
 #include <memory>
+#include <stdint.h>
 
 #include "Aliases.hpp"
 #include "Framebuffer.hpp"
+#include "Light.hpp"
 #include "Quad.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
@@ -32,11 +34,16 @@ struct DSRenderData
 struct ForwardRenderData
 {
     ShaderProgram forwardPassShader;
-    ShaderProgram depthPassShader;
+    ShaderProgram shadowPassShader;
 
-    DepthFramebuffer depthFramebuffer;
+    DepthFramebuffer shadowFramebuffer;
     WindowDimension  width;
     WindowDimension  height;
+
+    uint16_t                    maxLightCount;
+    std::vector<LightTransform> lightTransforms;
+
+    UniformBuffer lightTransformUB;
 };
 
 struct RenderingPipeline
@@ -48,7 +55,8 @@ struct RenderingPipeline
 
 DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height);
 
-ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution);
+ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution = 1024,
+                                          uint16_t maxLightCount = 32);
 
 void ResizeForwardViewport(const std::shared_ptr<ForwardRenderData> renderData, TextureDimension width, TextureDimension height);
 
@@ -63,9 +71,11 @@ void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<Frame
 void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
 
 void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData);
-void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData);
+void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<ForwardRenderData> renderData);
 
 void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
-void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shader);
+void RenderMeshDepth(const std::shared_ptr<const Mesh> mesh);
+void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);
+void RenderModelDepth(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);
 void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram, TextureId textureId);

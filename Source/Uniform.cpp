@@ -3,6 +3,21 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
+UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size)
+{
+    UniformBuffer uniformBuffer;
+    glGenBuffers(1, &uniformBuffer);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 2, uniformBuffer);
+    glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_STATIC_DRAW);
+    return uniformBuffer;
+}
+
+void SetUniformBufferSubData(UniformBuffer uniformBuffer, void* data, size_t size)
+{
+    glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffer);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
+}
+
 void ShaderSetBool(ShaderProgram shaderProgram, const std::string& uniformName, bool value)
 {
     ShaderSetBool(shaderProgram, glGetUniformLocation(shaderProgram, uniformName.c_str()), value);

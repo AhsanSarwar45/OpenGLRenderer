@@ -2,11 +2,11 @@
 
 #include "Aliases.hpp"
 
-struct Quad
+struct Cube
 {
     VertexArray  vao;
     VertexBuffer vbo;
 };
 
-Quad CreateQuad();
-void DeleteQuad(Quad quad);
+Cube CreateCube();
+void DeleteCube(Cube quad);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <corecrt.h>
 #include <glm/glm.hpp>
 
 #include "Aliases.hpp"
@@ -11,6 +12,10 @@ struct TextureUniform
     TextureId       textureId;
     UniformLocation location;
 };
+
+UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size);
+
+void SetUniformBufferSubData(UniformBuffer uniformBuffer, void* data, size_t size);
 
 // utility uniform functions
 void ShaderSetBool(ShaderProgram shaderProgram, const std::string& uniformName, bool value);

@@ -88,7 +88,6 @@ namespace ShaderInternal
 {
 void LoadShaderStages(ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
 {
-    printf("loaded!");
     bool vertexCompilationFailed = false;
     // find references to existing shaders, and create ones that didn't exist previously.
     for (auto& shaderData : shaderStages)

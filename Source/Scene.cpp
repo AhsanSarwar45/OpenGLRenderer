@@ -26,6 +26,7 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
         ShaderSetFloat3(shaderProgram, "sunLights[" + indexStr + "].direction", sunLight.direction);
         ShaderSetFloat3(shaderProgram, "sunLights[" + indexStr + "].color", sunLight.color);
         ShaderSetFloat(shaderProgram, "sunLights[" + indexStr + "].power", sunLight.power);
+        ShaderSetFloat(shaderProgram, "sunLights[" + indexStr + "].shadowBias", sunLight.shadowBias);
 
         index++;
     }

@@ -20,8 +20,8 @@ DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
     Framebuffer depthFramebuffer = CreateFrameBuffer();
 
     glBindFramebuffer(GL_FRAMEBUFFER, depthFramebuffer);
-    glDrawBuffer(GL_NONE);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture.id, 0);
+    glDrawBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     return {depthFramebuffer, depthTexture};
@@ -30,6 +30,12 @@ DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
 DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height)
 {
     DepthTexture depthTexture = CreateDepthTexture(width, height);
+    return CreateDepthFramebuffer(depthTexture);
+}
+
+DepthFramebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height)
+{
+    DepthTexture depthTexture = CreateDepthTextureArray(numDepthMaps, width, height);
     return CreateDepthFramebuffer(depthTexture);
 }
 

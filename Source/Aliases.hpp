@@ -14,7 +14,9 @@ using ShaderProgram = unsigned int;
 using ShaderStageId = unsigned int;
 using ShaderType    = unsigned int; // TODO rename this
 
-using UniformLocation = unsigned int;
+using UniformLocation      = unsigned int;
+using UniformBuffer        = unsigned int;
+using UniformBufferBinding = unsigned int;
 
 using VertexBuffer  = unsigned int;
 using VertexArray   = unsigned int;

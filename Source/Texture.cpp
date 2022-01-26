@@ -8,7 +8,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture)
+TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture, const std::string& debugName)
 {
 
     stbi_set_flip_vertically_on_load(flipTexture);
@@ -66,8 +66,7 @@ TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType ty
 
     stbi_image_free(data);
 
-    std::string pathStr  = path.string();
-    const char* pathCStr = pathStr.c_str();
+    glObjectLabel(GL_TEXTURE, textureId, strlen(debugName.c_str()), debugName.c_str());
 
     return {.id             = textureId,
             .type           = type,
@@ -78,7 +77,10 @@ TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType ty
             .isFlipped      = flipTexture};
 }
 
-TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture) { return LoadTexture(path, TextureType::Color, flipTexture); }
+TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture)
+{
+    return LoadTexture(path, TextureType::Color, flipTexture, path.filename().string());
+}
 
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
 {
@@ -99,19 +101,21 @@ DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
     };
 }
 
-DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height)
+DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height, const std::string& debugName)
 {
     TextureId depthMapId = CreateTexture();
 
     /*create the depth texture with a 16-bit depth internal format*/
     glGenTextures(1, &depthMapId);
     glBindTexture(GL_TEXTURE_2D_ARRAY, depthMapId);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT16, width, height, shadowMapCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT, width, height, shadowMapCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     /*set up the appropriate filtering and wrapping modes*/
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    glObjectLabel(GL_TEXTURE, depthMapId, strlen(debugName.c_str()), debugName.c_str());
 
     return {
         .id     = depthMapId,
@@ -162,4 +166,15 @@ void UnBindTexture(const unsigned int slot)
 {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+void BindTextureArray(unsigned int id, unsigned int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+}
+
+void UnBindTextureArray(const unsigned int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }

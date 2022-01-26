@@ -46,7 +46,7 @@ class ResourceManager
     inline ShaderProgram GetSkyboxShader() const { return m_SkyboxShader; }
     inline ShaderProgram GetBillboardShader() const { return m_BillboardShader; }
 
-    inline ShaderProgram GetForwardLitShader() const { return m_ForwardLitShader; }
+    inline ShaderProgram GetForwardSunShader() const { return m_ForwardSunShader; }
 
     inline ShaderProgram GetDSGeometryShader() const { return m_DSGeometryShader; }
     inline ShaderProgram GetDSLightingShader() const { return m_DSLightingShader; }
@@ -69,7 +69,7 @@ class ResourceManager
     ShaderProgram                                 m_SkyboxShader;
     ShaderProgram                                 m_BillboardShader;
 
-    ShaderProgram m_ForwardLitShader;
+    ShaderProgram m_ForwardSunShader;
     ShaderProgram m_ShadowShader;
 
     ShaderProgram m_DSGeometryShader;

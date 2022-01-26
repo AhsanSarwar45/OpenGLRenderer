@@ -38,9 +38,12 @@ struct DepthTexture
     TextureDimension height;
 };
 
-TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture = false);
-TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture = false);
+TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture = false); // TODO: take textureType as param
+TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture = false,
+                         const std::string& debugName = "Image Texture");
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height);
+DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height,
+                                     const std::string& debugName = "Depth Texture Array");
 
 DepthTexture CreateCubeMapTexture(TextureDimension resolution);
 
@@ -49,3 +52,6 @@ void      DeleteTexture(TextureId textureId);
 
 void BindTexture(unsigned int id, unsigned int slot);
 void UnBindTexture(const unsigned int slot);
+
+void BindTextureArray(unsigned int id, unsigned int slot);
+void UnBindTextureArray(const unsigned int slot);
