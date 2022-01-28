@@ -40,13 +40,38 @@ bool minimized = false;
 
 std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 
+std::vector<std::shared_ptr<Material>> materials;
+
 int currentPipeline = 0;
 
 void CheckMinimized(WindowDimension width, WindowDimension height) { minimized = (width == 0 || height == 0); }
 
+void SetRenderPipeline(int index)
+{
+    switch (currentPipeline)
+    {
+    case 0:
+        for (const auto& material : materials)
+        {
+            SetMaterialShader(material, ResourceManager::GetInstance().GetDSGeometryShader());
+        }
+
+        // DeleteDSRenderData(dsRenderData);
+        // *dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+        break;
+    case 1:
+        // *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
+        for (const auto& material : materials)
+        {
+            SetMaterialShader(material, ResourceManager::GetInstance().GetForwardSunShader());
+        }
+        break;
+    }
+}
+
 int main()
 {
-    std::vector<std::shared_ptr<Material>> materials;
+
     // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, materials, shaderProgram);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
@@ -59,20 +84,6 @@ int main()
 
     scene->skybox       = LoadSkybox("../Assets/Skyboxes/skybox");
     scene->ambientLight = glm::vec3(0.4f);
-
-    // std::shared_ptr<Material> gunMaterialPBR = std::make_shared<Material>();
-    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true));
-    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", "normal", true));
-    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness", true));
-    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", "roughness", true));
-    // gunMaterialPBR->textures.push_back(LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", "ao", true));
-
-    // std::shared_ptr<Material> metalLinedPBR = std::make_shared<Material>();
-    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", "albedo", true));
-    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", "normal", true));
-    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", "metalness", true));
-    // metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", "roughness",
-    // true)); metalLinedPBR->textures.push_back(LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", "ao", true));
 
     std::shared_ptr<Material> gunMaterialPBR = CreateMaterial(ResourceManager::GetInstance().GetDSGeometryShader());
     SetMaterialTexture(gunMaterialPBR, "albedoMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", true).id);
@@ -94,13 +105,6 @@ int main()
     SetMaterialTexture(metalMaterial, "aoMap", LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", true).id);
 
     materials.push_back(metalMaterial);
-
-    // gunMaterialPBR->albedoMap                   = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", "albedo", true).id;
-    // gunMaterialPBR->normalMap                   = LoadTexture("../Assets/Models/9mmfbx/source/unGS_NormalGL.png", "normal", true).id;
-    // gunMaterialPBR->roughnessMap                = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", "metalness",
-    // true).id; gunMaterialPBR->metalnessMap                = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png",
-    // "roughness", true).id; gunMaterialPBR->aoMap                       = LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png",
-    // "ao", true).id;
 
     std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
     std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", metalMaterial, "Sphere", true);
@@ -131,18 +135,6 @@ int main()
         .power    = 20.0f,
     });
 
-    // scene->pointLights.push_back({.position  = glm::vec3(-1.0f, -1.0f, 1.0f),
-    //                               .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-    //                               .power     = 20.0f,
-    //                               .linear    = defaultLinearAttenuation,
-    //                               .quadratic = defaultQuadraticAttenuation});
-
-    // scene->pointLights.push_back({.position  = glm::vec3(2.0f, 1.0f, 1.0f),
-    //                               .color     = glm::vec3(1.0f, 1.0f, 1.0f),
-    //                               .power     = 20.0f,
-    //                               .linear    = defaultLinearAttenuation,
-    //                               .quadratic = defaultQuadraticAttenuation});
-
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
     scene->sunLights.push_back(
@@ -163,57 +155,24 @@ int main()
 
     fileWatcher->watch();
 
-    // filewatch::FileWatch<std::filesystem::path> watch(L"../Assets/Shaders",
-    //                                                   [](const std::filesystem::path& path, const filewatch::Event change_type) {
-    //                                                       std::wcout << std::filesystem::absolute(path) << L"\n";
-    //                                                   });
+    DSRenderData      dsRenderData      = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
+    ForwardRenderData forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height);
 
-    // DepthTexture depthMap = CreateDepthTexture(2048, 2048);
+    LightRenderData  lightRenderData  = CreateLightRenderData(4);
+    ShadowRenderData shadowRenderData = CreateShadowRenderData(lightRenderData, 1024);
 
-    // Framebuffer depthFramebuffer = CreateDepthFramebuffer(depthMap);
-
-    std::shared_ptr<DSRenderData> dsRenderData           = std::make_shared<DSRenderData>();
-    *dsRenderData                                        = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-    std::shared_ptr<ForwardRenderData> forwardRenderData = std::make_shared<ForwardRenderData>();
-    *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 1024, 4);
-
-    // auto boundResizeFunction = [DSRenderData](TextureDimension width, TextureDimension height) {
-    //     ResizeFramebufferTextures(&DSRenderData, width, height);
-    // };
-    auto dsBoundResizeFunction      = std::bind(&ResizeFramebufferTextures, dsRenderData, std::placeholders::_1, std::placeholders::_2);
-    auto forwardBoundResizeFunction = std::bind(&ResizeForwardViewport, forwardRenderData, std::placeholders::_1, std::placeholders::_2);
+    auto dsBoundResizeFunction      = std::bind(&ResizeFramebufferTextures, &dsRenderData, std::placeholders::_1, std::placeholders::_2);
+    auto forwardBoundResizeFunction = std::bind(&ResizeForwardViewport, &forwardRenderData, std::placeholders::_1, std::placeholders::_2);
 
     window.AddFramebufferResizeCallback(dsBoundResizeFunction);
     window.AddFramebufferResizeCallback(forwardBoundResizeFunction);
     window.AddFramebufferResizeCallback(CheckMinimized);
 
-    std::vector<RenderPass> renderPasses;
+    std::vector<const char*> renderingPipelines = {"Deferred + Forward Shading", "Forward Shading"};
 
-    const std::vector<RenderPass> deferredRenderPipeline = {
-        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSGeometryPass(scene, dsRenderData); },
-        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSLightPass(scene, dsRenderData); },
-        [dsRenderData](const std::shared_ptr<const Scene> scene) { RenderDSForwardPass(scene, dsRenderData); }, RenderTransparentPass};
+    int numPipelines = renderingPipelines.size();
 
-    const std::vector<RenderPass> forwardRenderPipeline = {
-        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForwardShadowPass(scene, forwardRenderData); },
-        [forwardRenderData](const std::shared_ptr<const Scene> scene) { RenderForward(scene, forwardRenderData); }, RenderTransparentPass};
-
-    renderPasses = deferredRenderPipeline;
-
-    std::vector<RenderingPipeline> renderingPipelines = {{"Deferred + Forward Shading", deferredRenderPipeline},
-                                                         {"Forward Shading", forwardRenderPipeline}};
-
-    std::vector<const char*> pipelineNames;
-
-    for (const auto& pipeline : renderingPipelines)
-    {
-        pipelineNames.push_back(pipeline.name);
-    }
-
-    int numPipelines = pipelineNames.size();
-
-    BenchmarkData benchmark = {
-        .dsRenderData = dsRenderData, .forwardRenderData = forwardRenderData, .duration = 5.0f, .renderingPipelines = renderingPipelines};
+    BenchmarkData benchmark = {.duration = 5.0f, .renderingPipelines = renderingPipelines};
 
     while (window.IsRunning())
     {
@@ -224,10 +183,37 @@ int main()
 
         ImGui::LabelText("FPS", "%.1f", 1.0f / window.GetDeltaTime());
 
+        static int numPipelinesBenchmark = 1;
+
+        static glm::vec3 camPos   = {7.2, 4.2, -5.6};
+        static float     camYaw   = 140;
+        static float     camPitch = -25;
+
+        ImGui::DragInt("Pipelines To Benchmark", &numPipelinesBenchmark);
+
+        if (ImGui::TreeNode("Camera Settings"))
+        {
+            ImGui::DragFloat3("Position", (float*)(&camPos));
+            ImGui::DragFloat("Yaw", &camYaw);
+            ImGui::DragFloat("Pitch", &camPitch);
+
+            if (ImGui::Button("Set Current Camera Settings"))
+            {
+                camPos   = scene->camera->GetPosition();
+                camYaw   = scene->camera->GetYaw();
+                camPitch = scene->camera->GetPitch();
+            }
+            ImGui::TreePop();
+        }
+
         if (ImGui::Button(benchmark.isRunning ? "Running Benchmark..." : "Run Benchmark"))
         {
-            benchmark.isRunning = true;
+            benchmark.isRunning    = true;
+            benchmark.numPipelines = numPipelinesBenchmark;
+
+            scene->camera->SetCamera(camPos, camPitch, camYaw);
             window.SetVSync(false);
+
             benchmark.results.clear();
             benchmark.beginTime = std::chrono::steady_clock::now();
         }
@@ -357,30 +343,10 @@ int main()
         if (ImGui::TreeNode("Render Settings"))
         {
             int prevPipeline = currentPipeline;
-            ImGui::Combo("Render Pipeline", &currentPipeline, &pipelineNames[0], numPipelines);
+            ImGui::Combo("Render Pipeline", &currentPipeline, &renderingPipelines[0], numPipelines);
             if (ImGui::IsItemEdited())
             {
-
-                renderPasses = renderingPipelines[currentPipeline].renderPasses;
-                switch (currentPipeline)
-                {
-                case 0:
-                    for (const auto& material : materials)
-                    {
-                        SetMaterialShader(material, ResourceManager::GetInstance().GetDSGeometryShader());
-                    }
-
-                    // DeleteDSRenderData(dsRenderData);
-                    // *dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                    break;
-                case 1:
-                    // *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
-                    for (const auto& material : materials)
-                    {
-                        SetMaterialShader(material, ResourceManager::GetInstance().GetForwardSunShader());
-                    }
-                    break;
-                }
+                SetRenderPipeline(currentPipeline);
             }
             ImGui::TreePop();
         }
@@ -390,7 +356,7 @@ int main()
         ImGui::Begin("Debug");
         if (ImGui::TreeNode("G-Buffer"))
         {
-            for (const auto& texture : dsRenderData->gBuffer.textures)
+            for (const auto& texture : dsRenderData.gBuffer.textures)
             {
                 if (ImGui::TreeNode(texture.name))
                 {
@@ -409,79 +375,27 @@ int main()
 
         if (benchmark.isRunning)
         {
-            currentPipeline = RunBenchmark(benchmark, window, renderPasses);
+            currentPipeline = RunBenchmark(benchmark, window, SetRenderPipeline);
         }
 
         if (!minimized)
         {
-            for (const auto& pass : renderPasses)
+            switch (currentPipeline)
             {
-                pass(scene);
+            case 0:
+                RenderShadowPass(scene, lightRenderData, shadowRenderData);
+                RenderDSGeometryPass(scene, dsRenderData);
+                RenderDSLightPass(scene, dsRenderData, shadowRenderData);
+                RenderDSForwardPass(scene, dsRenderData);
+                RenderTransparentPass(scene);
+                break;
+            case 1:
+                RenderShadowPass(scene, lightRenderData, shadowRenderData);
+                RenderForward(scene, forwardRenderData, shadowRenderData);
+                RenderTransparentPass(scene);
+                break;
             }
         }
-
-        // ShaderSetInt(shadowShaderProgram, "shadowMap", 7);
-        // glActiveTexture(GL_TEXTURE7);
-        // glBindTexture(GL_TEXTURE_2D, depthMap.id);
-
-        // bulb.transform.position = lightPos;
-        // DrawModel(bulb, lightShaderProgram);
-
-        // for (auto& model : models)
-        // {
-        //     DrawModel(model);
-        // }
-
-        // glStencilMask(0x00);
-
-        // glm::mat4 lightProjection, lightView;
-        // glm::mat4 lightSpaceMatrix;
-        // lightProjection =
-        //     glm::ortho(-shadowMapOrtho, shadowMapOrtho, -shadowMapOrtho, shadowMapOrtho, shadowNearClip,
-        //     shadowFarClip);
-        // lightView        = glm::lookAt(lightDir, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-        // lightSpaceMatrix = lightProjection * lightView;
-        // // render scene from light's point of view
-        // UseShaderProgram(depthShaderProgram);
-        // ShaderSetMat4(depthShaderProgram, "lightSpaceMatrix", lightSpaceMatrix);
-
-        // glViewport(0, 0, depthMap.width, depthMap.height);
-        // glBindFramebuffer(GL_FRAMEBUFFER, depthFramebuffer);
-        // glClear(GL_DEPTH_BUFFER_BIT);
-
-        // for (auto& model : models)
-        // {
-        //     DrawModel(model, depthShaderProgram);
-        // }
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        // glViewport(0, 0, window.GetProperties().Width, window.GetProperties().Height);
-
-        // glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        // glStencilMask(0xFF);
-
-        // DrawBillboard(billboard);
-
-        // Draw outline
-        // glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        // glStencilMask(0x00);
-        // glDisable(GL_DEPTH_TEST);
-
-        // UseShaderProgram(outlineShader);
-        // ShaderSetFloat3(outlineShader, "color", glm::vec3(1.0f, 1.0f, 0.0f));
-
-        // for (auto model : models)
-        // {
-        //     model.transform.scale *= 1.1f;
-        //     // std::cout << model.transform.scale.x << ", " << model.transform.scale.y << ", " <<
-        //     // model.transform.scale.z
-        //     //   << "\n";
-        //     DrawModel(model, outlineShader);
-        // }
-
-        // glStencilMask(0xFF);
-        // glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        // glEnable(GL_DEPTH_TEST);
 
         window.Render();
     }

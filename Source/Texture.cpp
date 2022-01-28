@@ -108,12 +108,14 @@ DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension w
     /*create the depth texture with a 16-bit depth internal format*/
     glGenTextures(1, &depthMapId);
     glBindTexture(GL_TEXTURE_2D_ARRAY, depthMapId);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT, width, height, shadowMapCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT16, width, height, shadowMapCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     /*set up the appropriate filtering and wrapping modes*/
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glObjectLabel(GL_TEXTURE, depthMapId, strlen(debugName.c_str()), debugName.c_str());
 

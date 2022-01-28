@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Window.hpp"
+#include "glm/fwd.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,7 +19,7 @@
 class Camera
 {
   public:
-    Camera(Window* window, float nearClip = NEAR_CLIP, float farClip = FAR_CLIP, glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+    Camera(Window* window, float nearClip = NEAR_CLIP, float farClip = FAR_CLIP, glm::vec3 position = glm::vec3(0.0f, 0.0f, -2.0f),
            glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
     Camera(Window* window, float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
     ~Camera();
@@ -34,6 +35,8 @@ class Camera
 
     float     GetZoom() const { return m_Zoom; }
     glm::vec3 GetPosition() const { return m_Position; }
+     float         GetPitch() const { return m_Pitch; }
+    float     GetYaw() const { return m_Yaw; }
 
     void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
     void ProcessMouseScroll(float yoffset)
@@ -46,6 +49,15 @@ class Camera
     }
 
     static Camera* GetActiveCamera() { return s_ActiveCamera; }
+
+    void SetCamera(const glm::vec3& position, float pitch, float yaw)
+    {
+        m_Position = position;
+        m_Yaw      = yaw;
+        m_Pitch    = pitch;
+
+        UpdateCameraVectors();
+    }
 
   private:
     void UpdateCameraVectors();

@@ -19,12 +19,27 @@ struct Billboard;
 
 using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 
+struct LightRenderData
+{
+    uint16_t                    maxLightCount;
+    std::vector<LightTransform> lightTransforms;
+
+    UniformBuffer lightTransformUB;
+};
+
+struct ShadowRenderData
+{
+    ShaderProgram    shadowPassShader;
+    DepthFramebuffer shadowFramebuffer;
+};
+
 // Deferred Shading Render Data
 struct DSRenderData
 {
 
     GeometryFramebuffer gBuffer;
-    Quad                screenQuad;
+
+    Quad screenQuad;
 
     ShaderProgram geometryPassShader;
     ShaderProgram lightPassShader;
@@ -34,44 +49,40 @@ struct DSRenderData
 struct ForwardRenderData
 {
     ShaderProgram forwardPassShader;
-    ShaderProgram shadowPassShader;
 
-    DepthFramebuffer shadowFramebuffer;
-    WindowDimension  width;
-    WindowDimension  height;
-
-    uint16_t                    maxLightCount;
-    std::vector<LightTransform> lightTransforms;
-
-    UniformBuffer lightTransformUB;
+    WindowDimension width;
+    WindowDimension height;
 };
 
 struct RenderingPipeline
 {
     const char* name;
-
-    std::vector<RenderPass> renderPasses;
 };
 
 DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height);
 
-ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height, TextureDimension shadowResolution = 1024,
-                                          uint16_t maxLightCount = 32);
+ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height);
 
-void ResizeForwardViewport(const std::shared_ptr<ForwardRenderData> renderData, TextureDimension width, TextureDimension height);
+LightRenderData  CreateLightRenderData(uint16_t maxLightCount = 32);
+ShadowRenderData CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension shadowResolution = 1024);
 
-void DeleteDSRenderData(const std::shared_ptr<const DSRenderData> renderData);
+void ResizeForwardViewport(ForwardRenderData* renderData, TextureDimension width, TextureDimension height);
 
-void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
-void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
-void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const DSRenderData> renderData);
+void DeleteDSRenderData(const DSRenderData& renderData);
+
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData, const ShadowRenderData& shadowRenderData);
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
 
 void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures);
 
 void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
 
-void RenderForward(const std::shared_ptr<const Scene> scene, const std::shared_ptr<const ForwardRenderData> renderData);
-void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<ForwardRenderData> renderData);
+void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData, const ShadowRenderData& shadowRenderData);
+
+void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData& lightRenderData, const ShadowRenderData& shadowRenderData);
+void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData);
+void RenderDeferredShadowPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
 
 void RenderQuad(const Quad& screenQuad);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);

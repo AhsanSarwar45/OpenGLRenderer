@@ -3,6 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "Render.hpp"
@@ -26,12 +27,11 @@ class Window;
 struct BenchmarkData
 {
     std::chrono::steady_clock::time_point beginTime;
-    std::shared_ptr<DSRenderData>         dsRenderData;
-    std::shared_ptr<ForwardRenderData>    forwardRenderData;
     bool                                  isRunning;
     std::vector<BenchmarkResult>          results;
     float                                 duration;
-    std::vector<RenderingPipeline>        renderingPipelines;
+    std::vector<const char*>              renderingPipelines;
+    int                                   numPipelines;
 };
 
-int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<RenderPass>& renderPasses);
+int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::function<void(int)> setRenderPipeline);

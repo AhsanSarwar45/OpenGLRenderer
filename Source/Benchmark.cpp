@@ -2,7 +2,7 @@
 
 #include "Window.hpp"
 
-int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<RenderPass>& renderPasses)
+int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::function<void(int)> setRenderPipeline)
 {
 
     static int i = 0;
@@ -22,7 +22,7 @@ int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<Rende
 
         float           averageTime     = currentDuration / frameCount;
         float           averageFPS      = 1.0f / averageTime;
-        BenchmarkResult benchmarkResult = {.name        = benchmarkData.renderingPipelines[i - 1].name,
+        BenchmarkResult benchmarkResult = {.name        = benchmarkData.renderingPipelines[i - 1],
                                            .totalTime   = currentDuration,
                                            .frameCount  = frameCount,
                                            .averageTime = averageTime * 1000,
@@ -32,7 +32,7 @@ int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<Rende
 
         benchmarkData.results.push_back(benchmarkResult);
 
-        if (i >= benchmarkData.renderingPipelines.size())
+        if (i >= benchmarkData.numPipelines)
         {
             window.SetVSync(true);
             benchmarkData.isRunning = false;
@@ -40,18 +40,7 @@ int RunBenchmark(BenchmarkData& benchmarkData, Window& window, std::vector<Rende
         }
         else
         {
-            renderPasses = benchmarkData.renderingPipelines[i].renderPasses;
-            switch (i)
-            {
-            case 0:
-                DeleteDSRenderData(benchmarkData.dsRenderData);
-                *benchmarkData.dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
-                break;
-            case 1:
-                *benchmarkData.forwardRenderData =
-                    CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
-                break;
-            }
+            setRenderPipeline(i);
         }
 
         benchmarkData.beginTime = current;

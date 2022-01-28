@@ -157,7 +157,7 @@ TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimensio
     return textureData;
 }
 
-void ResizeFramebufferTextures(const std::shared_ptr<DSRenderData> renderData, TextureDimension width, TextureDimension height)
+void ResizeFramebufferTextures(DSRenderData* renderData, TextureDimension width, TextureDimension height)
 {
     GeometryFramebuffer geometryFramebuffer = renderData->gBuffer;
 

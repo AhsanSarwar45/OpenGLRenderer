@@ -55,4 +55,4 @@ DepthFramebuffer Create3DDepthFramebuffer(TextureDimension resolution);
 TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
                                              unsigned int internalFormat);
 
-void ResizeFramebufferTextures(const std::shared_ptr<DSRenderData> renderData, TextureDimension width, TextureDimension height);
+void ResizeFramebufferTextures(DSRenderData* renderData, TextureDimension width, TextureDimension height);
