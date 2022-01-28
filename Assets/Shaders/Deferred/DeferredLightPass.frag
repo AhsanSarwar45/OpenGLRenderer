@@ -22,11 +22,23 @@ struct SunLight
     float shadowBias;
 };
 
+struct PointLight
+{
+    vec3  position;
+    vec3  color;
+    float power;
+
+    float shadowBias;
+};
+
 const float PI         = 3.14159265359;
 const int   MAX_LIGHTS = 32;
 
 uniform SunLight sunLights[MAX_LIGHTS];
 uniform int      numSunLights;
+
+uniform PointLight pointLights[MAX_LIGHTS];
+uniform int        numPointLights;
 
 uniform vec3 viewPos;
 
@@ -108,6 +120,41 @@ float CalculateShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int 
     return shadow;
 }
 
+vec3 CalculatePointLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0, vec3 fragPos)
+{
+
+    PointLight pointLight = pointLights[index];
+
+    vec3 lightDir = normalize(pointLight.position - fragPos);
+
+    vec3 halfwayDir = normalize(viewDir + lightDir);
+
+    float distance    = length(lightDir);
+    float attenuation = 1.0 / (distance * distance);
+    vec3  radiance    = pointLight.color * pointLight.power * attenuation;
+
+    // cook-torrance brdf
+    float NDF = DistributionGGX(normal, halfwayDir, roughness);
+    float G   = GeometrySmith(normal, viewDir, lightDir, roughness);
+    vec3  F   = fresnelSchlick(max(dot(halfwayDir, viewDir), 0.0), F0);
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallness;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(normal, lightDir), 0.0);
+
+    vec3  numerator   = NDF * G * F;
+    float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * NdotL + 0.0001;
+    vec3  specular    = numerator / denominator;
+
+    float shadow   = 0;
+    vec3  lighting = (kD * albedo / PI + specular) * radiance * NdotL;
+
+    return lighting * (1 - shadow);
+}
+
 vec3 CalculateSunLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0, vec3 fragPos)
 {
     SunLight sunLight = sunLights[index];
@@ -161,8 +208,12 @@ void main()
 
     for (int i = 0; i < numSunLights; i++)
     {
-
         Lo += CalculateSunLighting(i, viewDir, normal, albedo, metalness, roughness, F0, fragPos);
+    }
+
+    for (int i = 0; i < numPointLights; i++)
+    {
+        Lo += CalculatePointLighting(i, viewDir, normal, albedo, metalness, roughness, F0, fragPos);
     }
 
     vec3 ambient = ambientLight * albedo * ao;

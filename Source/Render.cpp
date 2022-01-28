@@ -229,6 +229,7 @@ void RenderTransparentPass(const std::shared_ptr<const Scene> scene)
 
 void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData, const ShadowRenderData& shadowRenderData)
 {
+    glEnable(GL_MULTISAMPLE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, renderData.width, renderData.height);
 
@@ -246,6 +247,7 @@ void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRender
     }
 
     DrawSkybox(scene->skybox);
+    glDisable(GL_MULTISAMPLE);
 }
 
 void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData)
@@ -266,10 +268,11 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
 
     for (int i = 0; i < scene->sunLights.size(); i++)
     {
-        SunLight sunLight = scene->sunLights[i];
-        lightProjection   = glm::ortho(-sunLight.shadowMapOrtho, sunLight.shadowMapOrtho, -sunLight.shadowMapOrtho, sunLight.shadowMapOrtho,
-                                     sunLight.shadowNearClip, sunLight.shadowFarClip);
-        lightView         = glm::lookAt(sunLight.direction, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        SunLight         sunLight    = scene->sunLights[i];
+        ShadowProperties shadowProps = sunLight.shadowProps;
+        lightProjection              = glm::ortho(-shadowProps.shadowMapOrtho, shadowProps.shadowMapOrtho, -shadowProps.shadowMapOrtho,
+                                     shadowProps.shadowMapOrtho, shadowProps.shadowNearClip, shadowProps.shadowFarClip);
+        lightView                    = glm::lookAt(sunLight.direction, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 
         lightRenderData.lightTransforms[i].LightSpaceVPMatrix = lightProjection * lightView;
     }

@@ -193,7 +193,6 @@ void main()
 
     for (int i = 0; i < numSunLights; i++)
     {
-
         Lo += CalculateSunLighting(i, viewDir, normal, albedo, metalness, roughness, F0);
     }
 

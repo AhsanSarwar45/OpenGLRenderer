@@ -33,7 +33,7 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-    // glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     /* Create a windowed mode window and its OpenGL context */
     m_Window = glfwCreateWindow(m_Properties.Width, m_Properties.Height, m_Properties.Name.c_str(), NULL, NULL);

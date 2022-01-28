@@ -137,8 +137,8 @@ int main()
 
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
-    scene->sunLights.push_back(
-        {.position = {4.0f, 4.0f, 4.0f}, .direction = {2.0f, 2.0f, 2.0f}, .color = {1.0f, 0.0f, 1.0f}, .power = 10.0f});
+    // scene->sunLights.push_back(
+    //     {.position = {4.0f, 4.0f, 4.0f}, .direction = {-3.0f, 4.0f, 2.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 
     // float xPos = 0.0f;
     // for (auto& model : scene->models)
@@ -269,6 +269,16 @@ int main()
 
                         ImGui::DragFloat("Power", &light.power, 0.05f);
                         ImGui::TreePop();
+
+                        if (ImGui::TreeNode("Shadows"))
+                        {
+                            ShadowProperties shadowProps = light.shadowProps;
+                            ImGui::DragFloat("Bias", &shadowProps.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &shadowProps.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &shadowProps.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &shadowProps.shadowMapOrtho, 1.0f);
+                            ImGui::TreePop();
+                        }
                     }
                     lightIndex++;
                 }
@@ -293,10 +303,11 @@ int main()
 
                         if (ImGui::TreeNode("Shadows"))
                         {
-                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &light.shadowMapOrtho, 1.0f);
+                            ShadowProperties shadowProps = light.shadowProps;
+                            ImGui::DragFloat("Bias", &shadowProps.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &shadowProps.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &shadowProps.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &shadowProps.shadowMapOrtho, 1.0f);
                             ImGui::TreePop();
                         }
                         ImGui::TreePop();
