@@ -45,7 +45,9 @@ DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
 DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height,
                                      const std::string& debugName = "Depth Texture Array");
 
-DepthTexture CreateCubeMapTexture(TextureDimension resolution);
+DepthTexture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName = "Depth Cubemap");
+DepthTexture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution,
+                                     const std::string& debugName = "Depth Cubemap Array");
 
 TextureId CreateTexture();
 void      DeleteTexture(TextureId textureId);
@@ -55,3 +57,6 @@ void UnBindTexture(const unsigned int slot);
 
 void BindTextureArray(unsigned int id, unsigned int slot);
 void UnBindTextureArray(const unsigned int slot);
+
+void BindCubemapArray(unsigned int id, unsigned int slot);
+void UnBindCubemapArray(const unsigned int slot);

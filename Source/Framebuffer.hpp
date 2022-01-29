@@ -50,7 +50,8 @@ void                DeleteGeometryFramebuffer(const GeometryFramebuffer& geometr
 DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
 DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
 DepthFramebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height);
-DepthFramebuffer Create3DDepthFramebuffer(TextureDimension resolution);
+DepthFramebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution);
+DepthFramebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution);
 // TODO: Improve API.
 TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
                                              unsigned int internalFormat);

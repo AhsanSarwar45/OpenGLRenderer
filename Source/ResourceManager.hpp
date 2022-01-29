@@ -53,7 +53,8 @@ class ResourceManager
 
     inline Quad GetScreenQuad() const { return m_ScreenQuad; }
 
-    inline ShaderProgram GetShadowShader() const { return m_ShadowShader; }
+    inline ShaderProgram GetSunShadowShader() const { return m_SunShadowShader; }
+    inline ShaderProgram GetPointShadowShader() const { return m_PointShadowShader; }
 
     inline const char* GetOpenGLVersion() const { return m_OpenGLVersion; }
 
@@ -70,7 +71,9 @@ class ResourceManager
     ShaderProgram                                 m_BillboardShader;
 
     ShaderProgram m_ForwardSunShader;
-    ShaderProgram m_ShadowShader;
+
+    ShaderProgram m_SunShadowShader;
+    ShaderProgram m_PointShadowShader;
 
     ShaderProgram m_DSGeometryShader;
     ShaderProgram m_DSLightingShader;

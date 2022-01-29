@@ -129,11 +129,11 @@ int main()
         .power    = 20.0f,
     });
 
-    scene->pointLights.push_back({
-        .position = {-1.0f, 1.0f, 1.0f},
-        .color    = {1.0f, 0.0f, 0.0f},
-        .power    = 20.0f,
-    });
+    // scene->pointLights.push_back({
+    //     .position = {-1.0f, 1.0f, 1.0f},
+    //     .color    = {1.0f, 0.0f, 0.0f},
+    //     .power    = 20.0f,
+    // });
 
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
@@ -158,8 +158,8 @@ int main()
     DSRenderData      dsRenderData      = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     ForwardRenderData forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height);
 
-    LightRenderData  lightRenderData  = CreateLightRenderData(4);
-    ShadowRenderData shadowRenderData = CreateShadowRenderData(lightRenderData, 1024);
+    LightRenderData  lightRenderData  = CreateLightRenderData(2, 2);
+    ShadowRenderData shadowRenderData = CreateShadowRenderData(lightRenderData, 512);
 
     auto dsBoundResizeFunction      = std::bind(&ResizeFramebufferTextures, &dsRenderData, std::placeholders::_1, std::placeholders::_2);
     auto forwardBoundResizeFunction = std::bind(&ResizeForwardViewport, &forwardRenderData, std::placeholders::_1, std::placeholders::_2);
@@ -272,11 +272,10 @@ int main()
 
                         if (ImGui::TreeNode("Shadows"))
                         {
-                            ShadowProperties shadowProps = light.shadowProps;
-                            ImGui::DragFloat("Bias", &shadowProps.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &shadowProps.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &shadowProps.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &shadowProps.shadowMapOrtho, 1.0f);
+                            ImGui::DragFloat("Bias", &light.shadowProps.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &light.shadowProps.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &light.shadowProps.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &light.shadowProps.shadowMapOrtho, 1.0f);
                             ImGui::TreePop();
                         }
                     }
@@ -303,11 +302,10 @@ int main()
 
                         if (ImGui::TreeNode("Shadows"))
                         {
-                            ShadowProperties shadowProps = light.shadowProps;
-                            ImGui::DragFloat("Bias", &shadowProps.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &shadowProps.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &shadowProps.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &shadowProps.shadowMapOrtho, 1.0f);
+                            ImGui::DragFloat("Bias", &light.shadowProps.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &light.shadowProps.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &light.shadowProps.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &light.shadowProps.shadowMapOrtho, 1.0f);
                             ImGui::TreePop();
                         }
                         ImGui::TreePop();

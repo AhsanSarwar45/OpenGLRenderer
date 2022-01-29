@@ -13,7 +13,31 @@ struct TextureUniform
     UniformLocation location;
 };
 
+template <typename T>
+struct UniformBufferVector
+{
+    std::vector<T> data;
+    UniformBuffer  ubo;
+    size_t         size;
+};
+
 UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size);
+
+template <typename T>
+UniformBufferVector<T> CreateUniformBufferVector(UniformBufferBinding binding, size_t count)
+{
+    return {
+        .data = std::vector<T>(count),
+        .ubo  = CreateUniformBuffer(binding, count * sizeof(T)),
+        .size = count * sizeof(T),
+    };
+}
+
+template <typename T>
+void UploadUniformBufferVector(UniformBufferVector<T>& uboVector)
+{
+    SetUniformBufferSubData(uboVector.ubo, &uboVector.data[0], uboVector.size);
+}
 
 void SetUniformBufferSubData(UniformBuffer uniformBuffer, void* data, size_t size);
 

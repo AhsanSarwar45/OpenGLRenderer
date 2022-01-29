@@ -7,7 +7,7 @@ UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size)
 {
     UniformBuffer uniformBuffer;
     glGenBuffers(1, &uniformBuffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 2, uniformBuffer);
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding, uniformBuffer);
     glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_STATIC_DRAW);
     return uniformBuffer;
 }

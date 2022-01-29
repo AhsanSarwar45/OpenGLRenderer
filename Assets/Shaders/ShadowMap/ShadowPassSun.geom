@@ -1,7 +1,7 @@
 #version 420 core
 
-layout(std140, binding = 2) uniform lightTransform { mat4 LightSpaceVPMatrix[600]; }
-LightTransform;
+layout(std140, binding = 2) uniform SunLightTransform { mat4 LightSpaceVPMatrix[600]; }
+sunLightTransform;
 
 // layout(std140, binding = 1) uniform lightArray { vec4 lightPosition[100]; }
 // LightArray;
@@ -26,13 +26,12 @@ void main()
     // if (dot(normal, light) > 0.f)
     // {
 
+    int layerIndex = gl_InvocationID;
     for (int i = 0; i < 3; ++i)
     {
-        gl_Position = LightTransform.LightSpaceVPMatrix[gl_InvocationID] * vec4(fragData[i].worldPos, 1.0);
+        gl_Position = sunLightTransform.LightSpaceVPMatrix[gl_InvocationID] * vec4(fragData[i].worldPos, 1.0);
         gl_Layer    = gl_InvocationID;
         EmitVertex();
     }
     EndPrimitive();
-
-    // }
 }

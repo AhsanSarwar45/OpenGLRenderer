@@ -12,11 +12,14 @@ void ResourceManager::Initialize()
     m_BillboardShader =
         LoadShader({"../Assets/Shaders/Billboard/Billboard.vert", "../Assets/Shaders/Billboard/Billboard.frag"}, "Billboard");
 
-    m_ForwardSunShader = LoadShader({"../Assets/Shaders/Forward/ForwardLit.vert", "../Assets/Shaders/Forward/ForwardSun.frag"}, "Forward");
+    m_ForwardSunShader = LoadShader({"../Assets/Shaders/Forward/ForwardLit.vert", "../Assets/Shaders/Forward/ForwardLit.frag"}, "Forward");
 
-    m_ShadowShader = LoadShader({"../Assets/Shaders/ShadowMap/ShadowPass.vert", "../Assets/Shaders/ShadowMap/ShadowPass.frag",
-                                 "../Assets/Shaders/ShadowMap/ShadowPass.geom"},
-                                "Shadow", false);
+    m_SunShadowShader   = LoadShader({"../Assets/Shaders/ShadowMap/ShadowPass.vert", "../Assets/Shaders/ShadowMap/ShadowPass.frag",
+                                    "../Assets/Shaders/ShadowMap/ShadowPassSun.geom"},
+                                   "Sun Shadow Shader", false);
+    m_PointShadowShader = LoadShader({"../Assets/Shaders/ShadowMap/ShadowPass.vert", "../Assets/Shaders/ShadowMap/ShadowPassPoint.frag",
+                                      "../Assets/Shaders/ShadowMap/ShadowPassPoint.geom"},
+                                     "Point Shadow Shader", false);
 
     m_DSGeometryShader = LoadShader(
         {"../Assets/Shaders/Deferred/DeferredGeometryPass.vert", "../Assets/Shaders/Deferred/DeferredGeometryPass.frag"}, "Geometry Pass");

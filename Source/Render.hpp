@@ -10,6 +10,8 @@
 #include "Quad.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "Uniform.hpp"
+#include "glm/fwd.hpp"
 
 struct Scene;
 struct Model;
@@ -19,18 +21,37 @@ struct Billboard;
 
 using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 
+struct LightUniformBufferData
+{
+    glm::vec3 position;
+    float     shadowFarClip;
+};
+
+// todo condese the ub into one struct
+struct LightData
+{
+    UniformBufferVector<LightTransform>         lightTransformsUB;
+    UniformBufferVector<LightUniformBufferData> lightDataUB;
+
+    uint16_t maxLightCount;
+};
+
 struct LightRenderData
 {
-    uint16_t                    maxLightCount;
-    std::vector<LightTransform> lightTransforms;
+    LightData sunLightData;
+    LightData pointLightData;
+};
 
-    UniformBuffer lightTransformUB;
+struct LightShadowData
+{
+    ShaderProgram    shadowPassShader;
+    DepthFramebuffer shadowFramebuffer;
 };
 
 struct ShadowRenderData
 {
-    ShaderProgram    shadowPassShader;
-    DepthFramebuffer shadowFramebuffer;
+    LightShadowData sunLightData;
+    LightShadowData pointLightData;
 };
 
 // Deferred Shading Render Data
@@ -63,7 +84,7 @@ DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height);
 
 ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height);
 
-LightRenderData  CreateLightRenderData(uint16_t maxLightCount = 32);
+LightRenderData  CreateLightRenderData(uint16_t maxSunLightCount = 4, uint16_t maxPointLightCount = 4);
 ShadowRenderData CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension shadowResolution = 1024);
 
 void ResizeForwardViewport(ForwardRenderData* renderData, TextureDimension width, TextureDimension height);

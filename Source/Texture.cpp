@@ -112,10 +112,10 @@ DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension w
     /*set up the appropriate filtering and wrapping modes*/
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[] = {1.0, 1.0, 1.0, 1.0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     glObjectLabel(GL_TEXTURE, depthMapId, strlen(debugName.c_str()), debugName.c_str());
 
@@ -126,7 +126,7 @@ DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension w
     };
 }
 
-DepthTexture CreateCubeMapTexture(TextureDimension resolution)
+DepthTexture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName)
 {
 
     TextureId depthCubeMapId = CreateTexture();
@@ -138,12 +138,43 @@ DepthTexture CreateCubeMapTexture(TextureDimension resolution)
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {1.0, 1.0, 1.0, 1.0};
+    glTexParameterfv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glObjectLabel(GL_TEXTURE, depthCubeMapId, strlen(debugName.c_str()), debugName.c_str());
 
     return {
         .id     = depthCubeMapId,
+        .width  = resolution,
+        .height = resolution,
+    };
+}
+
+DepthTexture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution, const std::string& debugName)
+{
+
+    TextureId depthCubeMapArrayId = CreateTexture();
+
+    /*create the depth texture with a 16-bit depth internal format*/
+    glGenTextures(1, &depthCubeMapArrayId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, depthCubeMapArrayId);
+    glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT16, resolution, resolution, shadowMapCount * 6, 0, GL_DEPTH_COMPONENT,
+                 GL_FLOAT, NULL);
+
+    /*set up the appropriate filtering and wrapping modes*/
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glObjectLabel(GL_TEXTURE, depthCubeMapArrayId, strlen(debugName.c_str()), debugName.c_str());
+
+    return {
+        .id     = depthCubeMapArrayId,
         .width  = resolution,
         .height = resolution,
     };
@@ -179,4 +210,16 @@ void UnBindTextureArray(const unsigned int slot)
 {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+}
+
+void BindCubemapArray(unsigned int id, unsigned int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, id);
+}
+
+void UnBindCubemapArray(const unsigned int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
 }

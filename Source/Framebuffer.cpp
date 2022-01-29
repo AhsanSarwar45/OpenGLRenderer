@@ -39,9 +39,15 @@ DepthFramebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimen
     return CreateDepthFramebuffer(depthTexture);
 }
 
-DepthFramebuffer Create3DDepthFramebuffer(TextureDimension resolution)
+DepthFramebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution)
 {
-    DepthTexture depthTexture = CreateCubeMapTexture(resolution);
+    DepthTexture depthTexture = CreateDepthCubemapArray(numDepthMaps, resolution);
+    return CreateDepthFramebuffer(depthTexture);
+}
+
+DepthFramebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution)
+{
+    DepthTexture depthTexture = CreateDepthCubemap(resolution);
     return CreateDepthFramebuffer(depthTexture);
 }
 

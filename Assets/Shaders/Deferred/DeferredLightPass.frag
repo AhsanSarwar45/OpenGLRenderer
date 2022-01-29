@@ -8,10 +8,13 @@ uniform sampler2D gNormal;
 uniform sampler2D gAlbedo;
 uniform sampler2D gMetalnessRoughnessAO;
 
-layout(binding = 12) uniform sampler2DArray shadowMapArray;
+layout(binding = 12) uniform sampler2DArray sunShadowMapArray;
+layout(binding = 13) uniform samplerCubeArray pointShadowMapArray;
 
-layout(std140, binding = 2) uniform lightTransform { mat4 LightSpaceVPMatrix[600]; }
-LightTransform;
+layout(std140, binding = 2) uniform SunLightTransform { mat4 LightSpaceVPMatrix[600]; }
+sunLightTransform;
+layout(std140, binding = 3) uniform PointLightTransform { mat4 LightSpaceVPMatrix[600]; }
+pointLightTransform;
 
 struct SunLight
 {
@@ -29,6 +32,7 @@ struct PointLight
     float power;
 
     float shadowBias;
+    float shadowFarClip;
 };
 
 const float PI         = 3.14159265359;
@@ -80,9 +84,9 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-float CalculateShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int index)
+float CalculateSunShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int index)
 {
-    vec4 fragPosLightSpace = LightTransform.LightSpaceVPMatrix[index] * vec4(fragPos, 1.0);
+    vec4 fragPosLightSpace = sunLightTransform.LightSpaceVPMatrix[index] * vec4(fragPos, 1.0);
     vec3 projCoords        = (fragPosLightSpace.xyz / fragPosLightSpace.w) * 0.5 + 0.5;
 
     float currentDepth = projCoords.z;
@@ -94,7 +98,7 @@ float CalculateShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int 
 
     vec3 shadowMapTexelCoord = vec3(projCoords.x, projCoords.y, index);
 
-    float closestDepth = texture(shadowMapArray, shadowMapTexelCoord).r;
+    float closestDepth = texture(sunShadowMapArray, shadowMapTexelCoord).r;
 
     float bias = max(shadowBias * (1.0 - dotLightNormal), shadowBias / 10.0);
 
@@ -120,6 +124,24 @@ float CalculateShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int 
     return shadow;
 }
 
+float CalculatePointShadow(float shadowBias, vec3 fragPos, float dotLightNormal, int index)
+{
+
+    vec3 fragToLight = fragPos - pointLights[index].position;
+
+    float closestDepth = texture(pointShadowMapArray, vec4(fragToLight, index)).r;
+
+    closestDepth *= pointLights[index].shadowFarClip;
+
+    float currentDepth = length(fragToLight);
+
+    float bias = max(shadowBias * (1.0 - dotLightNormal), shadowBias / 10.0);
+
+    float shadow = currentDepth > (closestDepth + bias) ? 1 : 0.0;
+
+    return shadow;
+}
+
 vec3 CalculatePointLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0, vec3 fragPos)
 {
 
@@ -129,7 +151,7 @@ vec3 CalculatePointLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, f
 
     vec3 halfwayDir = normalize(viewDir + lightDir);
 
-    float distance    = length(lightDir);
+    float distance    = length(pointLight.position - fragPos);
     float attenuation = 1.0 / (distance * distance);
     vec3  radiance    = pointLight.color * pointLight.power * attenuation;
 
@@ -149,7 +171,7 @@ vec3 CalculatePointLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, f
     float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * NdotL + 0.0001;
     vec3  specular    = numerator / denominator;
 
-    float shadow   = 0;
+    float shadow   = CalculatePointShadow(pointLight.shadowBias, fragPos, NdotL, index);
     vec3  lighting = (kD * albedo / PI + specular) * radiance * NdotL;
 
     return lighting * (1 - shadow);
@@ -180,7 +202,7 @@ vec3 CalculateSunLighting(int index, vec3 viewDir, vec3 normal, vec3 albedo, flo
     float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * NdotL + 0.0001;
     vec3  specular    = numerator / denominator;
 
-    float shadow   = CalculateShadow(sunLight.shadowBias, fragPos, NdotL, index);
+    float shadow   = CalculateSunShadow(sunLight.shadowBias, fragPos, NdotL, index);
     vec3  lighting = (kD * albedo / PI + specular) * radiance * NdotL;
 
     return lighting * (1 - shadow);
@@ -223,5 +245,8 @@ void main()
     color = pow(color, vec3(1.0 / 2.2));
 
     FragColor = vec4(color, 1.0);
+    // FragColor = vec4(
+    //     vec3(CalculatePointShadow(pointLights[0].shadowBias, fragPos, max(dot(normal, pointLights[0].position - fragPos), 0.0),
+    //     0)), 1.0);
     // FragColor = vec4(vec3(ao), 1.0);
 }
