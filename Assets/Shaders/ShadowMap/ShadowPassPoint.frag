@@ -6,7 +6,7 @@ struct PointLight
     float shadowFarClip;
 };
 
-layout(std140, binding = 4) uniform LightArray { PointLight pointLights[100]; }
+layout(std140, binding = 5) uniform LightArray { PointLight pointLights[100]; }
 lightArray;
 
 in vec4 FragPos;

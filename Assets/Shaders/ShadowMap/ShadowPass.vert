@@ -8,8 +8,12 @@ uniform mat4 model;
 out VertexData
 {
     out vec3 worldPos;
-    out mat3 TBN;
+    out vec3 normal;
 }
 vertexData;
 
-void main() { vertexData.worldPos = (model * vec4(aPos, 1.0)).xyz; }
+void main()
+{
+    vertexData.normal   = aNormal;
+    vertexData.worldPos = (model * vec4(aPos, 1.0)).xyz;
+}

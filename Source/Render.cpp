@@ -49,10 +49,11 @@ ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension
 LightRenderData CreateLightRenderData(uint16_t maxSunLightCount, uint16_t maxPointLightCount)
 {
     return {.sunLightData   = {.lightTransformsUB = CreateUniformBufferVector<LightTransform>(2, maxSunLightCount),
+                             .lightDataUB       = CreateUniformBufferVector<SunLightUniformBufferData>(3, maxPointLightCount),
                              .maxLightCount     = maxSunLightCount},
             .pointLightData = {
-                .lightTransformsUB = CreateUniformBufferVector<LightTransform>(3, 6 * maxPointLightCount),
-                .lightDataUB       = CreateUniformBufferVector<LightUniformBufferData>(4, maxPointLightCount),
+                .lightTransformsUB = CreateUniformBufferVector<LightTransform>(4, 6 * maxPointLightCount),
+                .lightDataUB       = CreateUniformBufferVector<PointLightUniformBufferData>(5, maxPointLightCount),
                 .maxLightCount     = maxPointLightCount,
             }};
 }
@@ -286,9 +287,11 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
         lightView                    = glm::lookAt(sunLight.direction, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 
         lightRenderData.sunLightData.lightTransformsUB.data[i].LightSpaceVPMatrix = lightProjection * lightView;
+        lightRenderData.sunLightData.lightDataUB.data[i]                          = {.direction = sunLight.direction};
     }
 
     UploadUniformBufferVector(lightRenderData.sunLightData.lightTransformsUB);
+    UploadUniformBufferVector(lightRenderData.sunLightData.lightDataUB);
 
     glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.sunLightData.shadowFramebuffer.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.id, 0);
@@ -332,7 +335,6 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
     }
 
     UploadUniformBufferVector(lightRenderData.pointLightData.lightTransformsUB);
-
     UploadUniformBufferVector(lightRenderData.pointLightData.lightDataUB);
 
     glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.pointLightData.shadowFramebuffer.framebuffer);

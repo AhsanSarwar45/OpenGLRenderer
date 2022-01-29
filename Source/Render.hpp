@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <stdint.h>
+#include <variant>
 
 #include "Aliases.hpp"
 #include "Framebuffer.hpp"
@@ -21,25 +22,30 @@ struct Billboard;
 
 using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 
-struct LightUniformBufferData
+struct PointLightUniformBufferData
 {
     glm::vec3 position;
     float     shadowFarClip;
 };
 
-// todo condese the ub into one struct
+struct SunLightUniformBufferData
+{
+    glm::vec3 direction;
+};
+
+template <typename T>
 struct LightData
 {
-    UniformBufferVector<LightTransform>         lightTransformsUB;
-    UniformBufferVector<LightUniformBufferData> lightDataUB;
+    UniformBufferVector<LightTransform> lightTransformsUB;
+    UniformBufferVector<T>              lightDataUB;
 
     uint16_t maxLightCount;
 };
 
 struct LightRenderData
 {
-    LightData sunLightData;
-    LightData pointLightData;
+    LightData<SunLightUniformBufferData>   sunLightData;
+    LightData<PointLightUniformBufferData> pointLightData;
 };
 
 struct LightShadowData
