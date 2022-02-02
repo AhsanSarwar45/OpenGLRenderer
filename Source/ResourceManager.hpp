@@ -49,7 +49,9 @@ class ResourceManager
     inline ShaderProgram GetForwardSunShader() const { return m_ForwardSunShader; }
 
     inline ShaderProgram GetDSGeometryShader() const { return m_DSGeometryShader; }
-    inline ShaderProgram GetDSLightingShader() const { return m_DSLightingShader; }
+    inline ShaderProgram GetDSPointLightShader() const { return m_DSPointLightShader; }
+    inline ShaderProgram GetDSSunLightShader() const { return m_DSSunLightShader; }
+    inline ShaderProgram GetDSAmbientShader() const { return m_DSAmbientShader; }
 
     inline Quad GetScreenQuad() const { return m_ScreenQuad; }
 
@@ -64,7 +66,11 @@ class ResourceManager
 
     inline TextureId GetPointLightIcon() const { return m_PointLightIcon; }
 
+    std::filesystem::path GetRootPath() const { return m_RootPath; }
+
   private:
+    std::filesystem::path m_RootPath = "../..";
+
     std::unordered_map<std::string, ShaderLookup> m_ShaderStages;
     std::vector<ShaderLookup>                     m_DirtyShaderStages;
     ShaderProgram                                 m_SkyboxShader;
@@ -76,7 +82,9 @@ class ResourceManager
     ShaderProgram m_PointShadowShader;
 
     ShaderProgram m_DSGeometryShader;
-    ShaderProgram m_DSLightingShader;
+    ShaderProgram m_DSPointLightShader;
+    ShaderProgram m_DSSunLightShader;
+    ShaderProgram m_DSAmbientShader;
 
     const char* m_OpenGLVersion;
 

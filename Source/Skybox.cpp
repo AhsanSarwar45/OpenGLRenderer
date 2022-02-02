@@ -13,6 +13,8 @@
 
 Skybox LoadSkybox(const std::filesystem::path& directoryPath)
 {
+    std::filesystem::path fullPath = ResourceManager::GetInstance().GetRootPath() / directoryPath;
+
     Skybox skybox;
     skybox.shaderProgram = ResourceManager::GetInstance().GetSkyboxShader();
 
@@ -49,10 +51,10 @@ Skybox LoadSkybox(const std::filesystem::path& directoryPath)
     int width, height, nrChannels;
     for (unsigned int i = 0; i < 6; i++)
     {
-        unsigned char* data = stbi_load((directoryPath / (faces[i] + ".jpg")).string().c_str(), &width, &height, &nrChannels, 0);
+        unsigned char* data = stbi_load((fullPath / (faces[i] + ".jpg")).string().c_str(), &width, &height, &nrChannels, 0);
         if (data)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         }
         else
         {

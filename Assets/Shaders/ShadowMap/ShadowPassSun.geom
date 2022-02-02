@@ -2,7 +2,11 @@
 
 struct SunLight
 {
-    vec3 direction;
+    vec4  position;
+    vec4  direction;
+    vec4  color;
+    float power;
+    float shadowBias;
 };
 
 layout(std140, binding = 2) uniform SunLightTransform { mat4 lightSpaceVPMatrix[600]; }
@@ -29,7 +33,7 @@ void main()
 {
 
     vec3 normal   = cross(fragData[2].worldPos - fragData[0].worldPos, fragData[0].worldPos - fragData[1].worldPos);
-    vec3 lightDir = lightArray.sunLights[gl_InvocationID].direction;
+    vec3 lightDir = lightArray.sunLights[gl_InvocationID].direction.xyz;
 
     if (dot(normal, lightDir) > 0.f)
     {

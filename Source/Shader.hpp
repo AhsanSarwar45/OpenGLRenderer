@@ -12,8 +12,9 @@
 
 // ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath, const char* shaderProgramName,
 //                          bool cameraTransform = true);
-ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* shaderProgramName, bool cameraTransform = true,
-                         std::function<void(ShaderProgram)> initFunction = std::function<void(ShaderProgram)>());
+ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePaths, const char* shaderProgramName,
+                         bool                               cameraTransform = true,
+                         std::function<void(ShaderProgram)> initFunction    = std::function<void(ShaderProgram)>());
 
 struct ShaderStage
 {

@@ -22,17 +22,6 @@ struct Billboard;
 
 using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 
-struct PointLightUniformBufferData
-{
-    glm::vec3 position;
-    float     shadowFarClip;
-};
-
-struct SunLightUniformBufferData
-{
-    glm::vec3 direction;
-};
-
 template <typename T>
 struct LightData
 {
@@ -44,8 +33,8 @@ struct LightData
 
 struct LightRenderData
 {
-    LightData<SunLightUniformBufferData>   sunLightData;
-    LightData<PointLightUniformBufferData> pointLightData;
+    LightData<SunLightUniform>   sunLightData;
+    LightData<PointLightUniform> pointLightData;
 };
 
 struct LightShadowData
@@ -65,11 +54,15 @@ struct DSRenderData
 {
 
     GeometryFramebuffer gBuffer;
+    HDRFramebuffer      hdrFramebuffer;
 
     Quad screenQuad;
 
+    ShaderProgram postProcessShader;
     ShaderProgram geometryPassShader;
-    ShaderProgram lightPassShader;
+    ShaderProgram sunLightPassShader;
+    ShaderProgram pointLightPassShader;
+    ShaderProgram ambientPassShader;
 };
 
 // Forward Shading Render Data
@@ -100,6 +93,7 @@ void DeleteDSRenderData(const DSRenderData& renderData);
 void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
 void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData, const ShadowRenderData& shadowRenderData);
 void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
+void RenderDSPostProcessPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
 
 void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures);
 
@@ -112,6 +106,7 @@ void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const For
 void RenderDeferredShadowPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
 
 void RenderQuad(const Quad& screenQuad);
+void RenderQuadInstanced(const Quad& screenQuad, size_t count);
 void RenderMesh(const std::shared_ptr<const Mesh> mesh, ShaderProgram shaderProgram, const std::shared_ptr<const Material> material);
 void RenderMeshDepth(const std::shared_ptr<const Mesh> mesh);
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);

@@ -38,9 +38,9 @@ struct DepthTexture
     TextureDimension height;
 };
 
-TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture = false); // TODO: take textureType as param
-TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture = false,
-                         const std::string& debugName = "Image Texture");
+TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type = TextureType::Color,
+                         bool flipTexture = false); // TODO: take textureType as param
+TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type, bool flipTexture, const std::string& debugName);
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height);
 DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height,
                                      const std::string& debugName = "Depth Texture Array");

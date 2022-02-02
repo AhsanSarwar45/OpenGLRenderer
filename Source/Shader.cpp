@@ -17,37 +17,34 @@
 
 using namespace ShaderInternal;
 
-ShaderProgram LoadShader(const std::vector<std::string>& shaderStagePaths, const char* name, bool cameraTransform,
+ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePaths, const char* name, bool cameraTransform,
                          std::function<void(ShaderProgram)> initFunction)
 {
     std::vector<ShaderStage> shaderStages;
     for (const auto& shaderStagePath : shaderStagePaths)
     {
-        size_t extLoc = shaderStagePath.find_last_of('.');
-        if (extLoc == std::string::npos)
-        {
-            return 999; // TODO return fallback shader
-        }
+        std::filesystem::path path = ResourceManager::GetInstance().GetRootPath() / shaderStagePath;
 
         GLenum shaderType;
 
-        std::string ext = shaderStagePath.substr(extLoc + 1);
-        if (ext == "vert") // TODO check for multiplt file name conventions
+        std::string ext = path.extension().string();
+
+        if (ext == ".vert") // TODO check for multiplt file name conventions
             shaderType = GL_VERTEX_SHADER;
-        else if (ext == "frag")
+        else if (ext == ".frag")
             shaderType = GL_FRAGMENT_SHADER;
-        else if (ext == "geom")
+        else if (ext == ".geom")
             shaderType = GL_GEOMETRY_SHADER;
-        else if (ext == "tesc")
+        else if (ext == ".tesc")
             shaderType = GL_TESS_CONTROL_SHADER;
-        else if (ext == "tese")
+        else if (ext == ".tese")
             shaderType = GL_TESS_EVALUATION_SHADER;
-        else if (ext == "comp")
+        else if (ext == ".comp")
             shaderType = GL_COMPUTE_SHADER;
         else
             return 999; // TODO return fallback shader
 
-        shaderStages.push_back({.path = shaderStagePath, .type = shaderType});
+        shaderStages.push_back({.path = path, .type = shaderType});
     }
 
     ShaderProgram shaderProgram = glCreateProgram();
@@ -174,6 +171,7 @@ bool LinkAndValidateProgram(const ShaderProgram shaderProgram, const std::vector
 
 std::string ParseShaderStage(const std::filesystem::path& path)
 {
+
     std::ifstream stream(path);
     if (!stream.is_open())
     {

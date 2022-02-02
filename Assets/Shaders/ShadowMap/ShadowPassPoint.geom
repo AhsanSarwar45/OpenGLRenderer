@@ -2,7 +2,14 @@
 
 struct PointLight
 {
-    vec3  position;
+    vec4 position;
+
+    vec4 color;
+
+    float power;
+
+    float shadowBias;
+    float shadowNearClip;
     float shadowFarClip;
 };
 
@@ -31,7 +38,7 @@ out gl_PerVertex { vec4 gl_Position; };
 void main()
 {
     vec3 normal   = cross(fragData[2].worldPos - fragData[0].worldPos, fragData[0].worldPos - fragData[1].worldPos);
-    vec3 lightDir = lightArray.pointLights[gl_InvocationID].position - fragData[0].worldPos;
+    vec3 lightDir = lightArray.pointLights[gl_InvocationID].position.xyz - fragData[0].worldPos;
 
     if (dot(normal, lightDir) > 0.f)
     {

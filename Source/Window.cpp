@@ -16,7 +16,7 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
                                 const void* userParam)
 {
     fprintf(stderr, "GL CALLBACK: %s type = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, message);
-    // debug_break();
+    debug_break();
 }
 
 void ErrorCallback(int error, const char* description) { fprintf(stderr, "Error: %s\n", description); }
@@ -34,6 +34,7 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_SAMPLES, 4);
+    //  glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
 
     /* Create a windowed mode window and its OpenGL context */
     m_Window = glfwCreateWindow(m_Properties.Width, m_Properties.Height, m_Properties.Name.c_str(), NULL, NULL);
@@ -79,7 +80,7 @@ Window::Window(const std::string& name, WindowDimension width, WindowDimension h
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
     // glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_FRAMEBUFFER_SRGB);
+
     glEnable(GL_DEPTH_TEST);
     // glEnable(GL_CULL_FACE);
     glEnable(GL_DEBUG_OUTPUT);

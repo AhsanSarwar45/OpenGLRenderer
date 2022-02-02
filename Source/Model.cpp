@@ -18,6 +18,7 @@
 #include "Material.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
+#include "ResourceManager.hpp"
 #include "Texture.hpp"
 
 using namespace ModelInternal;
@@ -25,20 +26,22 @@ using namespace ModelInternal;
 std::shared_ptr<Model> LoadModel(const std::filesystem::path& path, std::shared_ptr<Material> material, const std::string& name,
                                  bool flipTexture)
 {
+    std::filesystem::path fullPath = ResourceManager::GetInstance().GetRootPath() / path;
+
     std::shared_ptr<Model> model;
 
     Assimp::Importer Importer;
 
-    const aiScene* pScene = Importer.ReadFile(path.string().c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-                                                                         aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace);
+    const aiScene* pScene = Importer.ReadFile(fullPath.string().c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+                                                                             aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace);
 
     if (pScene)
     {
-        model = ParseScene(pScene, path, flipTexture);
+        model = ParseScene(pScene, fullPath, flipTexture);
     }
     else
     {
-        printf("Error parsing '%s': '%s'\n", path.string().c_str(), Importer.GetErrorString());
+        printf("Error parsing '%s': '%s'\n", fullPath.string().c_str(), Importer.GetErrorString());
         model = nullptr;
     }
 

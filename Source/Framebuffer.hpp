@@ -13,6 +13,12 @@ struct FramebufferTexture
     TextureInternalData textureData;
 };
 
+struct FramebufferTextureData
+{
+    const char*  name;
+    unsigned int internalFormat;
+};
+
 struct GeometryFramebuffer
 {
     std::vector<FramebufferTexture> textures;
@@ -30,16 +36,20 @@ struct DepthFramebuffer
     DepthTexture depthTexture;
 };
 
-struct FramebufferTextureData
+struct HDRFramebuffer
 {
-    const char*  name;
-    unsigned int internalFormat;
+    Framebuffer        framebuffer;
+    FramebufferTexture hdrTexture;
+
+    Renderbuffer depthRenderBuffer;
 };
 
 GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height);
 
 Framebuffer CreateFramebuffer();
 void        DeleteFramebuffer(Framebuffer framebuffer);
+
+HDRFramebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension height);
 
 void DeleteRenderbuffer(Renderbuffer renderbuffer);
 

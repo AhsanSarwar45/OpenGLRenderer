@@ -27,18 +27,37 @@ void RenderQuad(const Quad& quad)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
+void RenderQuadInstanced(const Quad& quad, size_t count)
+{
+    glBindVertexArray(quad.vao);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, count);
+    glBindVertexArray(0);
+}
 
 DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height)
 {
     GeometryFramebuffer gBuffer      = CreateGeometryBuffer(width, height);
     const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
-    ShaderProgram       lightPassShader =
-        LoadShader({"../Assets/Shaders/Deferred/DeferredLightPass.vert", "../Assets/Shaders/Deferred/DeferredLightPass.frag"}, "Light Pass",
-                   false, initFunction);
-    return {.gBuffer            = gBuffer,
-            .screenQuad         = ResourceManager::GetInstance().GetScreenQuad(),
-            .geometryPassShader = ResourceManager::GetInstance().GetDSGeometryShader(),
-            .lightPassShader    = lightPassShader};
+    ShaderProgram       pointLightShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredPointLightPass.frag"},
+                   "Point Light Pass Shader", false, initFunction);
+    ShaderProgram sunLightShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredSunLightPass.frag"},
+                   "Sun Light Pass Shader", false, initFunction);
+    ShaderProgram ambientShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredAmbientPass.frag"},
+                   "Ambient Pass Shader", false, initFunction);
+    ShaderProgram postProcessShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredPostProcessPass.vert", "Assets/Shaders/Deferred/DeferredPostProcessPass.frag"},
+                   "Post Processing Pass Shader", false);
+    return {.gBuffer              = gBuffer,
+            .hdrFramebuffer       = CreateHDRFramebuffer(width, height),
+            .screenQuad           = ResourceManager::GetInstance().GetScreenQuad(),
+            .postProcessShader    = postProcessShader, // TODO move to resource manager
+            .geometryPassShader   = ResourceManager::GetInstance().GetDSGeometryShader(),
+            .sunLightPassShader   = sunLightShader,
+            .pointLightPassShader = pointLightShader,
+            .ambientPassShader    = ambientShader};
 }
 
 ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height)
@@ -49,11 +68,11 @@ ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension
 LightRenderData CreateLightRenderData(uint16_t maxSunLightCount, uint16_t maxPointLightCount)
 {
     return {.sunLightData   = {.lightTransformsUB = CreateUniformBufferVector<LightTransform>(2, maxSunLightCount),
-                             .lightDataUB       = CreateUniformBufferVector<SunLightUniformBufferData>(3, maxPointLightCount),
+                             .lightDataUB       = CreateUniformBufferVector<SunLightUniform>(3, maxPointLightCount),
                              .maxLightCount     = maxSunLightCount},
             .pointLightData = {
                 .lightTransformsUB = CreateUniformBufferVector<LightTransform>(4, 6 * maxPointLightCount),
-                .lightDataUB       = CreateUniformBufferVector<PointLightUniformBufferData>(5, maxPointLightCount),
+                .lightDataUB       = CreateUniformBufferVector<PointLightUniform>(5, maxPointLightCount),
                 .maxLightCount     = maxPointLightCount,
             }};
 }
@@ -79,7 +98,9 @@ void DeleteDSRenderData(const DSRenderData& renderData)
     DeleteGeometryFramebuffer(renderData.gBuffer);
     // DeleteQuad(data.screenQuad);
     // ShaderInternal::DeleteShaderProgram(data.geometryPassShader);
-    ShaderInternal::DeleteShaderProgram(renderData.lightPassShader);
+    ShaderInternal::DeleteShaderProgram(renderData.sunLightPassShader);
+    ShaderInternal::DeleteShaderProgram(renderData.pointLightPassShader);
+    ShaderInternal::DeleteShaderProgram(renderData.ambientPassShader);
 }
 
 void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures)
@@ -165,7 +186,6 @@ void RenderBillboard(const std::shared_ptr<const Billboard> billboardPtr, Shader
 
 void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
 {
-
     glViewport(0, 0, renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight);
 
     glBindFramebuffer(GL_FRAMEBUFFER, renderData.gBuffer.id);
@@ -178,37 +198,69 @@ void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRend
 }
 void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData, const ShadowRenderData& shadowRenderData)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     for (int i = 0; i < renderData.gBuffer.textures.size(); i++)
     {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, renderData.gBuffer.textures[i].textureData.id);
+        BindTexture(renderData.gBuffer.textures[i].textureData.id, i);
     }
 
-    SetSceneUniforms(scene, renderData.lightPassShader);
+    // Ambient Pass
+    UseShaderProgram(renderData.ambientPassShader);
+    ShaderSetFloat3(renderData.ambientPassShader, "ambientLight", scene->ambientLight);
+
+    RenderQuad(renderData.screenQuad);
 
     BindTextureArray(shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.id, 12);
     BindCubemapArray(shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.id, 13);
 
-    UseShaderProgram(renderData.lightPassShader);
+    // Sun Light Pass
+    UseShaderProgram(renderData.sunLightPassShader);
+    ShaderSetFloat3(renderData.sunLightPassShader, "viewPos", scene->camera->GetPosition());
 
-    // finally render quad
-    RenderQuad(renderData.screenQuad);
+    RenderQuadInstanced(renderData.screenQuad, scene->sunLights.size());
+
+    // Point Light Pass
+    UseShaderProgram(renderData.pointLightPassShader);
+    ShaderSetFloat3(renderData.pointLightPassShader, "viewPos", scene->camera->GetPosition());
+
+    RenderQuadInstanced(renderData.screenQuad, scene->pointLights.size());
+
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
 }
 void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
 {
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData.gBuffer.id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer); // write to default framebuffer
 
     glBlitFramebuffer(0, 0, renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight, 0, 0,
                       renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer);
 
     DrawSkybox(scene->skybox);
+}
+
+void RenderDSPostProcessPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    BindTexture(renderData.hdrFramebuffer.hdrTexture.textureData.id, 0);
+
+    UseShaderProgram(renderData.postProcessShader);
+
+    ShaderSetFloat(renderData.postProcessShader, "exposure", scene->camera->exposure);
+
+    RenderQuad(renderData.screenQuad);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void RenderTransparentPass(const std::shared_ptr<const Scene> scene)
@@ -240,7 +292,9 @@ void RenderTransparentPass(const std::shared_ptr<const Scene> scene)
 void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData, const ShadowRenderData& shadowRenderData)
 {
     glEnable(GL_MULTISAMPLE);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glViewport(0, 0, renderData.width, renderData.height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -280,14 +334,18 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
 
     for (int i = 0; i < scene->sunLights.size(); i++)
     {
-        SunLight         sunLight    = scene->sunLights[i];
-        ShadowProperties shadowProps = sunLight.shadowProps;
-        lightProjection              = glm::ortho(-shadowProps.shadowMapOrtho, shadowProps.shadowMapOrtho, -shadowProps.shadowMapOrtho,
-                                     shadowProps.shadowMapOrtho, shadowProps.shadowNearClip, shadowProps.shadowFarClip);
-        lightView                    = glm::lookAt(sunLight.direction, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        SunLight sunLight = scene->sunLights[i];
+        lightProjection   = glm::ortho(-sunLight.shadowMapOrtho, sunLight.shadowMapOrtho, -sunLight.shadowMapOrtho, sunLight.shadowMapOrtho,
+                                     sunLight.shadowNearClip, sunLight.shadowFarClip);
+        lightView         = glm::lookAt(sunLight.direction, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 
         lightRenderData.sunLightData.lightTransformsUB.data[i].LightSpaceVPMatrix = lightProjection * lightView;
-        lightRenderData.sunLightData.lightDataUB.data[i]                          = {.direction = sunLight.direction};
+
+        lightRenderData.sunLightData.lightDataUB.data[i] = {.position   = {sunLight.position, 1.0f},
+                                                            .direction  = {sunLight.direction, 1.0f},
+                                                            .color      = {sunLight.color, 1.0f},
+                                                            .power      = {sunLight.power},
+                                                            .shadowBias = {sunLight.shadowBias}};
     }
 
     UploadUniformBufferVector(lightRenderData.sunLightData.lightTransformsUB);
@@ -308,9 +366,8 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
 
     for (int i = 0; i < scene->pointLights.size(); i++)
     {
-        PointLight       pointLight  = scene->pointLights[i];
-        ShadowProperties shadowProps = pointLight.shadowProps;
-        lightProjection              = glm::perspective(glm::radians(90.0f), 1.0f, shadowProps.shadowNearClip, shadowProps.shadowFarClip);
+        PointLight pointLight = scene->pointLights[i];
+        lightProjection       = glm::perspective(glm::radians(90.0f), 1.0f, pointLight.shadowNearClip, pointLight.shadowFarClip);
 
         lightRenderData.pointLightData.lightTransformsUB.data[6 * i + 0].LightSpaceVPMatrix =
             lightProjection *
@@ -330,8 +387,12 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
             lightProjection *
             glm::lookAt(pointLight.position, pointLight.position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0, -1.0, 0.0));
 
-        lightRenderData.pointLightData.lightDataUB.data[i] = {.position      = pointLight.position,
-                                                              .shadowFarClip = pointLight.shadowProps.shadowFarClip};
+        lightRenderData.pointLightData.lightDataUB.data[i] = {.position       = {pointLight.position, 1.0f},
+                                                              .color          = {pointLight.color, 1.0f},
+                                                              .power          = pointLight.power,
+                                                              .shadowBias     = pointLight.shadowBias,
+                                                              .shadowNearClip = pointLight.shadowNearClip,
+                                                              .shadowFarClip  = pointLight.shadowFarClip};
     }
 
     UploadUniformBufferVector(lightRenderData.pointLightData.lightTransformsUB);

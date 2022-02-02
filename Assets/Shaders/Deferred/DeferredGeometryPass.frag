@@ -28,8 +28,7 @@ void main()
     gNormal = normalize(gNormal * 2.0 - 1.0);
     gNormal = normalize(fragData.TBN * gNormal);
 
-    gAlbedo = pow(texture(albedoMap, fragData.TexCoords).rgb, vec3(2.2));
-    // gAlbedo = texture(material.albedo, fragData.TexCoords).rgb;
+    gAlbedo = texture(albedoMap, fragData.TexCoords).rgb;
 
     gMetalnessRoughnessAO.r = texture(metalnessMap, fragData.TexCoords).r;
     gMetalnessRoughnessAO.g = texture(roughnessMap, fragData.TexCoords).r;

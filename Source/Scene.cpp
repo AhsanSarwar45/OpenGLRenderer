@@ -16,8 +16,8 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
         ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].position", pointLight.position);
         ShaderSetFloat3(shaderProgram, "pointLights[" + indexStr + "].color", pointLight.color);
         ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].power", pointLight.power);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].shadowBias", pointLight.shadowProps.shadowBias);
-        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].shadowFarClip", pointLight.shadowProps.shadowFarClip);
+        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].shadowBias", pointLight.shadowBias);
+        ShaderSetFloat(shaderProgram, "pointLights[" + indexStr + "].shadowFarClip", pointLight.shadowFarClip);
 
         index++;
     }
@@ -28,7 +28,7 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
         ShaderSetFloat3(shaderProgram, "sunLights[" + indexStr + "].direction", sunLight.direction);
         ShaderSetFloat3(shaderProgram, "sunLights[" + indexStr + "].color", sunLight.color);
         ShaderSetFloat(shaderProgram, "sunLights[" + indexStr + "].power", sunLight.power);
-        ShaderSetFloat(shaderProgram, "sunLights[" + indexStr + "].shadowBias", sunLight.shadowProps.shadowBias);
+        ShaderSetFloat(shaderProgram, "sunLights[" + indexStr + "].shadowBias", sunLight.shadowBias);
 
         index++;
     }

@@ -5,20 +5,20 @@
 #include <glad/glad.h>
 #include <string>
 
+#include "ResourceManager.hpp"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType type, bool flipTexture, const std::string& debugName)
+TextureAsset LoadTexture(const std::filesystem::path& texturePath, const TextureType type, bool flipTexture, const std::string& debugName)
 {
-
+    std::filesystem::path fullPath = ResourceManager::GetInstance().GetRootPath() / texturePath;
     stbi_set_flip_vertically_on_load(flipTexture);
-
-    std::filesystem::path filePathStr = path;
 
     TextureId      textureId;
     int            width, height;
     int            componentCount;
-    unsigned char* data     = stbi_load(filePathStr.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
+    unsigned char* data     = stbi_load(fullPath.make_preferred().string().c_str(), &width, &height, &componentCount, 0);
     bool           isLoaded = false;
     if (data)
     {
@@ -35,13 +35,27 @@ TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType ty
         }
         else if (componentCount == 3)
         {
-            internalFormat = GL_RGB;
-            dataFormat     = GL_RGB;
+            if (type == TextureType::Color)
+            {
+                internalFormat = GL_SRGB;
+            }
+            else
+            {
+                internalFormat = GL_RGB;
+            }
+            dataFormat = GL_RGB;
         }
         else if (componentCount == 4)
         {
-            internalFormat = GL_RGBA;
-            dataFormat     = GL_RGBA;
+            if (type == TextureType::Color)
+            {
+                internalFormat = GL_SRGB_ALPHA;
+            }
+            else
+            {
+                internalFormat = GL_RGBA;
+            }
+            dataFormat = GL_RGBA;
         }
 
         textureId = CreateTexture();
@@ -54,14 +68,11 @@ TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType ty
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        std::cout << "Texture at path: " << path << "loaded (nr: " << componentCount << ", width: " << width << ", height: " << height
-                  << "\n";
-
         isLoaded = true;
     }
     else
     {
-        std::cout << "Texture failed to load at path: " << path << "\n";
+        std::cout << "Texture failed to load at path: " << fullPath << "\n";
     }
 
     stbi_image_free(data);
@@ -77,9 +88,9 @@ TextureAsset LoadTexture(const std::filesystem::path& path, const TextureType ty
             .isFlipped      = flipTexture};
 }
 
-TextureAsset LoadTexture(const std::filesystem::path& path, bool flipTexture)
+TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type, bool flipTexture)
 {
-    return LoadTexture(path, TextureType::Color, flipTexture, path.filename().string());
+    return LoadTexture(path, type, flipTexture, path.filename().string());
 }
 
 DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)

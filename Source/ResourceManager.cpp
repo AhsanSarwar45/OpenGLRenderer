@@ -8,28 +8,34 @@
 
 void ResourceManager::Initialize()
 {
-    m_SkyboxShader = LoadShader({"../Assets/Shaders/Skybox/Skybox.vert", "../Assets/Shaders/Skybox/Skybox.frag"}, "Skybox", false);
+    m_SkyboxShader = LoadShader({"Assets/Shaders/Skybox/Skybox.vert", "Assets/Shaders/Skybox/Skybox.frag"}, "Skybox Shader", false);
     m_BillboardShader =
-        LoadShader({"../Assets/Shaders/Billboard/Billboard.vert", "../Assets/Shaders/Billboard/Billboard.frag"}, "Billboard");
+        LoadShader({"Assets/Shaders/Billboard/Billboard.vert", "Assets/Shaders/Billboard/Billboard.frag"}, "Billboard Shader");
 
-    m_ForwardSunShader = LoadShader({"../Assets/Shaders/Forward/ForwardLit.vert", "../Assets/Shaders/Forward/ForwardLit.frag"}, "Forward");
+    m_ForwardSunShader = LoadShader({"Assets/Shaders/Forward/ForwardLit.vert", "Assets/Shaders/Forward/ForwardLit.frag"}, "Forward Shader");
 
-    m_SunShadowShader   = LoadShader({"../Assets/Shaders/ShadowMap/ShadowPass.vert", "../Assets/Shaders/ShadowMap/ShadowPass.frag",
-                                    "../Assets/Shaders/ShadowMap/ShadowPassSun.geom"},
+    m_SunShadowShader   = LoadShader({"Assets/Shaders/ShadowMap/ShadowPass.vert", "Assets/Shaders/ShadowMap/ShadowPass.frag",
+                                    "Assets/Shaders/ShadowMap/ShadowPassSun.geom"},
                                    "Sun Shadow Shader", false);
-    m_PointShadowShader = LoadShader({"../Assets/Shaders/ShadowMap/ShadowPass.vert", "../Assets/Shaders/ShadowMap/ShadowPassPoint.frag",
-                                      "../Assets/Shaders/ShadowMap/ShadowPassPoint.geom"},
+    m_PointShadowShader = LoadShader({"Assets/Shaders/ShadowMap/ShadowPass.vert", "Assets/Shaders/ShadowMap/ShadowPassPoint.frag",
+                                      "Assets/Shaders/ShadowMap/ShadowPassPoint.geom"},
                                      "Point Shadow Shader", false);
 
     m_DSGeometryShader = LoadShader(
-        {"../Assets/Shaders/Deferred/DeferredGeometryPass.vert", "../Assets/Shaders/Deferred/DeferredGeometryPass.frag"}, "Geometry Pass");
-    m_DSLightingShader = LoadShader(
-        {"../Assets/Shaders/Deferred/DeferredLightPass.vert", "../Assets/Shaders/Deferred/DeferredLightPass.frag"}, "Light Pass", false);
+        {"Assets/Shaders/Deferred/DeferredGeometryPass.vert", "Assets/Shaders/Deferred/DeferredGeometryPass.frag"}, "Geometry Pass Shader");
+
+    m_DSPointLightShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredPointLightPass.frag"},
+                   "Point Light Pass Shader", false);
+    m_DSSunLightShader = LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredSunLightPass.frag"},
+                                    "Sun Light Pass Shader", false);
+    m_DSAmbientShader  = LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredAmbientPass.frag"},
+                                   "Ambient Pass Shader", false);
 
     m_ScreenQuad = CreateQuad();
 
-    m_PointLightIcon = LoadTexture("../Assets/Images/BulbIcon2.png").id;
-    m_SunLightIcon   = LoadTexture("../Assets/Images/sunIcon.png").id;
+    m_PointLightIcon = LoadTexture("Assets/Images/BulbIcon2.png").id;
+    m_SunLightIcon   = LoadTexture("Assets/Images/sunIcon.png").id;
 
     m_Billboard        = std::make_shared<Billboard>();
     *m_Billboard       = CreateBillboard();

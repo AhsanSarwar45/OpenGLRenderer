@@ -72,7 +72,7 @@ void SetRenderPipeline(int index)
 int main()
 {
 
-    // PRN_STRUCT_OFFSETS(Model, name, transform, meshes, materials, shaderProgram);
+    PRN_STRUCT_OFFSETS(SunLight, position, direction, color, power);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
@@ -82,33 +82,39 @@ int main()
 
     ResourceManager::GetInstance().Initialize();
 
-    scene->skybox       = LoadSkybox("../Assets/Skyboxes/skybox");
+    scene->skybox       = LoadSkybox("Assets/Skyboxes/skybox");
     scene->ambientLight = glm::vec3(0.4f);
 
     std::shared_ptr<Material> gunMaterialPBR = CreateMaterial(ResourceManager::GetInstance().GetDSGeometryShader());
-    SetMaterialTexture(gunMaterialPBR, "albedoMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Albedo.png", true).id);
-    SetMaterialTexture(gunMaterialPBR, "normalMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_NormalGL.png", true).id);
-    SetMaterialTexture(gunMaterialPBR, "metalnessMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Metallic.png", true).id);
-    SetMaterialTexture(gunMaterialPBR, "roughnessMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_Roughness.png", true).id);
-    SetMaterialTexture(gunMaterialPBR, "aoMap", LoadTexture("../Assets/Models/9mmfbx/source/GunGS_AO.png", true).id);
+    SetMaterialTexture(gunMaterialPBR, "albedoMap",
+                       LoadTexture("Assets/Models/9mmfbx/source/GunGS_Albedo.png", TextureType::Color, true).id);
+    SetMaterialTexture(gunMaterialPBR, "normalMap",
+                       LoadTexture("Assets/Models/9mmfbx/source/GunGS_NormalGL.png", TextureType::NonColor, true).id);
+    SetMaterialTexture(gunMaterialPBR, "metalnessMap",
+                       LoadTexture("Assets/Models/9mmfbx/source/GunGS_Metallic.png", TextureType::NonColor, true).id);
+    SetMaterialTexture(gunMaterialPBR, "roughnessMap",
+                       LoadTexture("Assets/Models/9mmfbx/source/GunGS_Roughness.png", TextureType::NonColor, true).id);
+    SetMaterialTexture(gunMaterialPBR, "aoMap", LoadTexture("Assets/Models/9mmfbx/source/GunGS_AO.png", TextureType::NonColor, true).id);
 
     materials.push_back(gunMaterialPBR);
 
     std::shared_ptr<Material> metalMaterial = CreateMaterial(ResourceManager::GetInstance().GetDSGeometryShader());
-    SetMaterialTexture(metalMaterial, "albedoMap", LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_albedo.png", true).id);
+    SetMaterialTexture(metalMaterial, "albedoMap",
+                       LoadTexture("Assets/Materials/metalLined/rusting-lined-metal_albedo.png", TextureType::Color, true).id);
     SetMaterialTexture(metalMaterial, "normalMap",
-                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", true).id);
+                       LoadTexture("Assets/Materials/metalLined/rusting-lined-metal_normal-ogl.png", TextureType::NonColor, true).id);
     SetMaterialTexture(metalMaterial, "metalnessMap",
-                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_metallic.png", true).id);
+                       LoadTexture("Assets/Materials/metalLined/rusting-lined-metal_metallic.png", TextureType::NonColor, true).id);
     SetMaterialTexture(metalMaterial, "roughnessMap",
-                       LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_roughness.png", true).id);
-    SetMaterialTexture(metalMaterial, "aoMap", LoadTexture("../Assets/Materials/metalLined/rusting-lined-metal_ao.png", true).id);
+                       LoadTexture("Assets/Materials/metalLined/rusting-lined-metal_roughness.png", TextureType::NonColor, true).id);
+    SetMaterialTexture(metalMaterial, "aoMap",
+                       LoadTexture("Assets/Materials/metalLined/rusting-lined-metal_ao.png", TextureType::NonColor, true).id);
 
     materials.push_back(metalMaterial);
 
-    std::shared_ptr<Model> gun    = LoadModel("../Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
-    std::shared_ptr<Model> sphere = LoadModel("../Assets/Models/sphere/sphere.obj", metalMaterial, "Sphere", true);
-    std::shared_ptr<Model> cube   = LoadModel("../Assets/Models/WoodenBox/cube.obj", metalMaterial, "Cube", true);
+    std::shared_ptr<Model> gun    = LoadModel("Assets/Models/9mmfbx/source/9mm.fbx", gunMaterialPBR, "Gun", true);
+    std::shared_ptr<Model> sphere = LoadModel("Assets/Models/sphere/sphere.obj", metalMaterial, "Sphere", true);
+    std::shared_ptr<Model> cube   = LoadModel("Assets/Models/WoodenBox/cube.obj", metalMaterial, "Cube", true);
 
     cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
     cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
@@ -137,6 +143,8 @@ int main()
 
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
+    scene->sunLights.push_back(
+        {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
     // scene->sunLights.push_back(
     //     {.position = {4.0f, 4.0f, 4.0f}, .direction = {-3.0f, 4.0f, 2.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 
@@ -151,7 +159,8 @@ int main()
 
     ShaderUpdateListener* shaderListener = new ShaderUpdateListener();
 
-    efsw::WatchID watchID = fileWatcher->addWatch("../Assets/Shaders", shaderListener, true);
+    efsw::WatchID watchID = fileWatcher->addWatch(
+        (ResourceManager::GetInstance().GetRootPath() / "Assets/Shaders").make_preferred().string().c_str(), shaderListener, true);
 
     fileWatcher->watch();
 
@@ -272,10 +281,9 @@ int main()
 
                         if (ImGui::TreeNode("Shadows"))
                         {
-                            ImGui::DragFloat("Bias", &light.shadowProps.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &light.shadowProps.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &light.shadowProps.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &light.shadowProps.shadowMapOrtho, 1.0f);
+                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
                             ImGui::TreePop();
                         }
                     }
@@ -302,10 +310,10 @@ int main()
 
                         if (ImGui::TreeNode("Shadows"))
                         {
-                            ImGui::DragFloat("Bias", &light.shadowProps.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &light.shadowProps.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &light.shadowProps.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &light.shadowProps.shadowMapOrtho, 1.0f);
+                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
+                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
+                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
+                            ImGui::DragFloat("Ortho Size", &light.shadowMapOrtho, 1.0f);
                             ImGui::TreePop();
                         }
                         ImGui::TreePop();
@@ -327,6 +335,8 @@ int main()
             ImGui::DragFloat("Speed", scene->camera->GetSpeedPtr(), 0.03f);
             ImGui::DragFloat("Near Clip", scene->camera->GetNearClipPtr(), 0.01f);
             ImGui::DragFloat("Far Clip", scene->camera->GetFarClipPtr(), 1.0f);
+            ImGui::DragFloat("Exposure", &scene->camera->exposure, 0.03f);
+
             ImGui::TreePop();
         }
 
@@ -397,6 +407,7 @@ int main()
                 RenderDSLightPass(scene, dsRenderData, shadowRenderData);
                 RenderDSForwardPass(scene, dsRenderData);
                 RenderTransparentPass(scene);
+                RenderDSPostProcessPass(scene, dsRenderData);
                 break;
             case 1:
                 RenderShadowPass(scene, lightRenderData, shadowRenderData);

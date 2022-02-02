@@ -28,7 +28,7 @@ void ShaderUpdateListener::handleFileAction(efsw::WatchID watchid, const std::st
             m_MinFileModifyTime)
         {
             m_LastModifyTimes[filepath.string()] = currentTime;
-            printf("%s", "changed!");
+            printf("%s", filepath.string().c_str());
             ResourceManager::GetInstance().AddDirtyShader(filepath);
         }
         break;

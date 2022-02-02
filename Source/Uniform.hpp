@@ -13,6 +13,32 @@ struct TextureUniform
     UniformLocation location;
 };
 
+struct SunLightUniform
+{
+    glm::vec4 position;
+    glm::vec4 direction;
+
+    glm::vec4 color;
+
+    float power;
+    float shadowBias;
+    float PADDING1;
+    float PADDING2;
+};
+
+struct PointLightUniform
+{
+    glm::vec4 position;
+
+    glm::vec4 color;
+
+    float power;
+
+    float shadowBias;
+    float shadowNearClip;
+    float shadowFarClip;
+};
+
 template <typename T>
 struct UniformBufferVector
 {

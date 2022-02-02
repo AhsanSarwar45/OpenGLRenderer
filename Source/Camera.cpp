@@ -26,10 +26,9 @@ Camera::Camera(Window* window, float nearClip, float farClip, glm::vec3 position
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_UniformBuffer, 0, 2 * sizeof(glm::mat4));
 }
 // constructor with scalar values
-Camera::Camera(Window* window, float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw,
-               float pitch)
-    : m_Window(window), m_NativeWindow(window->GetWindowPtr()), m_Front(glm::vec3(0.0f, 0.0f, -1.0f)),
-      m_MovementSpeed(SPEED), m_MouseSensitivity(SENSITIVITY), m_Zoom(ZOOM)
+Camera::Camera(Window* window, float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
+    : m_Window(window), m_NativeWindow(window->GetWindowPtr()), m_Front(glm::vec3(0.0f, 0.0f, -1.0f)), m_MovementSpeed(SPEED),
+      m_MouseSensitivity(SENSITIVITY), m_Zoom(ZOOM)
 {
 }
 
@@ -63,13 +62,11 @@ void Camera::Update(float deltaTime)
     WindowProperties props = m_Window->GetProperties();
     if (props.Height > 0) // TODO get rid
     {
-        m_Projection =
-            glm::perspective(glm::radians(m_Zoom), (float)props.Width / (float)props.Height, m_NearClip, m_FarClip);
+        m_Projection = glm::perspective(glm::radians(m_Zoom), (float)props.Width / (float)props.Height, m_NearClip, m_FarClip);
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, m_UniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(m_Projection));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     glBindBuffer(GL_UNIFORM_BUFFER, m_UniformBuffer);
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_View));
