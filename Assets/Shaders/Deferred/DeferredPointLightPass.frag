@@ -96,9 +96,9 @@ vec3 CalculatePointLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metall
 
     vec3 halfwayDir = normalize(viewDir + lightDir);
 
-    float distance    = length(pointLight.position.xyz - fragPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3  radiance    = pointLight.color.xyz * pointLight.power * attenuation;
+    float distanceToLight = length(pointLight.position.xyz - fragPos);
+    float attenuation     = 1.0 / (distanceToLight * distanceToLight);
+    vec3  radiance        = pointLight.color.xyz * pointLight.power * attenuation;
 
     // cook-torrance brdf
     float NDF = DistributionGGX(normal, halfwayDir, roughness);
@@ -124,6 +124,7 @@ vec3 CalculatePointLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metall
 
 void main()
 {
+
     // retrieve data from gbuffer
     vec3 fragPos = texture(gPosition, texCoord).rgb;
 

@@ -1,15 +1,16 @@
-#version 330 core
+#version 430 core
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoords;
 layout(location = 3) in vec3 aTangent;
 layout(location = 4) in vec3 aBitangent;
 
-layout(std140) uniform Camera
+layout(std140, binding = 0) uniform Camera
 {
     mat4 projection;
     mat4 view;
-};
+}
+camera;
 
 out VertexData
 {
@@ -35,5 +36,5 @@ void main()
     vertexData.TBN       = mat3(T, B, N);
     // vertexData.FragPosLightSpace = lightSpaceMatrix * vec4(vertexData.FragPos, 1.0);
 
-    gl_Position = projection * view * worldPos;
+    gl_Position = camera.projection * camera.view * worldPos;
 }
