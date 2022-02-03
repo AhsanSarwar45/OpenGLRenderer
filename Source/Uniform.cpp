@@ -3,18 +3,18 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
-UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size)
+UniformBufferObject CreateUniformBufferObject(UniformBufferBinding binding, size_t size)
 {
-    UniformBuffer uniformBuffer;
-    glGenBuffers(1, &uniformBuffer);
-    glBindBufferBase(GL_UNIFORM_BUFFER, binding, uniformBuffer);
+    UniformBufferObject uniformBufferObject;
+    glGenBuffers(1, &uniformBufferObject);
+    glBindBufferBase(GL_UNIFORM_BUFFER, binding, uniformBufferObject);
     glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_STATIC_DRAW);
-    return uniformBuffer;
+    return uniformBufferObject;
 }
 
-void SetUniformBufferSubData(UniformBuffer uniformBuffer, void* data, size_t size)
+void SetUniformBufferSubData(UniformBufferObject uniformBufferObject, void* data, size_t size)
 {
-    glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferObject);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
 }
 

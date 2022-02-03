@@ -13,49 +13,40 @@ struct TextureUniform
     UniformLocation location;
 };
 
-struct SunLightUniform
-{
-    glm::vec4 position;
-    glm::vec4 direction;
-
-    glm::vec4 color;
-
-    float power;
-    float shadowBias;
-    float PADDING1;
-    float PADDING2;
-};
-
-struct PointLightUniform
-{
-    glm::vec4 position;
-
-    glm::vec4 color;
-
-    float power;
-
-    float shadowBias;
-    float shadowNearClip;
-    float shadowFarClip;
-};
-
 template <typename T>
 struct UniformBufferVector
 {
-    std::vector<T> data;
-    UniformBuffer  ubo;
-    size_t         size;
+    std::vector<T>      data;
+    UniformBufferObject ubo;
+    size_t              size;
 };
 
-UniformBuffer CreateUniformBuffer(UniformBufferBinding binding, size_t size);
+template <typename T>
+struct UniformBuffer
+{
+    T                   data;
+    UniformBufferObject ubo;
+    size_t              size;
+};
+
+UniformBufferObject CreateUniformBufferObject(UniformBufferBinding binding, size_t size);
 
 template <typename T>
 UniformBufferVector<T> CreateUniformBufferVector(UniformBufferBinding binding, size_t count)
 {
     return {
         .data = std::vector<T>(count),
-        .ubo  = CreateUniformBuffer(binding, count * sizeof(T)),
+        .ubo  = CreateUniformBufferObject(binding, count * sizeof(T)),
         .size = count * sizeof(T),
+    };
+}
+
+template <typename T>
+UniformBuffer<T> CreateUniformBuffer(UniformBufferBinding binding)
+{
+    return {
+        .ubo  = CreateUniformBufferObject(binding, sizeof(T)),
+        .size = sizeof(T),
     };
 }
 
@@ -65,7 +56,13 @@ void UploadUniformBufferVector(UniformBufferVector<T>& uboVector)
     SetUniformBufferSubData(uboVector.ubo, &uboVector.data[0], uboVector.size);
 }
 
-void SetUniformBufferSubData(UniformBuffer uniformBuffer, void* data, size_t size);
+template <typename T>
+void UploadUniformBuffer(UniformBuffer<T>& uniformBuffer)
+{
+    SetUniformBufferSubData(uniformBuffer.ubo, &uniformBuffer.data, uniformBuffer.size);
+}
+
+void SetUniformBufferSubData(UniformBufferObject uniformBufferObject, void* data, size_t size);
 
 // utility uniform functions
 void ShaderSetBool(ShaderProgram shaderProgram, const std::string& uniformName, bool value);

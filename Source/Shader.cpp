@@ -65,11 +65,6 @@ ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePa
 
     glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
 
-    if (cameraTransform)
-    {
-        glUniformBlockBinding(shaderProgram, glGetUniformBlockIndex(shaderProgram, "Camera"), 0);
-    }
-
     return shaderProgram;
 }
 

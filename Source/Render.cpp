@@ -68,11 +68,11 @@ ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension
 LightRenderData CreateLightRenderData(uint16_t maxSunLightCount, uint16_t maxPointLightCount)
 {
     return {.sunLightData   = {.lightTransformsUB = CreateUniformBufferVector<LightTransform>(2, maxSunLightCount),
-                             .lightDataUB       = CreateUniformBufferVector<SunLightUniform>(3, maxPointLightCount),
+                             .lightDataUB       = CreateUniformBufferVector<SunLightUniformData>(3, maxPointLightCount),
                              .maxLightCount     = maxSunLightCount},
             .pointLightData = {
                 .lightTransformsUB = CreateUniformBufferVector<LightTransform>(4, 6 * maxPointLightCount),
-                .lightDataUB       = CreateUniformBufferVector<PointLightUniform>(5, maxPointLightCount),
+                .lightDataUB       = CreateUniformBufferVector<PointLightUniformData>(5, maxPointLightCount),
                 .maxLightCount     = maxPointLightCount,
             }};
 }
@@ -220,13 +220,13 @@ void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderD
 
     // Sun Light Pass
     UseShaderProgram(renderData.sunLightPassShader);
-    ShaderSetFloat3(renderData.sunLightPassShader, "viewPos", scene->camera->GetPosition());
+    ShaderSetFloat3(renderData.sunLightPassShader, "viewPos", scene->camera.position);
 
     RenderQuadInstanced(renderData.screenQuad, scene->sunLights.size());
 
     // Point Light Pass
     UseShaderProgram(renderData.pointLightPassShader);
-    ShaderSetFloat3(renderData.pointLightPassShader, "viewPos", scene->camera->GetPosition());
+    ShaderSetFloat3(renderData.pointLightPassShader, "viewPos", scene->camera.position);
 
     RenderQuadInstanced(renderData.screenQuad, scene->pointLights.size());
 
@@ -256,7 +256,7 @@ void RenderDSPostProcessPass(const std::shared_ptr<const Scene> scene, const DSR
 
     UseShaderProgram(renderData.postProcessShader);
 
-    ShaderSetFloat(renderData.postProcessShader, "exposure", scene->camera->exposure);
+    ShaderSetFloat(renderData.postProcessShader, "exposure", scene->camera.exposure);
 
     RenderQuad(renderData.screenQuad);
 

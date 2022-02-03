@@ -17,7 +17,7 @@ lightArray;
 // layout(std140, binding = 1) uniform lightArray { vec4 lightPosition[100]; }
 // LightArray;
 
-layout(triangles, invocations = 10) in;
+layout(triangles, invocations = 2) in;
 layout(triangle_strip, max_vertices = 3) out;
 
 in VertexData

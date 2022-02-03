@@ -15,7 +15,7 @@ struct Scene
     std::vector<std::shared_ptr<Billboard>> billboards;
     std::vector<PointLight>                 pointLights;
     std::vector<SunLight>                   sunLights;
-    std::shared_ptr<Camera>                 camera;
+    Camera                                  camera;
     glm::vec3                               ambientLight;
     Skybox                                  skybox;
 };

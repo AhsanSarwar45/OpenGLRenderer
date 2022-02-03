@@ -85,8 +85,6 @@ void DrawSkybox(const Skybox& skybox)
     // change depth function so depth test passes when values are equal to depth buffer's content
     glDepthFunc(GL_LEQUAL);
     UseShaderProgram(skybox.shaderProgram);
-    ShaderSetMat4(skybox.shaderProgram, "view", glm::mat4(glm::mat3(Camera::GetActiveCamera()->GetViewMatrix())));
-    ShaderSetMat4(skybox.shaderProgram, "projection", Camera::GetActiveCamera()->GetProjectionMatrix());
 
     // skybox cube
     glBindVertexArray(skybox.vao);

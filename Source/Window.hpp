@@ -34,7 +34,7 @@ class Window
     inline WindowProperties GetProperties() const { return m_Properties; }
     inline float            GetDeltaTime() const { return m_DeltaTime; }
     inline bool             IsFocused() const { return m_Focused; }
-    inline GLFWwindow*      GetWindowPtr() { return m_Window; }
+    inline GLFWwindow*      GetWindowPtr() const { return m_Window; }
 
     inline void SetVSync(bool value) { glfwSwapInterval(value); }
 

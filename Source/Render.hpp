@@ -33,8 +33,8 @@ struct LightData
 
 struct LightRenderData
 {
-    LightData<SunLightUniform>   sunLightData;
-    LightData<PointLightUniform> pointLightData;
+    LightData<SunLightUniformData>   sunLightData;
+    LightData<PointLightUniformData> pointLightData;
 };
 
 struct LightShadowData

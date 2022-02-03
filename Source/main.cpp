@@ -72,13 +72,13 @@ void SetRenderPipeline(int index)
 int main()
 {
 
-    PRN_STRUCT_OFFSETS(SunLight, position, direction, color, power);
+    // PRN_STRUCT_OFFSETS(SunLight, position, direction, color, power);
     // PRN_STRUCT_OFFSETS(Texture, id, type, path, width, height, componentCount, isLoaded);
     // PRN_STRUCT_OFFSETS(Billboard, transform, shader, vbo, vao, texture);
 
     Window window = Window("OpenGL", 1240, 720);
 
-    scene->camera = std::make_shared<Camera>(&window);
+    scene->camera = CreateCamera();
 
     ResourceManager::GetInstance().Initialize();
 
@@ -141,8 +141,8 @@ int main()
     //     .power    = 20.0f,
     // });
 
-    scene->sunLights.push_back(
-        {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
+    // scene->sunLights.push_back(
+    //     {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
     scene->sunLights.push_back(
         {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
     // scene->sunLights.push_back(
@@ -186,7 +186,7 @@ int main()
     while (window.IsRunning())
     {
         window.Update();
-        scene->camera->Update(window.GetDeltaTime());
+        UpdateCamera(scene->camera, window);
 
         ImGui::Begin("Stats");
 
@@ -208,9 +208,9 @@ int main()
 
             if (ImGui::Button("Set Current Camera Settings"))
             {
-                camPos   = scene->camera->GetPosition();
-                camYaw   = scene->camera->GetYaw();
-                camPitch = scene->camera->GetPitch();
+                camPos   = scene->camera.position;
+                camYaw   = scene->camera.yaw;
+                camPitch = scene->camera.pitch;
             }
             ImGui::TreePop();
         }
@@ -220,7 +220,7 @@ int main()
             benchmark.isRunning    = true;
             benchmark.numPipelines = numPipelinesBenchmark;
 
-            scene->camera->SetCamera(camPos, camPitch, camYaw);
+            SetCameraVectors(scene->camera, camPos, camPitch, camYaw);
             window.SetVSync(false);
 
             benchmark.results.clear();
@@ -332,10 +332,10 @@ int main()
         }
         if (ImGui::TreeNode("Camera"))
         {
-            ImGui::DragFloat("Speed", scene->camera->GetSpeedPtr(), 0.03f);
-            ImGui::DragFloat("Near Clip", scene->camera->GetNearClipPtr(), 0.01f);
-            ImGui::DragFloat("Far Clip", scene->camera->GetFarClipPtr(), 1.0f);
-            ImGui::DragFloat("Exposure", &scene->camera->exposure, 0.03f);
+            ImGui::DragFloat("Speed", &scene->camera.movementSettings.speed, 0.03f);
+            ImGui::DragFloat("Near Clip", &scene->camera.nearClip, 0.01f);
+            ImGui::DragFloat("Far Clip", &scene->camera.farClip, 1.0f);
+            ImGui::DragFloat("Exposure", &scene->camera.exposure, 0.03f);
 
             ImGui::TreePop();
         }
