@@ -32,6 +32,4 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
 
         index++;
     }
-
-    ShaderSetFloat3(shaderProgram, "viewPos", scene->camera.position);
 }

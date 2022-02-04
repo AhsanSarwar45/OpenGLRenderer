@@ -7,6 +7,7 @@ layout(std140, binding = 0) uniform Camera
 {
     mat4 projection;
     mat4 view;
+    vec4 position;
 }
 camera;
 

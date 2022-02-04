@@ -188,6 +188,16 @@ int main()
         window.Update();
         UpdateCamera(scene->camera, window);
 
+        ImGui::Begin("Controls");
+
+        ImGui::Text("F Switch to view mode");
+        ImGui::Text("G Switch to mouse mode");
+        ImGui::Text("WASD Move around in view mode");
+        ImGui::Text("SHIFT Move down in view mode");
+        ImGui::Text("SPACE Move up in view mode");
+
+        ImGui::End();
+
         ImGui::Begin("Stats");
 
         ImGui::LabelText("FPS", "%.1f", 1.0f / window.GetDeltaTime());

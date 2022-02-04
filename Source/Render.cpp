@@ -220,14 +220,10 @@ void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderD
 
     // Sun Light Pass
     UseShaderProgram(renderData.sunLightPassShader);
-    ShaderSetFloat3(renderData.sunLightPassShader, "viewPos", scene->camera.position);
-
     RenderQuadInstanced(renderData.screenQuad, scene->sunLights.size());
 
     // Point Light Pass
     UseShaderProgram(renderData.pointLightPassShader);
-    ShaderSetFloat3(renderData.pointLightPassShader, "viewPos", scene->camera.position);
-
     RenderQuadInstanced(renderData.screenQuad, scene->pointLights.size());
 
     glDisable(GL_BLEND);

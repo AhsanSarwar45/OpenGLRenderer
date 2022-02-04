@@ -17,6 +17,13 @@ struct SunLight
     float shadowBias;
 };
 
+layout(std140, binding = 0) uniform Camera
+{
+    mat4 projection;
+    mat4 view;
+    vec4 position;
+}
+camera;
 layout(std140, binding = 2) uniform SunLightTransform { mat4 lightSpaceVPMatrix[600]; }
 sunLightTransform;
 layout(std140, binding = 3) uniform SunLightArray { SunLight sunLights[100]; }
@@ -26,8 +33,6 @@ layout(location = 0) in vec2 texCoord;
 layout(location = 1) flat in int lightIndex;
 
 const float PI = 3.14159265359;
-
-uniform vec3 viewPos;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) { return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0); }
 
@@ -147,7 +152,7 @@ void main()
     float metalness            = metalnessRoughnessAO.r;
     float roughness            = metalnessRoughnessAO.g;
 
-    vec3 viewDir = normalize(viewPos - fragPos);
+    vec3 viewDir = normalize(camera.position.xyz - fragPos);
 
     vec3 F0 = vec3(0.04);
     F0      = mix(F0, albedo, metalness);

@@ -36,6 +36,8 @@ void UpdateCamera(Camera& camera, const Window& window)
             glm::perspective(glm::radians(camera.zoom), (float)props.Width / (float)props.Height, camera.nearClip, camera.farClip);
     }
 
+    camera.uniformBuffer.data.position = {camera.position.x, camera.position.y, camera.position.z, 0.0f};
+
     UploadUniformBuffer(camera.uniformBuffer);
 }
 

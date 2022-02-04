@@ -18,6 +18,13 @@ uniform sampler2D aoMap;
 
 layout(binding = 12) uniform sampler2DArray shadowMapArray;
 
+layout(std140, binding = 0) uniform Camera
+{
+    mat4 projection;
+    mat4 view;
+    vec4 position;
+}
+camera;
 layout(std140, binding = 2) uniform lightTransform { mat4 LightSpaceVPMatrix[600]; }
 LightTransform;
 
@@ -36,8 +43,6 @@ uniform SunLight sunLights[MAX_LIGHTS];
 uniform int      numSunLights;
 
 const float PI = 3.14159265359;
-
-uniform vec3 viewPos;
 
 uniform vec3 ambientLight;
 
@@ -183,7 +188,7 @@ void main()
     float roughness = texture(roughnessMap, fragData.TexCoords).r;
     float ao        = texture(aoMap, fragData.TexCoords).r;
 
-    vec3 viewDir = normalize(viewPos - fragData.FragPos);
+    vec3 viewDir = normalize(camera.position.xyz - fragData.FragPos);
 
     vec3 F0 = vec3(0.04);
     F0      = mix(F0, albedo, metalness);
