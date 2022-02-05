@@ -17,7 +17,7 @@
 
 using namespace ShaderInternal;
 
-ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePaths, const char* name, bool cameraTransform,
+ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePaths, const char* debugName, bool cameraTransform,
                          std::function<void(ShaderProgram)> initFunction)
 {
     std::vector<ShaderStage> shaderStages;
@@ -63,16 +63,10 @@ ShaderProgram LoadShader(const std::vector<std::filesystem::path>& shaderStagePa
         ResourceManager::GetInstance().AddShader(shaderProgram, shaderData.path, shaderStages, initFunction);
     }
 
-    glObjectLabel(GL_PROGRAM, shaderProgram, strlen(name), name);
+    glObjectLabel(GL_PROGRAM, shaderProgram, strlen(debugName), debugName);
 
     return shaderProgram;
 }
-
-// ShaderProgram LoadShader(std::filesystem::path vertexShaderPath, std::filesystem::path fragmentShaderPath, const char* name,
-//                          bool cameraTransform)
-// {
-//     return LoadShaders({vertexShaderPath.string(), fragmentShaderPath.string()}, name, cameraTransform);
-// }
 
 void UseShaderProgram(const ShaderProgram shaderProgram) { glUseProgram(shaderProgram); }
 
@@ -81,6 +75,7 @@ namespace ShaderInternal
 void LoadShaderStages(ShaderProgram shaderProgram, std::vector<ShaderStage>& shaderStages)
 {
     bool vertexCompilationFailed = false;
+
     // find references to existing shaders, and create ones that didn't exist previously.
     for (auto& shaderData : shaderStages)
     {

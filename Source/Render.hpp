@@ -39,8 +39,8 @@ struct LightRenderData
 
 struct LightShadowData
 {
-    ShaderProgram    shadowPassShader;
-    DepthFramebuffer shadowFramebuffer;
+    ShaderProgram shadowPassShader;
+    Framebuffer   shadowFramebuffer;
 };
 
 struct ShadowRenderData
@@ -49,16 +49,19 @@ struct ShadowRenderData
     LightShadowData pointLightData;
 };
 
+struct RenderData
+{
+    Framebuffer hdrFramebuffer;
+    Quad        screenQuad;
+
+    ShaderProgram postProcessShader;
+};
+
 // Deferred Shading Render Data
 struct DSRenderData
 {
+    Framebuffer gBuffer;
 
-    GeometryFramebuffer gBuffer;
-    HDRFramebuffer      hdrFramebuffer;
-
-    Quad screenQuad;
-
-    ShaderProgram postProcessShader;
     ShaderProgram geometryPassShader;
     ShaderProgram sunLightPassShader;
     ShaderProgram pointLightPassShader;
@@ -69,9 +72,6 @@ struct DSRenderData
 struct ForwardRenderData
 {
     ShaderProgram forwardPassShader;
-
-    WindowDimension width;
-    WindowDimension height;
 };
 
 struct RenderingPipeline
@@ -79,31 +79,29 @@ struct RenderingPipeline
     const char* name;
 };
 
-DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height);
-
+RenderData        CreateRenderData(WindowDimension width, WindowDimension height);
+DSRenderData      CreateDSRenderData(WindowDimension width, WindowDimension height);
 ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height);
+LightRenderData   CreateLightRenderData(uint16_t maxSunLightCount = 4, uint16_t maxPointLightCount = 4);
+ShadowRenderData  CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension shadowResolution = 1024);
 
-LightRenderData  CreateLightRenderData(uint16_t maxSunLightCount = 4, uint16_t maxPointLightCount = 4);
-ShadowRenderData CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension shadowResolution = 1024);
-
+void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<Texture>& textures);
 void ResizeForwardViewport(ForwardRenderData* renderData, TextureDimension width, TextureDimension height);
 
 void DeleteDSRenderData(const DSRenderData& renderData);
 
-void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
-void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData, const ShadowRenderData& shadowRenderData);
-void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
-void RenderDSPostProcessPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& dsRenderData);
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const DSRenderData& dsRenderData,
+                       const ShadowRenderData& shadowRenderData);
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const DSRenderData& dsRenderData);
 
-void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures);
-
-void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
-
-void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData, const ShadowRenderData& shadowRenderData);
+void RenderForward(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const ForwardRenderData& forwardRenderData,
+                   const ShadowRenderData& shadowRenderData);
 
 void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData& lightRenderData, const ShadowRenderData& shadowRenderData);
-void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData);
-void RenderDeferredShadowPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData);
+
+void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
+void RenderPostProcessPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData);
 
 void RenderQuad(const Quad& screenQuad);
 void RenderQuadInstanced(const Quad& screenQuad, size_t count);

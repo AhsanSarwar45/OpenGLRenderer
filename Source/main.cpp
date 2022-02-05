@@ -164,17 +164,16 @@ int main()
 
     fileWatcher->watch();
 
+    RenderData        renderData        = CreateRenderData(window.GetProperties().Width, window.GetProperties().Height);
     DSRenderData      dsRenderData      = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     ForwardRenderData forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height);
+    LightRenderData   lightRenderData   = CreateLightRenderData(2, 2);
+    ShadowRenderData  shadowRenderData  = CreateShadowRenderData(lightRenderData, 512);
 
-    LightRenderData  lightRenderData  = CreateLightRenderData(2, 2);
-    ShadowRenderData shadowRenderData = CreateShadowRenderData(lightRenderData, 512);
+    ResourceManager::GetInstance().AddFramebufferToResize(&dsRenderData.gBuffer);
+    ResourceManager::GetInstance().AddFramebufferToResize(&renderData.hdrFramebuffer);
 
-    auto dsBoundResizeFunction      = std::bind(&ResizeFramebufferTextures, &dsRenderData, std::placeholders::_1, std::placeholders::_2);
-    auto forwardBoundResizeFunction = std::bind(&ResizeForwardViewport, &forwardRenderData, std::placeholders::_1, std::placeholders::_2);
-
-    window.AddFramebufferResizeCallback(dsBoundResizeFunction);
-    window.AddFramebufferResizeCallback(forwardBoundResizeFunction);
+    window.AddFramebufferResizeCallback(ResizeFramebuffers);
     window.AddFramebufferResizeCallback(CheckMinimized);
 
     std::vector<const char*> renderingPipelines = {"Deferred + Forward Shading", "Forward Shading"};
@@ -377,6 +376,13 @@ int main()
             {
                 SetRenderPipeline(currentPipeline);
             }
+
+            static bool vSync = true;
+            if (ImGui::Checkbox("VSync", &vSync))
+            {
+                window.SetVSync(vSync);
+            }
+
             ImGui::TreePop();
         }
 
@@ -387,9 +393,9 @@ int main()
         {
             for (const auto& texture : dsRenderData.gBuffer.textures)
             {
-                if (ImGui::TreeNode(texture.name))
+                if (ImGui::TreeNode(texture.debugName.c_str()))
                 {
-                    ImGui::Image((void*)(intptr_t)texture.textureData.id, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+                    ImGui::Image((void*)(intptr_t)texture.id, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
                     ImGui::TreePop();
                 }
             }
@@ -414,15 +420,16 @@ int main()
             case 0:
                 RenderShadowPass(scene, lightRenderData, shadowRenderData);
                 RenderDSGeometryPass(scene, dsRenderData);
-                RenderDSLightPass(scene, dsRenderData, shadowRenderData);
-                RenderDSForwardPass(scene, dsRenderData);
+                RenderDSLightPass(scene, renderData, dsRenderData, shadowRenderData);
+                RenderDSForwardPass(scene, renderData, dsRenderData);
                 RenderTransparentPass(scene);
-                RenderDSPostProcessPass(scene, dsRenderData);
+                RenderPostProcessPass(scene, renderData);
                 break;
             case 1:
                 RenderShadowPass(scene, lightRenderData, shadowRenderData);
-                RenderForward(scene, forwardRenderData, shadowRenderData);
+                RenderForward(scene, renderData, forwardRenderData, shadowRenderData);
                 RenderTransparentPass(scene);
+                RenderPostProcessPass(scene, renderData);
                 break;
             }
         }

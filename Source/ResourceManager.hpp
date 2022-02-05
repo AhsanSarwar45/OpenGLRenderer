@@ -8,13 +8,14 @@
 #include "Quad.hpp"
 #include "Shader.hpp"
 
+struct Framebuffer;
+
 struct ShaderProgramLookup
 {
     ShaderProgram                      id;
     std::function<void(ShaderProgram)> init;
 };
 
-// Todo awful naming cmon man
 struct ShaderLookup
 {
     std::vector<ShaderStage>         shaderStages;
@@ -66,7 +67,10 @@ class ResourceManager
 
     inline TextureId GetPointLightIcon() const { return m_PointLightIcon; }
 
-    std::filesystem::path GetRootPath() const { return m_RootPath; }
+    inline std::filesystem::path GetRootPath() const { return m_RootPath; }
+
+    inline void                      AddFramebufferToResize(Framebuffer* framebuffer) { m_FramebuffersToResize.push_back(framebuffer); }
+    inline std::vector<Framebuffer*> GetFramebuffersToResize() { return m_FramebuffersToResize; }
 
   private:
     std::filesystem::path m_RootPath = "../..";
@@ -96,4 +100,6 @@ class ResourceManager
     Quad m_ScreenQuad;
 
     std::shared_ptr<Billboard> m_Billboard;
+
+    std::vector<Framebuffer*> m_FramebuffersToResize;
 };

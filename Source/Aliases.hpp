@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-using WindowDimension = uint16_t;
-using Framebuffer     = unsigned int;
-using Renderbuffer    = unsigned int;
+using WindowDimension    = uint16_t;
+using FramebufferObject  = unsigned int;
+using RenderbufferObject = unsigned int;
 
 using TextureDimension = uint16_t;
 using TextureId        = unsigned int;

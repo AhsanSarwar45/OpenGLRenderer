@@ -23,31 +23,33 @@ struct TextureAsset
     bool             isFlipped;
 };
 
-struct TextureInternalData
-{
-    TextureId    id;
-    unsigned int internalFormat;
-    unsigned int format;
-    unsigned int type;
-};
-
-struct DepthTexture
+struct Texture
 {
     TextureId        id;
-    TextureDimension width; // TODO: Don't need these
+    unsigned int     internalFormat;
+    unsigned int     format;
+    unsigned int     type;
+    TextureDimension width;
     TextureDimension height;
+    std::string      debugName;
+};
+
+struct FramebufferTextureData
+{
+    const char*  name;
+    unsigned int internalFormat;
 };
 
 TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type = TextureType::Color,
                          bool flipTexture = false); // TODO: take textureType as param
 TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type, bool flipTexture, const std::string& debugName);
-DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height);
-DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height,
-                                     const std::string& debugName = "Depth Texture Array");
 
-DepthTexture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName = "Depth Cubemap");
-DepthTexture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution,
-                                     const std::string& debugName = "Depth Cubemap Array");
+Texture CreateDepthTexture(TextureDimension width, TextureDimension height, const std::string& debugName = "Depth Texture");
+Texture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height,
+                                const std::string& debugName = "Depth Texture Array");
+
+Texture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName = "Depth Cubemap");
+Texture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution, const std::string& debugName = "Depth Cubemap Array");
 
 TextureId CreateTexture();
 void      DeleteTexture(TextureId textureId);

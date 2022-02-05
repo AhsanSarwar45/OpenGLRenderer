@@ -34,11 +34,23 @@ void RenderQuadInstanced(const Quad& quad, size_t count)
     glBindVertexArray(0);
 }
 
+RenderData CreateRenderData(WindowDimension width, WindowDimension height)
+{
+    ShaderProgram postProcessShader =
+        LoadShader({"Assets/Shaders/Deferred/DeferredPostProcessPass.vert", "Assets/Shaders/Deferred/DeferredPostProcessPass.frag"},
+                   "Post Processing Pass Shader", false);
+    return {
+        .hdrFramebuffer    = CreateHDRFramebuffer(width, height),
+        .screenQuad        = ResourceManager::GetInstance().GetScreenQuad(),
+        .postProcessShader = postProcessShader, // TODO move to resource manager
+    };
+}
+
 DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height)
 {
-    GeometryFramebuffer gBuffer      = CreateGeometryBuffer(width, height);
-    const auto          initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
-    ShaderProgram       pointLightShader =
+    Framebuffer   gBuffer      = CreateGeometryBuffer(width, height);
+    const auto    initFunction = [gBuffer](ShaderProgram shaderProgram) { SetUpLightPassShader(shaderProgram, gBuffer.textures); };
+    ShaderProgram pointLightShader =
         LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredPointLightPass.frag"},
                    "Point Light Pass Shader", false, initFunction);
     ShaderProgram sunLightShader =
@@ -47,13 +59,9 @@ DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height)
     ShaderProgram ambientShader =
         LoadShader({"Assets/Shaders/Deferred/DeferredLightPass.vert", "Assets/Shaders/Deferred/DeferredAmbientPass.frag"},
                    "Ambient Pass Shader", false, initFunction);
-    ShaderProgram postProcessShader =
-        LoadShader({"Assets/Shaders/Deferred/DeferredPostProcessPass.vert", "Assets/Shaders/Deferred/DeferredPostProcessPass.frag"},
-                   "Post Processing Pass Shader", false);
-    return {.gBuffer              = gBuffer,
-            .hdrFramebuffer       = CreateHDRFramebuffer(width, height),
-            .screenQuad           = ResourceManager::GetInstance().GetScreenQuad(),
-            .postProcessShader    = postProcessShader, // TODO move to resource manager
+
+    return {.gBuffer = gBuffer,
+
             .geometryPassShader   = ResourceManager::GetInstance().GetDSGeometryShader(),
             .sunLightPassShader   = sunLightShader,
             .pointLightPassShader = pointLightShader,
@@ -62,7 +70,7 @@ DSRenderData CreateDSRenderData(WindowDimension width, WindowDimension height)
 
 ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height)
 {
-    return {.forwardPassShader = ResourceManager::GetInstance().GetForwardSunShader(), .width = width, .height = height};
+    return {.forwardPassShader = ResourceManager::GetInstance().GetForwardSunShader()};
 }
 
 LightRenderData CreateLightRenderData(uint16_t maxSunLightCount, uint16_t maxPointLightCount)
@@ -87,12 +95,6 @@ ShadowRenderData CreateShadowRenderData(const LightRenderData& lightRenderData, 
                                    CreateDepthCubemapArrayFramebuffer(lightRenderData.pointLightData.maxLightCount, shadowResolution)}};
 }
 
-void ResizeForwardViewport(ForwardRenderData* renderData, TextureDimension width, TextureDimension height)
-{
-    renderData->width  = width;
-    renderData->height = height;
-}
-
 void DeleteDSRenderData(const DSRenderData& renderData)
 {
     DeleteGeometryFramebuffer(renderData.gBuffer);
@@ -103,13 +105,13 @@ void DeleteDSRenderData(const DSRenderData& renderData)
     ShaderInternal::DeleteShaderProgram(renderData.ambientPassShader);
 }
 
-void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<FramebufferTexture>& textures)
+void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<Texture>& textures)
 {
     UseShaderProgram(lightPassShader);
 
     for (int i = 0; i < textures.size(); i++)
     {
-        ShaderSetInt(lightPassShader, textures[i].name, i);
+        ShaderSetInt(lightPassShader, textures[i].debugName, i);
     }
 }
 
@@ -184,71 +186,72 @@ void RenderBillboard(const std::shared_ptr<const Billboard> billboardPtr, Shader
     glDisable(GL_BLEND);
 }
 
-void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
+void RenderDSGeometryPass(const std::shared_ptr<const Scene> scene, const DSRenderData& dsRenderData)
 {
-    glViewport(0, 0, renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight);
+    glViewport(0, 0, dsRenderData.gBuffer.width, dsRenderData.gBuffer.height);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, renderData.gBuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, dsRenderData.gBuffer.fbo);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto& model : scene->models)
     {
-        RenderModel(model, renderData.geometryPassShader);
+        RenderModel(model, dsRenderData.geometryPassShader);
     }
 }
-void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData, const ShadowRenderData& shadowRenderData)
+void RenderDSLightPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const DSRenderData& dsRenderData,
+                       const ShadowRenderData& shadowRenderData)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.fbo);
     glBlendFunc(GL_ONE, GL_ONE);
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (int i = 0; i < renderData.gBuffer.textures.size(); i++)
+    for (int i = 0; i < dsRenderData.gBuffer.textures.size(); i++)
     {
-        BindTexture(renderData.gBuffer.textures[i].textureData.id, i);
+        BindTexture(dsRenderData.gBuffer.textures[i].id, i);
     }
 
     // Ambient Pass
-    UseShaderProgram(renderData.ambientPassShader);
-    ShaderSetFloat3(renderData.ambientPassShader, "ambientLight", scene->ambientLight);
+    UseShaderProgram(dsRenderData.ambientPassShader);
+    ShaderSetFloat3(dsRenderData.ambientPassShader, "ambientLight", scene->ambientLight);
 
     RenderQuad(renderData.screenQuad);
 
-    BindTextureArray(shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.id, 12);
-    BindCubemapArray(shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.id, 13);
+    BindTextureArray(shadowRenderData.sunLightData.shadowFramebuffer.textures[0].id, 12);
+    BindCubemapArray(shadowRenderData.pointLightData.shadowFramebuffer.textures[0].id, 13);
 
     // Sun Light Pass
-    UseShaderProgram(renderData.sunLightPassShader);
+    UseShaderProgram(dsRenderData.sunLightPassShader);
     RenderQuadInstanced(renderData.screenQuad, scene->sunLights.size());
 
     // Point Light Pass
-    UseShaderProgram(renderData.pointLightPassShader);
+    UseShaderProgram(dsRenderData.pointLightPassShader);
     RenderQuadInstanced(renderData.screenQuad, scene->pointLights.size());
 
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 }
-void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
+void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const DSRenderData& dsRenderData)
 {
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, renderData.gBuffer.id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer); // write to default framebuffer
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, dsRenderData.gBuffer.fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderData.hdrFramebuffer.fbo); // write to default framebuffer
 
-    glBlitFramebuffer(0, 0, renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight, 0, 0,
-                      renderData.gBuffer.frameBufferWidth, renderData.gBuffer.frameBufferHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.framebuffer);
+    glBlitFramebuffer(0, 0, dsRenderData.gBuffer.width, dsRenderData.gBuffer.height, 0, 0, dsRenderData.gBuffer.width,
+                      dsRenderData.gBuffer.height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.fbo);
 
     DrawSkybox(scene->skybox);
 }
 
-void RenderDSPostProcessPass(const std::shared_ptr<const Scene> scene, const DSRenderData& renderData)
+void RenderPostProcessPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    BindTexture(renderData.hdrFramebuffer.hdrTexture.textureData.id, 0);
+    BindTexture(renderData.hdrFramebuffer.textures[0].id, 0);
 
     UseShaderProgram(renderData.postProcessShader);
 
@@ -285,22 +288,23 @@ void RenderTransparentPass(const std::shared_ptr<const Scene> scene)
     }
 }
 
-void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData, const ShadowRenderData& shadowRenderData)
+void RenderForward(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const ForwardRenderData& forwardRenderData,
+                   const ShadowRenderData& shadowRenderData)
 {
     glEnable(GL_MULTISAMPLE);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, renderData.hdrFramebuffer.fbo);
 
-    glViewport(0, 0, renderData.width, renderData.height);
+    glViewport(0, 0, renderData.hdrFramebuffer.width, renderData.hdrFramebuffer.height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    ShaderProgram shaderProgram = renderData.forwardPassShader;
+    ShaderProgram shaderProgram = forwardRenderData.forwardPassShader;
 
     SetSceneUniforms(scene, shaderProgram);
 
-    BindTextureArray(shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.id, 12);
-    BindCubemapArray(shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.id, 13);
+    BindTextureArray(shadowRenderData.sunLightData.shadowFramebuffer.textures[0].id, 12);
+    BindCubemapArray(shadowRenderData.pointLightData.shadowFramebuffer.textures[0].id, 13);
 
     for (const auto& model : scene->models)
     {
@@ -309,16 +313,6 @@ void RenderForward(const std::shared_ptr<const Scene> scene, const ForwardRender
 
     DrawSkybox(scene->skybox);
     glDisable(GL_MULTISAMPLE);
-}
-
-void RenderForwardShadowPass(const std::shared_ptr<const Scene> scene, const ForwardRenderData& renderData)
-{
-    // RenderShadowPass(scene, renderData->lightData, renderData->shadowData);
-}
-
-void RenderDeferredShadowPass(const std::shared_ptr<const Scene> scene, const std::shared_ptr<DSRenderData> renderData)
-{
-    // RenderShadowPass(scene, renderData->lightData, renderData->shadowData);
 }
 
 void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData& lightRenderData, const ShadowRenderData& shadowRenderData)
@@ -347,12 +341,11 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
     UploadUniformBufferVector(lightRenderData.sunLightData.lightTransformsUB);
     UploadUniformBufferVector(lightRenderData.sunLightData.lightDataUB);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.sunLightData.shadowFramebuffer.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.id, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.sunLightData.shadowFramebuffer.fbo);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowRenderData.sunLightData.shadowFramebuffer.textures[0].id, 0);
 
     UseShaderProgram(shadowRenderData.sunLightData.shadowPassShader);
-    glViewport(0, 0, shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.width,
-               shadowRenderData.sunLightData.shadowFramebuffer.depthTexture.height);
+    glViewport(0, 0, shadowRenderData.sunLightData.shadowFramebuffer.width, shadowRenderData.sunLightData.shadowFramebuffer.height);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     for (const auto& model : scene->models)
@@ -394,12 +387,11 @@ void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData&
     UploadUniformBufferVector(lightRenderData.pointLightData.lightTransformsUB);
     UploadUniformBufferVector(lightRenderData.pointLightData.lightDataUB);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.pointLightData.shadowFramebuffer.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.id, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowRenderData.pointLightData.shadowFramebuffer.fbo);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowRenderData.pointLightData.shadowFramebuffer.textures[0].id, 0);
 
     UseShaderProgram(shadowRenderData.pointLightData.shadowPassShader);
-    glViewport(0, 0, shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.width,
-               shadowRenderData.pointLightData.shadowFramebuffer.depthTexture.height);
+    glViewport(0, 0, shadowRenderData.pointLightData.shadowFramebuffer.width, shadowRenderData.pointLightData.shadowFramebuffer.height);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     for (const auto& model : scene->models)

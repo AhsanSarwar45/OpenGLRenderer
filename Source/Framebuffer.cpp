@@ -5,64 +5,71 @@
 #include <glad/glad.h>
 
 #include "Render.hpp"
+#include "ResourceManager.hpp"
+
 #include "Texture.hpp"
 
-Framebuffer CreateFramebuffer()
+FramebufferObject CreateFramebufferObject()
 {
-    Framebuffer fbo;
+    FramebufferObject fbo;
     glGenFramebuffers(1, &fbo);
 
     return fbo;
 }
 
-DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture)
+Framebuffer CreateDepthFramebuffer(Texture depthTexture)
 {
-    Framebuffer depthFramebuffer = CreateFramebuffer();
+    FramebufferObject fbo = CreateFramebufferObject();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, depthFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture.id, 0);
     glDrawBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    return {depthFramebuffer, depthTexture};
+    return {
+        .textures = {depthTexture},
+        .fbo      = fbo,
+        .width    = depthTexture.width,
+        .height   = depthTexture.height,
+    };
 }
 
-DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height)
+Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height)
 {
-    DepthTexture depthTexture = CreateDepthTexture(width, height);
+    Texture depthTexture = CreateDepthTexture(width, height);
     return CreateDepthFramebuffer(depthTexture);
 }
 
-DepthFramebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height)
+Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height)
 {
-    DepthTexture depthTexture = CreateDepthTextureArray(numDepthMaps, width, height);
+    Texture depthTexture = CreateDepthTextureArray(numDepthMaps, width, height);
     return CreateDepthFramebuffer(depthTexture);
 }
 
-DepthFramebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution)
+Framebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution)
 {
-    DepthTexture depthTexture = CreateDepthCubemapArray(numDepthMaps, resolution);
+    Texture depthTexture = CreateDepthCubemapArray(numDepthMaps, resolution);
     return CreateDepthFramebuffer(depthTexture);
 }
 
-DepthFramebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution)
+Framebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution)
 {
-    DepthTexture depthTexture = CreateDepthCubemap(resolution);
+    Texture depthTexture = CreateDepthCubemap(resolution);
     return CreateDepthFramebuffer(depthTexture);
 }
 
-void DeleteFramebuffer(Framebuffer framebuffer) { glDeleteFramebuffers(1, &framebuffer); }
+void DeleteFramebufferObject(FramebufferObject fbo) { glDeleteFramebuffers(1, &fbo); }
 
-void DeleteRenderbuffer(Renderbuffer renderbuffer) { glDeleteRenderbuffers(1, &renderbuffer); }
+void DeleteRenderbufferObject(RenderbufferObject rbo) { glDeleteRenderbuffers(1, &rbo); }
 
-HDRFramebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension height)
+Framebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension height)
 {
-    HDRFramebuffer hdrFramebuffer;
-    hdrFramebuffer.framebuffer = CreateFramebuffer();
+    Framebuffer hdrFramebuffer;
+    hdrFramebuffer.fbo = CreateFramebufferObject();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, hdrFramebuffer.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFramebuffer.fbo);
 
-    hdrFramebuffer.hdrTexture = {.name = "HDRTexture", .textureData = CreateFramebufferTexture(0, width, height, GL_RGBA16F)};
+    hdrFramebuffer.textures = {CreateFramebufferTexture(0, width, height, GL_RGBA16F, "HDR Texture")};
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
@@ -75,47 +82,47 @@ HDRFramebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension hei
     glDrawBuffers(1, attachments);
 
     // create and attach depth buffer (renderbuffer)
-    glGenRenderbuffers(1, &hdrFramebuffer.depthRenderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, hdrFramebuffer.depthRenderBuffer);
+    glGenRenderbuffers(1, &hdrFramebuffer.depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, hdrFramebuffer.depthRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, hdrFramebuffer.depthRenderBuffer);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, hdrFramebuffer.depthRBO);
 
     return hdrFramebuffer;
 }
 
-GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures, TextureDimension width,
-                                              TextureDimension height)
+Framebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures, TextureDimension width,
+                                      TextureDimension height)
 {
 
-    GeometryFramebuffer gBuffer;
-    gBuffer.frameBufferWidth  = width;
-    gBuffer.frameBufferHeight = height;
+    Framebuffer gBuffer;
+    gBuffer.width  = width;
+    gBuffer.height = height;
 
-    gBuffer.id = CreateFramebuffer();
+    gBuffer.fbo = CreateFramebufferObject();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.fbo);
 
     int numTextures = framebufferTextures.size();
 
-    gBuffer.textures = std::vector<FramebufferTexture>(numTextures);
+    gBuffer.textures = std::vector<Texture>(numTextures);
 
     std::vector<unsigned int> attachments = std::vector<unsigned int>(numTextures);
 
     for (int i = 0; i < numTextures; i++)
     {
         FramebufferTextureData texture = framebufferTextures[i];
-        gBuffer.textures[i] = {.name = texture.name, .textureData = CreateFramebufferTexture(i, width, height, texture.internalFormat)};
-        attachments[i]      = GL_COLOR_ATTACHMENT0 + i;
+        gBuffer.textures[i]            = CreateFramebufferTexture(i, width, height, texture.internalFormat, texture.name);
+        attachments[i]                 = GL_COLOR_ATTACHMENT0 + i;
     }
 
     // tell OpenGL which color attachments we'll use (of this framebuffer) for rendering
     glDrawBuffers(attachments.size(), &attachments[0]);
 
     // create and attach depth buffer (renderbuffer)
-    glGenRenderbuffers(1, &gBuffer.depthRenderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, gBuffer.depthRenderBuffer);
+    glGenRenderbuffers(1, &gBuffer.depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, gBuffer.depthRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gBuffer.depthRenderBuffer);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gBuffer.depthRBO);
 
     // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -127,17 +134,17 @@ GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextu
     return gBuffer;
 }
 
-void DeleteGeometryFramebuffer(const GeometryFramebuffer& geometryBuffer)
+void DeleteGeometryFramebuffer(const Framebuffer& geometryBuffer)
 {
-    DeleteFramebuffer(geometryBuffer.frameBufferHeight);
-    DeleteRenderbuffer(geometryBuffer.depthRenderBuffer);
+    DeleteFramebufferObject(geometryBuffer.fbo);
+    DeleteRenderbufferObject(geometryBuffer.depthRBO);
     for (const auto& texture : geometryBuffer.textures)
     {
-        DeleteTexture(texture.textureData.id);
+        DeleteTexture(texture.id);
     }
 }
 
-GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height)
+Framebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height)
 {
     auto framebufferTextures = std::vector<FramebufferTextureData>(4);
 
@@ -149,12 +156,10 @@ GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimensio
     return CreateGeometryFramebuffer(framebufferTextures, width, height);
 }
 
-TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
-                                             unsigned int internalFormat)
+Texture CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height, unsigned int internalFormat,
+                                 const std::string& debugName)
 {
-    TextureInternalData textureData;
-
-    textureData.internalFormat = internalFormat;
+    Texture textureData = {.internalFormat = internalFormat, .width = width, .height = height, .debugName = debugName};
 
     if (internalFormat == GL_RGBA16F || internalFormat == GL_RGBA32F)
     {
@@ -188,34 +193,26 @@ TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimensio
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_TEXTURE_2D, textureData.id, 0);
 
+    glObjectLabel(GL_TEXTURE, textureData.id, strlen(debugName.c_str()), debugName.c_str());
+
     return textureData;
 }
 
-void ResizeFramebufferTextures(DSRenderData* renderData, TextureDimension width, TextureDimension height)
+void ResizeFramebuffers(TextureDimension width, TextureDimension height)
 {
-    GeometryFramebuffer geometryFramebuffer = renderData->gBuffer;
-
-    geometryFramebuffer.frameBufferWidth  = width;
-    geometryFramebuffer.frameBufferHeight = height;
-
-    for (const auto& texture : geometryFramebuffer.textures)
+    std::vector<Framebuffer*> framebuffersToResize = ResourceManager::GetInstance().GetFramebuffersToResize();
+    for (auto&& framebuffer : framebuffersToResize)
     {
-        glBindTexture(GL_TEXTURE_2D, texture.textureData.id);
-        glTexImage2D(GL_TEXTURE_2D, 0, texture.textureData.internalFormat, width, height, 0, texture.textureData.format,
-                     texture.textureData.type, NULL);
+        framebuffer->width  = width;
+        framebuffer->height = height;
+
+        for (const auto& texture : framebuffer->textures)
+        {
+            glBindTexture(GL_TEXTURE_2D, texture.id);
+            glTexImage2D(GL_TEXTURE_2D, 0, texture.internalFormat, width, height, 0, texture.format, texture.type, NULL);
+        }
+
+        glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
     }
-
-    glBindRenderbuffer(GL_RENDERBUFFER, geometryFramebuffer.depthRenderBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-
-    HDRFramebuffer hdrFramebuffer = renderData->hdrFramebuffer;
-
-    glBindTexture(GL_TEXTURE_2D, hdrFramebuffer.hdrTexture.textureData.id);
-    glTexImage2D(GL_TEXTURE_2D, 0, hdrFramebuffer.hdrTexture.textureData.internalFormat, width, height, 0,
-                 hdrFramebuffer.hdrTexture.textureData.format, hdrFramebuffer.hdrTexture.textureData.type, NULL);
-
-    glBindRenderbuffer(GL_RENDERBUFFER, hdrFramebuffer.depthRenderBuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-
-    renderData->gBuffer = geometryFramebuffer;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "Aliases.hpp"
@@ -7,63 +8,35 @@
 
 struct DSRenderData;
 
-struct FramebufferTexture
+struct Framebuffer
 {
-    const char*         name;
-    TextureInternalData textureData;
+    std::vector<Texture> textures;
+
+    FramebufferObject  fbo;
+    RenderbufferObject depthRBO;
+
+    WindowDimension width;
+    WindowDimension height;
 };
 
-struct FramebufferTextureData
-{
-    const char*  name;
-    unsigned int internalFormat;
-};
+Framebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height);
 
-struct GeometryFramebuffer
-{
-    std::vector<FramebufferTexture> textures;
+FramebufferObject CreateFramebufferObject();
+void              DeleteFramebufferObject(FramebufferObject framebuffer);
+void              DeleteRenderbufferObject(RenderbufferObject renderbuffer);
 
-    Framebuffer  id;
-    Renderbuffer depthRenderBuffer;
+Framebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension height);
+Framebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures, TextureDimension width,
+                                      TextureDimension height);
+void        DeleteGeometryFramebuffer(const Framebuffer& geometryBuffer);
 
-    WindowDimension frameBufferWidth;
-    WindowDimension frameBufferHeight;
-};
-
-struct DepthFramebuffer
-{
-    Framebuffer  framebuffer;
-    DepthTexture depthTexture;
-};
-
-struct HDRFramebuffer
-{
-    Framebuffer        framebuffer;
-    FramebufferTexture hdrTexture;
-
-    Renderbuffer depthRenderBuffer;
-};
-
-GeometryFramebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height);
-
-Framebuffer CreateFramebuffer();
-void        DeleteFramebuffer(Framebuffer framebuffer);
-
-HDRFramebuffer CreateHDRFramebuffer(TextureDimension width, TextureDimension height);
-
-void DeleteRenderbuffer(Renderbuffer renderbuffer);
-
-GeometryFramebuffer CreateGeometryFramebuffer(const std::vector<FramebufferTextureData>& framebufferTextures, TextureDimension width,
-                                              TextureDimension height);
-void                DeleteGeometryFramebuffer(const GeometryFramebuffer& geometryBuffer);
-
-DepthFramebuffer CreateDepthFramebuffer(DepthTexture depthTexture);
-DepthFramebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
-DepthFramebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height);
-DepthFramebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution);
-DepthFramebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution);
+Framebuffer CreateDepthFramebuffer(Texture depthTexture);
+Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
+Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height);
+Framebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution);
+Framebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution);
 // TODO: Improve API.
-TextureInternalData CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height,
-                                             unsigned int internalFormat);
+Texture CreateFramebufferTexture(unsigned int index, TextureDimension width, TextureDimension height, unsigned int internalFormat,
+                                 const std::string& debugName);
 
-void ResizeFramebufferTextures(DSRenderData* renderData, TextureDimension width, TextureDimension height);
+void ResizeFramebuffers(TextureDimension width, TextureDimension height);

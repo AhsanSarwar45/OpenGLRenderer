@@ -93,7 +93,7 @@ TextureAsset LoadTexture(const std::filesystem::path& path, TextureType type, bo
     return LoadTexture(path, type, flipTexture, path.filename().string());
 }
 
-DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
+Texture CreateDepthTexture(TextureDimension width, TextureDimension height, const std::string& debugName)
 {
     TextureId depthMapId = CreateTexture();
     glBindTexture(GL_TEXTURE_2D, depthMapId);
@@ -106,13 +106,16 @@ DepthTexture CreateDepthTexture(TextureDimension width, TextureDimension height)
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     return {
-        .id     = depthMapId,
-        .width  = width,
-        .height = height,
+        .id             = depthMapId,
+        .internalFormat = GL_DEPTH_COMPONENT,
+        .format         = GL_DEPTH_COMPONENT,
+        .width          = width,
+        .height         = height,
+        .debugName      = debugName,
     };
 }
 
-DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height, const std::string& debugName)
+Texture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension width, TextureDimension height, const std::string& debugName)
 {
     TextureId depthMapId = CreateTexture();
 
@@ -131,13 +134,16 @@ DepthTexture CreateDepthTextureArray(uint16_t shadowMapCount, TextureDimension w
     glObjectLabel(GL_TEXTURE, depthMapId, strlen(debugName.c_str()), debugName.c_str());
 
     return {
-        .id     = depthMapId,
-        .width  = width,
-        .height = height,
+        .id             = depthMapId,
+        .internalFormat = GL_DEPTH_COMPONENT,
+        .format         = GL_DEPTH_COMPONENT,
+        .width          = width,
+        .height         = height,
+        .debugName      = debugName,
     };
 }
 
-DepthTexture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName)
+Texture CreateDepthCubemap(TextureDimension resolution, const std::string& debugName)
 {
 
     TextureId depthCubeMapId = CreateTexture();
@@ -158,13 +164,16 @@ DepthTexture CreateDepthCubemap(TextureDimension resolution, const std::string& 
     glObjectLabel(GL_TEXTURE, depthCubeMapId, strlen(debugName.c_str()), debugName.c_str());
 
     return {
-        .id     = depthCubeMapId,
-        .width  = resolution,
-        .height = resolution,
+        .id             = depthCubeMapId,
+        .internalFormat = GL_DEPTH_COMPONENT,
+        .format         = GL_DEPTH_COMPONENT,
+        .width          = resolution,
+        .height         = resolution,
+        .debugName      = debugName,
     };
 }
 
-DepthTexture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution, const std::string& debugName)
+Texture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension resolution, const std::string& debugName)
 {
 
     TextureId depthCubeMapArrayId = CreateTexture();
@@ -185,9 +194,12 @@ DepthTexture CreateDepthCubemapArray(uint16_t shadowMapCount, TextureDimension r
     glObjectLabel(GL_TEXTURE, depthCubeMapArrayId, strlen(debugName.c_str()), debugName.c_str());
 
     return {
-        .id     = depthCubeMapArrayId,
-        .width  = resolution,
-        .height = resolution,
+        .id             = depthCubeMapArrayId,
+        .internalFormat = GL_DEPTH_COMPONENT,
+        .format         = GL_DEPTH_COMPONENT,
+        .width          = resolution,
+        .height         = resolution,
+        .debugName      = debugName,
     };
 }
 
