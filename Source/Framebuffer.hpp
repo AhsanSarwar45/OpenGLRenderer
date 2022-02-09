@@ -33,6 +33,7 @@ void        DeleteGeometryFramebuffer(const Framebuffer& geometryBuffer);
 Framebuffer CreateDepthFramebuffer(Texture depthTexture);
 Framebuffer CreateDepthFramebuffer(TextureDimension width, TextureDimension height);
 Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension width, TextureDimension height);
+Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution);
 Framebuffer CreateDepthCubemapFramebuffer(TextureDimension resolution);
 Framebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution);
 // TODO: Improve API.

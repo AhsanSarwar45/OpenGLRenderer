@@ -94,3 +94,6 @@ void ShaderSetFloat4(ShaderProgram shaderProgram, UniformLocation uniformlocatio
 
 void ShaderSetMat4(ShaderProgram shaderProgram, const std::string& uniformName, const glm::mat4& matrix);
 void ShaderSetMat4(ShaderProgram shaderProgram, UniformLocation uniformlocation, const glm::mat4& matrix);
+
+void ShaderSetFloatArray(ShaderProgram shaderProgram, const std::string& uniformName, size_t length, const float* array);
+void ShaderSetFloatArray(ShaderProgram shaderProgram, UniformLocation uniformlocation, size_t length, const float* array);

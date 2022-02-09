@@ -1,8 +1,8 @@
 #version 330 core
-layout(location = 0) out vec3 gPosition;
-layout(location = 1) out vec3 gNormal;
-layout(location = 2) out vec3 gAlbedo;
-layout(location = 3) out vec3 gMetalnessRoughnessAO;
+layout(location = 0) out vec4 gPositionMetalness;
+layout(location = 1) out vec4 gNormalRoughness;
+layout(location = 2) out vec4 gAlbedoAO;
+// layout(location = 3) out vec3 gMetalnessRoughnessAO;
 
 in VertexData
 {
@@ -22,15 +22,15 @@ uniform sampler2D aoMap;
 void main()
 {
     // store the fragment position vector in the first gbuffer texture
-    gPosition = fragData.FragPos;
+    gPositionMetalness.rgb = fragData.FragPos;
     // also store the per-fragment normals into the gbuffer
-    gNormal = texture(normalMap, fragData.TexCoords).rgb;
-    gNormal = normalize(gNormal * 2.0 - 1.0);
-    gNormal = normalize(fragData.TBN * gNormal);
+    vec3 normal          = texture(normalMap, fragData.TexCoords).rgb;
+    normal               = normalize(normal * 2.0 - 1.0);
+    gNormalRoughness.rgb = normalize(fragData.TBN * normal);
 
-    gAlbedo = texture(albedoMap, fragData.TexCoords).rgb;
+    gAlbedoAO.rgb = texture(albedoMap, fragData.TexCoords).rgb;
 
-    gMetalnessRoughnessAO.r = texture(metalnessMap, fragData.TexCoords).r;
-    gMetalnessRoughnessAO.g = texture(roughnessMap, fragData.TexCoords).r;
-    gMetalnessRoughnessAO.b = texture(aoMap, fragData.TexCoords).r;
+    gPositionMetalness.a = texture(metalnessMap, fragData.TexCoords).r;
+    gNormalRoughness.a   = texture(roughnessMap, fragData.TexCoords).r;
+    gAlbedoAO.a          = texture(aoMap, fragData.TexCoords).r;
 }

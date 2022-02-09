@@ -46,6 +46,11 @@ Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension 
     return CreateDepthFramebuffer(depthTexture);
 }
 
+Framebuffer CreateDepthArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution)
+{
+    return CreateDepthArrayFramebuffer(numDepthMaps, resolution, resolution);
+}
+
 Framebuffer CreateDepthCubemapArrayFramebuffer(uint16_t numDepthMaps, TextureDimension resolution)
 {
     Texture depthTexture = CreateDepthCubemapArray(numDepthMaps, resolution);
@@ -146,12 +151,11 @@ void DeleteGeometryFramebuffer(const Framebuffer& geometryBuffer)
 
 Framebuffer CreateGeometryBuffer(TextureDimension width, TextureDimension height)
 {
-    auto framebufferTextures = std::vector<FramebufferTextureData>(4);
-
-    framebufferTextures[0] = {"gPosition", GL_RGBA16F};
-    framebufferTextures[1] = {"gNormal", GL_RGBA16F};
-    framebufferTextures[2] = {"gAlbedo", GL_RGBA};
-    framebufferTextures[3] = {"gMetalnessRoughnessAO", GL_RGBA};
+    std::vector<FramebufferTextureData> framebufferTextures = {
+        {"gPositionMetalness", GL_RGBA16F},
+        {"gNormalRoughness", GL_RGBA16F},
+        {"gAlbedoAO", GL_RGBA8},
+    };
 
     return CreateGeometryFramebuffer(framebufferTextures, width, height);
 }
@@ -171,7 +175,7 @@ Texture CreateFramebufferTexture(unsigned int index, TextureDimension width, Tex
         textureData.format = GL_RGB;
         textureData.type   = GL_FLOAT;
     }
-    else if (internalFormat == GL_RGBA)
+    else if (internalFormat == GL_RGBA || internalFormat == GL_RGBA8)
     {
         textureData.format = GL_RGBA;
         textureData.type   = GL_UNSIGNED_BYTE;

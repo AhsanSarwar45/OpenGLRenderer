@@ -1,8 +1,13 @@
 #pragma once
 
-#include "Aliases.hpp"
 #include "glm/fwd.hpp"
 #include <glm/glm.hpp>
+
+#include "Aliases.hpp"
+#include "Camera.hpp"
+#include "Frustum.hpp"
+
+struct ShadowRenderData;
 
 struct PointLight
 {
@@ -26,10 +31,9 @@ struct SunLight
 
     float power;
 
-    float shadowBias     = 0.08f;
-    float shadowNearClip = 0.1f;
-    float shadowFarClip  = 20.0f;
-    float shadowMapOrtho = 10.0f;
+    float shadowBias = 0.2f;
+
+    float zMult = 2.5f;
 };
 
 struct SunLightUniformData
@@ -63,3 +67,7 @@ struct LightTransform
 };
 
 void SetSunLightUniform(ShaderProgram shaderProgram, const SunLight& sunLight);
+
+glm::mat4 GetSunLightMatrix(const SunLight& sunLight, const Camera& camera, float nearPlane, float farPlane);
+
+std::vector<glm::mat4> GetSunLightMatrices(const SunLight& sunLight, const Camera& camera, ShadowRenderData& shadowData);

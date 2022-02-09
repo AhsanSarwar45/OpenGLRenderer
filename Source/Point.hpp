@@ -1,12 +1,13 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "Aliases.hpp"
 
-struct Quad
+struct Points
 {
     VertexArrayObject  vao;
     VertexBufferObject vbo;
-};
 
-Quad CreateQuad();
-void DeleteQuad(Quad quad);
+    uint16_t size;
+};

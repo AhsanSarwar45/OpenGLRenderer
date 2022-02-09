@@ -25,8 +25,7 @@ using RenderPass = std::function<void(const std::shared_ptr<const Scene>)>;
 template <typename T>
 struct LightData
 {
-    UniformBufferVector<LightTransform> lightTransformsUB;
-    UniformBufferVector<T>              lightDataUB;
+    UniformBufferVector<T> lightDataUB;
 
     uint16_t maxLightCount;
 };
@@ -39,14 +38,24 @@ struct LightRenderData
 
 struct LightShadowData
 {
-    ShaderProgram shadowPassShader;
-    Framebuffer   shadowFramebuffer;
+    UniformBufferVector<LightTransform> lightTransformsUB;
+    ShaderProgram                       shadowPassShader;
+    Framebuffer                         shadowFramebuffer;
 };
 
 struct ShadowRenderData
 {
     LightShadowData sunLightData;
     LightShadowData pointLightData;
+
+    std::vector<float> shadowCascadeLevels = {0.02f, 0.04f, 0.1f, 0.5f};
+    std::vector<float> shadowCascadeDistances;
+    uint8_t            numShadowCascades;
+};
+
+struct DebugRenderData
+{
+    ShaderProgram viewShadowCascadesShader;
 };
 
 struct RenderData
@@ -83,7 +92,9 @@ RenderData        CreateRenderData(WindowDimension width, WindowDimension height
 DSRenderData      CreateDSRenderData(WindowDimension width, WindowDimension height);
 ForwardRenderData CreateForwardRenderData(WindowDimension width, WindowDimension height);
 LightRenderData   CreateLightRenderData(uint16_t maxSunLightCount = 4, uint16_t maxPointLightCount = 4);
-ShadowRenderData  CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension shadowResolution = 1024);
+ShadowRenderData  CreateShadowRenderData(const LightRenderData& lightRenderData, TextureDimension sunShadowResolution = 1024,
+                                         TextureDimension pointShadowResolution = 512, uint8_t numShadowCascades = 4);
+DebugRenderData   CreateDebugRenderData(const DSRenderData& dsRenderData);
 
 void SetUpLightPassShader(ShaderProgram lightPassShader, const std::vector<Texture>& textures);
 void ResizeForwardViewport(ForwardRenderData* renderData, TextureDimension width, TextureDimension height);
@@ -98,10 +109,13 @@ void RenderDSForwardPass(const std::shared_ptr<const Scene> scene, const RenderD
 void RenderForward(const std::shared_ptr<const Scene> scene, const RenderData& renderData, const ForwardRenderData& forwardRenderData,
                    const ShadowRenderData& shadowRenderData);
 
-void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData& lightRenderData, const ShadowRenderData& shadowRenderData);
+void RenderShadowPass(const std::shared_ptr<const Scene> scene, LightRenderData& lightRenderData, ShadowRenderData& shadowRenderData);
 
 void RenderTransparentPass(const std::shared_ptr<const Scene> scene);
 void RenderPostProcessPass(const std::shared_ptr<const Scene> scene, const RenderData& renderData);
+
+template <typename T>
+void RenderShadows(const std::shared_ptr<const Scene> scene, LightData<T>& lightData, LightShadowData& shadowData);
 
 void RenderQuad(const Quad& screenQuad);
 void RenderQuadInstanced(const Quad& screenQuad, size_t count);
@@ -110,3 +124,6 @@ void RenderMeshDepth(const std::shared_ptr<const Mesh> mesh);
 void RenderModel(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);
 void RenderModelDepth(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);
 void RenderBillboard(const std::shared_ptr<const Billboard> billboard, ShaderProgram shaderProgram, TextureId textureId);
+
+void RenderShadowCascades(uint8_t sunLightIndex, const RenderData& renderData, const DSRenderData& dsRenderData,
+                          const DebugRenderData& debugRenderData, const ShadowRenderData& shadowRenderData);

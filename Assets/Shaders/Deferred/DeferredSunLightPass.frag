@@ -1,10 +1,9 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-uniform sampler2D gAlbedo;
-uniform sampler2D gMetalnessRoughnessAO;
+uniform sampler2D gPositionMetalness;
+uniform sampler2D gNormalRoughness;
+uniform sampler2D gAlbedoAO;
 
 layout(binding = 12) uniform sampler2DArray sunShadowMapArray;
 
@@ -26,11 +25,14 @@ layout(std140, binding = 0) uniform Camera
 camera;
 layout(std140, binding = 2) uniform SunLightTransform { mat4 lightSpaceVPMatrix[600]; }
 sunLightTransform;
-layout(std140, binding = 3) uniform SunLightArray { SunLight sunLights[100]; }
+layout(std140, binding = 3) uniform SunLightArray { SunLight sunLights[20]; }
 sunLightArray; // todo rename to block
 
 layout(location = 0) in vec2 texCoord;
 layout(location = 1) flat in int lightIndex;
+
+uniform float shadowCascadeDistances[5];
+uniform int   shadowCascadeCount;
 
 const float PI = 3.14159265359;
 
@@ -72,7 +74,22 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 float CalculateSunShadow(float shadowBias, vec3 fragPos, float dotLightNormal)
 {
-    vec4 fragPosLightSpace = sunLightTransform.lightSpaceVPMatrix[lightIndex] * vec4(fragPos, 1.0);
+    vec4  fragPosViewSpace = camera.view * vec4(fragPos, 1.0);
+    float depthValue       = abs(fragPosViewSpace.z);
+
+    int layer;
+    for (int i = 0; i <= shadowCascadeCount; ++i)
+    {
+        if (depthValue <= shadowCascadeDistances[i])
+        {
+            layer = i;
+            break;
+        }
+    }
+
+    int shadowMapIndex = (shadowCascadeCount + 1) * lightIndex + layer;
+
+    vec4 fragPosLightSpace = sunLightTransform.lightSpaceVPMatrix[shadowMapIndex] * vec4(fragPos, 1.0);
     vec3 projCoords        = (fragPosLightSpace.xyz / fragPosLightSpace.w) * 0.5 + 0.5;
 
     float currentDepth = projCoords.z;
@@ -82,11 +99,11 @@ float CalculateSunShadow(float shadowBias, vec3 fragPos, float dotLightNormal)
         currentDepth = 1.0;
     }
 
-    vec3 shadowMapTexelCoord = vec3(projCoords.x, projCoords.y, lightIndex);
+    vec3 shadowMapTexelCoord = vec3(projCoords.x, projCoords.y, shadowMapIndex);
 
     float closestDepth = texture(sunShadowMapArray, shadowMapTexelCoord).r;
 
-    float bias = max(shadowBias * (1.0 - dotLightNormal), shadowBias / 10.0);
+    float bias = max(shadowBias * (1.0 - dotLightNormal), shadowBias / 10.0) * (1 / (shadowCascadeDistances[layer] * 0.5));
 
     float shadow = currentDepth > (closestDepth + bias) ? 1 : 0.0;
 
@@ -144,13 +161,14 @@ vec3 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallne
 void main()
 {
     // retrieve data from gbuffer
-    vec3 fragPos = texture(gPosition, texCoord).rgb;
+    vec4 positionMetalness = texture(gPositionMetalness, texCoord);
+    vec4 normalRoughness   = texture(gNormalRoughness, texCoord);
 
-    vec3  albedo               = texture(gAlbedo, texCoord).rgb;
-    vec3  normal               = texture(gNormal, texCoord).rgb;
-    vec3  metalnessRoughnessAO = texture(gMetalnessRoughnessAO, texCoord).rgb;
-    float metalness            = metalnessRoughnessAO.r;
-    float roughness            = metalnessRoughnessAO.g;
+    vec3  fragPos   = positionMetalness.xyz;
+    vec3  albedo    = texture(gAlbedoAO, texCoord).rgb;
+    vec3  normal    = normalRoughness.xyz;
+    float metalness = positionMetalness.a;
+    float roughness = normalRoughness.a;
 
     vec3 viewDir = normalize(camera.position.xyz - fragPos);
 
@@ -161,7 +179,7 @@ void main()
 
     vec3 color = CalculateSunLighting(viewDir, normal, albedo, metalness, roughness, F0, fragPos);
 
-    // color = vec3(metalness);
+    // color = vec3(float(layer) / float(shadowCascadeCount));
 
     FragColor = vec4(color, 1.0);
 }

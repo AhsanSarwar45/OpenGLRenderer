@@ -43,6 +43,7 @@ std::shared_ptr<Scene> scene = std::make_shared<Scene>();
 std::vector<std::shared_ptr<Material>> materials;
 
 int currentPipeline = 0;
+int currentViewMode = 0;
 
 void CheckMinimized(WindowDimension width, WindowDimension height) { minimized = (width == 0 || height == 0); }
 
@@ -57,10 +58,8 @@ void SetRenderPipeline(int index)
         }
 
         // DeleteDSRenderData(dsRenderData);
-        // *dsRenderData = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
         break;
     case 1:
-        // *forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height, 256);
         for (const auto& material : materials)
         {
             SetMaterialShader(material, ResourceManager::GetInstance().GetForwardSunShader());
@@ -117,7 +116,7 @@ int main()
     std::shared_ptr<Model> cube   = LoadModel("Assets/Models/WoodenBox/cube.obj", metalMaterial, "Cube", true);
 
     cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
-    cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
+    cube->transform.scale    = glm::vec3(100.0, 1.0, 100.0);
 
     sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
 
@@ -129,11 +128,11 @@ int main()
     scene->models.push_back(sphere);
     scene->models.push_back(cube);
 
-    scene->pointLights.push_back({
-        .position = {1.0f, 1.0f, 1.0f},
-        .color    = {1.0f, 1.0f, 1.0f},
-        .power    = 20.0f,
-    });
+    // scene->pointLights.push_back({
+    //     .position = {1.0f, 1.0f, 1.0f},
+    //     .color    = {1.0f, 1.0f, 1.0f},
+    //     .power    = 20.0f,
+    // });
 
     // scene->pointLights.push_back({
     //     .position = {-1.0f, 1.0f, 1.0f},
@@ -141,10 +140,18 @@ int main()
     //     .power    = 20.0f,
     // });
 
+    // scene->pointLights.push_back({
+    //     .position = {1.0f, 1.0f, -1.0f},
+    //     .color    = {0.0f, 1.0f, 0.0f},
+    //     .power    = 20.0f,
+    // });
+
     // scene->sunLights.push_back(
     //     {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
-    scene->sunLights.push_back(
-        {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
+    scene->sunLights.push_back({.position  = {2.0f, 2.0f, 2.0f},
+                                .direction = glm::normalize(glm::vec3(3.0f, 3.0f, 3.0f)),
+                                .color     = {1.0f, 1.0f, 1.0f},
+                                .power     = 20.0f});
     // scene->sunLights.push_back(
     //     {.position = {4.0f, 4.0f, 4.0f}, .direction = {-3.0f, 4.0f, 2.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 
@@ -167,8 +174,9 @@ int main()
     RenderData        renderData        = CreateRenderData(window.GetProperties().Width, window.GetProperties().Height);
     DSRenderData      dsRenderData      = CreateDSRenderData(window.GetProperties().Width, window.GetProperties().Height);
     ForwardRenderData forwardRenderData = CreateForwardRenderData(window.GetProperties().Width, window.GetProperties().Height);
-    LightRenderData   lightRenderData   = CreateLightRenderData(2, 2);
-    ShadowRenderData  shadowRenderData  = CreateShadowRenderData(lightRenderData, 512);
+    LightRenderData   lightRenderData   = CreateLightRenderData(2, 3);
+    ShadowRenderData  shadowRenderData  = CreateShadowRenderData(lightRenderData);
+    DebugRenderData   debugRenderData   = CreateDebugRenderData(dsRenderData);
 
     ResourceManager::GetInstance().AddFramebufferToResize(&dsRenderData.gBuffer);
     ResourceManager::GetInstance().AddFramebufferToResize(&renderData.hdrFramebuffer);
@@ -177,253 +185,273 @@ int main()
     window.AddFramebufferResizeCallback(CheckMinimized);
 
     std::vector<const char*> renderingPipelines = {"Deferred + Forward Shading", "Forward Shading"};
+    std::vector<const char*> viewModes          = {"Lit", "CSM"};
 
     int numPipelines = renderingPipelines.size();
+    int numViewModes = viewModes.size();
 
     BenchmarkData benchmark = {.duration = 5.0f, .renderingPipelines = renderingPipelines};
 
     while (window.IsRunning())
     {
         window.Update();
-        UpdateCamera(scene->camera, window);
-
-        ImGui::Begin("Controls");
-
-        ImGui::Text("F Switch to view mode");
-        ImGui::Text("G Switch to mouse mode");
-        ImGui::Text("WASD Move around in view mode");
-        ImGui::Text("SHIFT Move down in view mode");
-        ImGui::Text("SPACE Move up in view mode");
-
-        ImGui::End();
-
-        ImGui::Begin("Stats");
-
-        ImGui::LabelText("FPS", "%.1f", 1.0f / window.GetDeltaTime());
-
-        static int numPipelinesBenchmark = 1;
-
-        static glm::vec3 camPos   = {7.2, 4.2, -5.6};
-        static float     camYaw   = 140;
-        static float     camPitch = -25;
-
-        ImGui::DragInt("Pipelines To Benchmark", &numPipelinesBenchmark);
-
-        if (ImGui::TreeNode("Camera Settings"))
-        {
-            ImGui::DragFloat3("Position", (float*)(&camPos));
-            ImGui::DragFloat("Yaw", &camYaw);
-            ImGui::DragFloat("Pitch", &camPitch);
-
-            if (ImGui::Button("Set Current Camera Settings"))
-            {
-                camPos   = scene->camera.position;
-                camYaw   = scene->camera.yaw;
-                camPitch = scene->camera.pitch;
-            }
-            ImGui::TreePop();
-        }
-
-        if (ImGui::Button(benchmark.isRunning ? "Running Benchmark..." : "Run Benchmark"))
-        {
-            benchmark.isRunning    = true;
-            benchmark.numPipelines = numPipelinesBenchmark;
-
-            SetCameraVectors(scene->camera, camPos, camPitch, camYaw);
-            window.SetVSync(false);
-
-            benchmark.results.clear();
-            benchmark.beginTime = std::chrono::steady_clock::now();
-        }
-
-        for (const auto& result : benchmark.results)
-        {
-            if (ImGui::TreeNode(result.name))
-            {
-                ImGui::LabelText("Total Time (s)", "%.2f", result.totalTime);
-                ImGui::LabelText("Average Time (ms)", "%.2f", result.averageTime);
-                ImGui::LabelText("Frame Count", "%i", result.frameCount);
-                ImGui::LabelText("Average FPS", "%.1f", result.averageFPS);
-                // ImGui::LabelText("Highest FPS", "%.1f", result.highestFPS);
-                // ImGui::LabelText("Lowest FPS", "%.1f", result.lowestFPS);
-
-                ImGui::TreePop();
-            }
-        }
-
-        ImGui::End();
-
-        ImGui::Begin("Parameters");
-
-        if (ImGui::TreeNode("Transforms"))
-        {
-            for (auto& model : scene->models)
-            {
-                if (ImGui::TreeNode(model->name))
-                {
-                    ImGui::DragFloat3("Position", (float*)(&model->transform.position), 0.03f);
-                    ImGui::DragFloat3("Scale", (float*)(&model->transform.scale), 0.03f);
-                    glm::vec3 rotation = glm::degrees(model->transform.rotation);
-                    ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.3f);
-                    model->transform.rotation = glm::radians(rotation);
-
-                    ImGui::TreePop();
-                }
-            }
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("Lights"))
-        {
-            if (ImGui::TreeNode("Point Lights"))
-            {
-                int lightIndex = 0;
-                for (auto& light : scene->pointLights)
-                {
-                    if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
-                    {
-                        ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
-
-                        ImGui::ColorEdit3("Color", (float*)(&light.color));
-
-                        ImGui::DragFloat("Power", &light.power, 0.05f);
-                        ImGui::TreePop();
-
-                        if (ImGui::TreeNode("Shadows"))
-                        {
-                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
-                            ImGui::TreePop();
-                        }
-                    }
-                    lightIndex++;
-                }
-                ImGui::TreePop();
-            }
-            if (ImGui::TreeNode("Sun Lights"))
-            {
-                int lightIndex = 0;
-                for (auto& light : scene->sunLights)
-                {
-                    if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
-                    {
-                        ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
-
-                        glm::vec3 rotation = glm::degrees(light.direction);
-                        ImGui::DragFloat3("Direction", (float*)(&rotation), 0.3f);
-                        light.direction = glm::radians(rotation);
-
-                        ImGui::ColorEdit3("Color", (float*)(&light.color));
-
-                        ImGui::DragFloat("Power", &light.power, 0.05f);
-
-                        if (ImGui::TreeNode("Shadows"))
-                        {
-                            ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
-                            ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
-                            ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
-                            ImGui::DragFloat("Ortho Size", &light.shadowMapOrtho, 1.0f);
-                            ImGui::TreePop();
-                        }
-                        ImGui::TreePop();
-                    }
-                    lightIndex++;
-                }
-                ImGui::TreePop();
-            }
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("Environment"))
-        {
-            ImGui::ColorEdit3("Ambient Light", (float*)(&scene->ambientLight));
-
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("Camera"))
-        {
-            ImGui::DragFloat("Speed", &scene->camera.movementSettings.speed, 0.03f);
-            ImGui::DragFloat("Near Clip", &scene->camera.nearClip, 0.01f);
-            ImGui::DragFloat("Far Clip", &scene->camera.farClip, 1.0f);
-            ImGui::DragFloat("Exposure", &scene->camera.exposure, 0.03f);
-
-            ImGui::TreePop();
-        }
-
-        if (ImGui::TreeNode("Materials"))
-        {
-            int materialIndex = 0;
-            for (auto& material : materials)
-            {
-                if (ImGui::TreeNode(std::to_string(materialIndex).c_str()))
-                {
-                    for (auto& textureUnifrom : material->textureUniforms)
-                    {
-                        ImGui::Text("%s", textureUnifrom.name.c_str());
-                        ImGui::Image((void*)(intptr_t)textureUnifrom.textureId, ImVec2(52, 52), ImVec2(0, 1), ImVec2(1, 0));
-                    }
-
-                    ImGui::TreePop();
-                }
-                materialIndex++;
-            }
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("Render Settings"))
-        {
-            int prevPipeline = currentPipeline;
-            ImGui::Combo("Render Pipeline", &currentPipeline, &renderingPipelines[0], numPipelines);
-            if (ImGui::IsItemEdited())
-            {
-                SetRenderPipeline(currentPipeline);
-            }
-
-            static bool vSync = true;
-            if (ImGui::Checkbox("VSync", &vSync))
-            {
-                window.SetVSync(vSync);
-            }
-
-            ImGui::TreePop();
-        }
-
-        ImGui::End();
-
-        ImGui::Begin("Debug");
-        if (ImGui::TreeNode("G-Buffer"))
-        {
-            for (const auto& texture : dsRenderData.gBuffer.textures)
-            {
-                if (ImGui::TreeNode(texture.debugName.c_str()))
-                {
-                    ImGui::Image((void*)(intptr_t)texture.id, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
-                    ImGui::TreePop();
-                }
-            }
-
-            ImGui::TreePop();
-        }
-        ImGui::End();
-
-        // ImGui::ShowDemoWindow();
-
-        ResourceManager::GetInstance().CheckDirtyShaders();
-
-        if (benchmark.isRunning)
-        {
-            currentPipeline = RunBenchmark(benchmark, window, SetRenderPipeline);
-        }
 
         if (!minimized)
         {
+            UpdateCamera(scene->camera, window);
+
+            ImGui::Begin("Controls");
+
+            ImGui::Text("F Switch to view mode");
+            ImGui::Text("G Switch to mouse mode");
+            ImGui::Text("WASD Move around in view mode");
+            ImGui::Text("SHIFT Move down in view mode");
+            ImGui::Text("SPACE Move up in view mode");
+
+            ImGui::End();
+
+            ImGui::Begin("Stats");
+
+            ImGui::LabelText("FPS", "%.1f", 1.0f / window.GetDeltaTime());
+
+            static int numPipelinesBenchmark = 1;
+
+            static glm::vec3 camPos   = {7.2, 4.2, -5.6};
+            static float     camYaw   = 140;
+            static float     camPitch = -25;
+
+            ImGui::DragInt("Pipelines To Benchmark", &numPipelinesBenchmark);
+
+            if (ImGui::TreeNode("Camera Settings"))
+            {
+                ImGui::DragFloat3("Position", (float*)(&camPos));
+                ImGui::DragFloat("Yaw", &camYaw);
+                ImGui::DragFloat("Pitch", &camPitch);
+
+                if (ImGui::Button("Set Current Camera Settings"))
+                {
+                    camPos   = scene->camera.position;
+                    camYaw   = scene->camera.yaw;
+                    camPitch = scene->camera.pitch;
+                }
+                ImGui::TreePop();
+            }
+
+            if (ImGui::Button(benchmark.isRunning ? "Running Benchmark..." : "Run Benchmark"))
+            {
+                benchmark.isRunning    = true;
+                benchmark.numPipelines = numPipelinesBenchmark;
+
+                SetCameraVectors(scene->camera, camPos, camPitch, camYaw);
+                window.SetVSync(false);
+
+                benchmark.results.clear();
+                benchmark.beginTime = std::chrono::steady_clock::now();
+            }
+
+            for (const auto& result : benchmark.results)
+            {
+                if (ImGui::TreeNode(result.name))
+                {
+                    ImGui::LabelText("Total Time (s)", "%.2f", result.totalTime);
+                    ImGui::LabelText("Average Time (ms)", "%.2f", result.averageTime);
+                    ImGui::LabelText("Frame Count", "%i", result.frameCount);
+                    ImGui::LabelText("Average FPS", "%.1f", result.averageFPS);
+                    // ImGui::LabelText("Highest FPS", "%.1f", result.highestFPS);
+                    // ImGui::LabelText("Lowest FPS", "%.1f", result.lowestFPS);
+
+                    ImGui::TreePop();
+                }
+            }
+
+            ImGui::End();
+
+            ImGui::Begin("Parameters");
+
+            if (ImGui::TreeNode("Transforms"))
+            {
+                for (auto& model : scene->models)
+                {
+                    if (ImGui::TreeNode(model->name))
+                    {
+                        ImGui::DragFloat3("Position", (float*)(&model->transform.position), 0.03f);
+                        ImGui::DragFloat3("Scale", (float*)(&model->transform.scale), 0.03f);
+                        glm::vec3 rotation = glm::degrees(model->transform.rotation);
+                        ImGui::DragFloat3("Rotation", (float*)(&rotation), 0.3f);
+                        model->transform.rotation = glm::radians(rotation);
+
+                        ImGui::TreePop();
+                    }
+                }
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Lights"))
+            {
+                if (ImGui::TreeNode("Point Lights"))
+                {
+                    int lightIndex = 0;
+                    for (auto& light : scene->pointLights)
+                    {
+                        if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
+                        {
+                            ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
+
+                            ImGui::ColorEdit3("Color", (float*)(&light.color));
+
+                            ImGui::DragFloat("Power", &light.power, 0.05f);
+                            ImGui::TreePop();
+
+                            if (ImGui::TreeNode("Shadows"))
+                            {
+                                ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
+                                ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
+                                ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
+                                ImGui::TreePop();
+                            }
+                        }
+                        lightIndex++;
+                    }
+                    ImGui::TreePop();
+                }
+                if (ImGui::TreeNode("Sun Lights"))
+                {
+                    int lightIndex = 0;
+                    for (auto& light : scene->sunLights)
+                    {
+                        if (ImGui::TreeNode(std::to_string(lightIndex).c_str()))
+                        {
+                            ImGui::DragFloat3("Position", (float*)(&light.position), 0.03f);
+
+                            glm::vec3 rotation = glm::degrees(light.direction);
+                            ImGui::DragFloat3("Direction", (float*)(&rotation), 0.3f);
+                            light.direction = glm::normalize(glm::radians(rotation));
+
+                            ImGui::ColorEdit3("Color", (float*)(&light.color));
+
+                            ImGui::DragFloat("Power", &light.power, 0.05f);
+
+                            if (ImGui::TreeNode("Shadows"))
+                            {
+                                ImGui::DragFloat("Bias", &light.shadowBias, 0.001f);
+                                ImGui::DragFloat("Z Multiplier", &light.zMult, 0.001f);
+                                // ImGui::DragFloat("Near Clip", &light.shadowNearClip, 0.01f);
+                                // ImGui::DragFloat("Far Clip", &light.shadowFarClip, 1.0f);
+                                // ImGui::DragFloat("Ortho Size", &light.shadowMapOrtho, 1.0f);
+                                ImGui::TreePop();
+                            }
+                            ImGui::TreePop();
+                        }
+                        lightIndex++;
+                    }
+                    ImGui::TreePop();
+                }
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Environment"))
+            {
+                ImGui::ColorEdit3("Ambient Light", (float*)(&scene->ambientLight));
+
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Camera"))
+            {
+                ImGui::DragFloat("Speed", &scene->camera.movementSettings.speed, 0.03f);
+                ImGui::DragFloat("Near Clip", &scene->camera.nearClip, 0.01f);
+                ImGui::DragFloat("Far Clip", &scene->camera.farClip, 1.0f);
+                ImGui::DragFloat("Exposure", &scene->camera.exposure, 0.03f);
+
+                ImGui::TreePop();
+            }
+
+            if (ImGui::TreeNode("Materials"))
+            {
+                int materialIndex = 0;
+                for (auto& material : materials)
+                {
+                    if (ImGui::TreeNode(std::to_string(materialIndex).c_str()))
+                    {
+                        for (auto& textureUnifrom : material->textureUniforms)
+                        {
+                            ImGui::Text("%s", textureUnifrom.name.c_str());
+                            ImGui::Image((void*)(intptr_t)textureUnifrom.textureId, ImVec2(52, 52), ImVec2(0, 1), ImVec2(1, 0));
+                        }
+
+                        ImGui::TreePop();
+                    }
+                    materialIndex++;
+                }
+                ImGui::TreePop();
+            }
+            if (ImGui::TreeNode("Render Settings"))
+            {
+                ImGui::Combo("Render Pipeline", &currentPipeline, &renderingPipelines[0], numPipelines);
+                if (ImGui::IsItemEdited())
+                {
+                    SetRenderPipeline(currentPipeline);
+                }
+
+                ImGui::Combo("View Mode", &currentViewMode, &viewModes[0], numViewModes);
+                // if (ImGui::IsItemEdited())
+                // {
+                //     SetRenderPipeline(currentPipeline);
+                // }
+
+                static bool vSync = true;
+                if (ImGui::Checkbox("VSync", &vSync))
+                {
+                    window.SetVSync(vSync);
+                }
+
+                ImGui::TreePop();
+            }
+
+            ImGui::End();
+
+            ImGui::Begin("Debug");
+            if (ImGui::TreeNode("G-Buffer"))
+            {
+                for (const auto& texture : dsRenderData.gBuffer.textures)
+                {
+                    if (ImGui::TreeNode(texture.debugName.c_str()))
+                    {
+                        ImGui::Image((void*)(intptr_t)texture.id, ImVec2(256, 256), ImVec2(0, 1), ImVec2(1, 0));
+                        ImGui::TreePop();
+                    }
+                }
+
+                ImGui::TreePop();
+            }
+            ImGui::End();
+
+            // ImGui::ShowDemoWindow();
+
+            ResourceManager::GetInstance().CheckDirtyShaders();
+
+            if (benchmark.isRunning)
+            {
+                currentPipeline = RunBenchmark(benchmark, window, SetRenderPipeline);
+            }
+
             switch (currentPipeline)
             {
             case 0:
                 RenderShadowPass(scene, lightRenderData, shadowRenderData);
                 RenderDSGeometryPass(scene, dsRenderData);
-                RenderDSLightPass(scene, renderData, dsRenderData, shadowRenderData);
-                RenderDSForwardPass(scene, renderData, dsRenderData);
-                RenderTransparentPass(scene);
-                RenderPostProcessPass(scene, renderData);
+
+                switch (currentViewMode)
+                {
+                case 0:
+                    RenderDSLightPass(scene, renderData, dsRenderData, shadowRenderData);
+                    RenderDSForwardPass(scene, renderData, dsRenderData);
+                    RenderTransparentPass(scene);
+                    RenderPostProcessPass(scene, renderData);
+                    break;
+                case 1:
+                    RenderShadowCascades(0, renderData, dsRenderData, debugRenderData, shadowRenderData);
+                default:
+                    break;
+                }
+
                 break;
             case 1:
                 RenderShadowPass(scene, lightRenderData, shadowRenderData);

@@ -4,8 +4,8 @@
 
 struct Cube
 {
-    VertexArray  vao;
-    VertexBuffer vbo;
+    VertexArrayObject  vao;
+    VertexBufferObject vbo;
 };
 
 Cube CreateCube();

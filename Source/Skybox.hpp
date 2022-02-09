@@ -10,10 +10,10 @@ struct Skybox
 {
     ShaderProgram shaderProgram;
 
-    unsigned int vbo;
-    unsigned int vao;
+    VertexBufferObject vbo;
+    VertexArrayObject  vao;
 
-    unsigned int textureId;
+    TextureId textureId;
 };
 
 Skybox LoadSkybox(const std::filesystem::path& directoryPath);

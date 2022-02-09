@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "Render.hpp"
-
 struct BenchmarkResult
 {
     const char* name;

@@ -19,7 +19,12 @@ struct ViewProjection
 {
     glm::mat4 projectionMatrix;
     glm::mat4 viewMatrix;
-    glm::vec4 position;
+};
+
+struct CameraUniformData
+{
+    ViewProjection viewProjection;
+    glm::vec4      position;
 };
 
 struct Camera
@@ -36,13 +41,18 @@ struct Camera
     float zoom = 45.0f;
 
     float nearClip = 0.1f;
-    float farClip  = 1000.0f;
+    float farClip  = 500.0f;
 
     float exposure = 1.0f;
 
+    WindowDimension viewportWidth;
+    WindowDimension viewportHeight;
+
+    ViewProjection viewProjection;
+
     CameraMovementSettings movementSettings;
 
-    UniformBuffer<ViewProjection> uniformBuffer;
+    UniformBuffer<CameraUniformData> uniformBuffer;
 };
 
 Camera CreateCamera();

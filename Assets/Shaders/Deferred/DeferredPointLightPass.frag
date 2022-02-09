@@ -1,10 +1,9 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gPosition;
-uniform sampler2D gNormal;
-uniform sampler2D gAlbedo;
-uniform sampler2D gMetalnessRoughnessAO;
+uniform sampler2D gPositionMetalness;
+uniform sampler2D gNormalRoughness;
+uniform sampler2D gAlbedoAO;
 
 layout(binding = 13) uniform samplerCubeArray pointShadowMapArray;
 
@@ -131,13 +130,14 @@ void main()
 {
 
     // retrieve data from gbuffer
-    vec3 fragPos = texture(gPosition, texCoord).rgb;
+    vec4 positionMetalness = texture(gPositionMetalness, texCoord);
+    vec4 normalRoughness   = texture(gNormalRoughness, texCoord);
 
-    vec3  albedo               = texture(gAlbedo, texCoord).rgb;
-    vec3  normal               = texture(gNormal, texCoord).rgb;
-    vec3  metalnessRoughnessAO = texture(gMetalnessRoughnessAO, texCoord).rgb;
-    float metalness            = metalnessRoughnessAO.r;
-    float roughness            = metalnessRoughnessAO.g;
+    vec3  fragPos   = positionMetalness.xyz;
+    vec3  albedo    = texture(gAlbedoAO, texCoord).rgb;
+    vec3  normal    = normalRoughness.xyz;
+    float metalness = positionMetalness.a;
+    float roughness = normalRoughness.a;
 
     vec3 viewDir = normalize(camera.position.xyz - fragPos);
 

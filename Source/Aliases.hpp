@@ -18,8 +18,8 @@ using UniformLocation      = unsigned int;
 using UniformBufferObject  = unsigned int;
 using UniformBufferBinding = unsigned int;
 
-using VertexBuffer  = unsigned int;
-using VertexArray   = unsigned int;
-using ElementBuffer = unsigned int;
+using VertexBufferObject  = unsigned int;
+using VertexArrayObject   = unsigned int;
+using ElementBufferObject = unsigned int;
 
 using MaterialId = uint32_t;

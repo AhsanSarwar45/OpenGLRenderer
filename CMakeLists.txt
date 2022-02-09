@@ -55,6 +55,7 @@ add_executable(${PROJECT_NAME}
 "Source/Benchmark.cpp"
 "Source/Light.cpp"
 "Source/Quad.cpp"
+"Source/Point.cpp"
 "Source/Cube.cpp"
 "Source/Frustum.cpp"
 "Source/Render.cpp"

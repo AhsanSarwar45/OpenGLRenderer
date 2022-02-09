@@ -8,7 +8,7 @@ Camera CreateCamera()
 {
     Camera camera;
 
-    camera.uniformBuffer = CreateUniformBuffer<ViewProjection>(0);
+    camera.uniformBuffer = CreateUniformBuffer<CameraUniformData>(0);
 
     UpdateCameraVectors(camera);
 
@@ -28,15 +28,14 @@ void UpdateCamera(Camera& camera, const Window& window)
         ProcessCameraMouse(camera, window.GetProperties().OffsetX, window.GetProperties().OffsetY);
     }
 
-    camera.uniformBuffer.data.viewMatrix = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
-    WindowProperties props               = window.GetProperties();
-    if (props.Height > 0) // TODO get rid
-    {
-        camera.uniformBuffer.data.projectionMatrix =
-            glm::perspective(glm::radians(camera.zoom), (float)props.Width / (float)props.Height, camera.nearClip, camera.farClip);
-    }
+    camera.viewportWidth  = window.GetProperties().Width;
+    camera.viewportHeight = window.GetProperties().Height;
 
-    camera.uniformBuffer.data.position = {camera.position.x, camera.position.y, camera.position.z, 0.0f};
+    camera.viewProjection.viewMatrix       = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
+    camera.viewProjection.projectionMatrix = glm::perspective(
+        glm::radians(camera.zoom), (float)camera.viewportWidth / (float)camera.viewportHeight, camera.nearClip, camera.farClip);
+
+    camera.uniformBuffer.data = {.viewProjection = camera.viewProjection, .position = {camera.position, 0.0f}};
 
     UploadUniformBuffer(camera.uniformBuffer);
 }

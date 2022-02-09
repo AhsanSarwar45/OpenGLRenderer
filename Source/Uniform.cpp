@@ -106,42 +106,12 @@ void ShaderSetMat4(ShaderProgram shaderProgram, UniformLocation uniformlocation,
     glUniformMatrix4fv(uniformlocation, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
-// void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, float x, float y)
-// {
-//     glUniform2f(glGetUniformLocation(shaderProgram, uniformName.c_str()), x, y);
-// }
+void ShaderSetFloatArray(ShaderProgram shaderProgram, UniformLocation uniformlocation, size_t length, const float* array)
+{
+    glUniform1fv(uniformlocation, length, array);
+}
 
-// void ShaderSetFloat2(ShaderProgram shaderProgram, const std::string& uniformName, const glm::vec2& vec)
-// {
-//     ShaderSetFloat2(shaderProgram, uniformName.c_str(), vec.x, vec.y);
-// }
-
-// void ShaderSetInt3(ShaderProgram shaderProgram, const std::string& name, int x, int y, int z)
-// {
-//     glUniform3i(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z);
-// }
-
-// void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& name, float x, float y, float z)
-// {
-//     glUniform3f(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z);
-// }
-
-// void ShaderSetFloat3(ShaderProgram shaderProgram, const std::string& name, const glm::vec3& vec)
-// {
-//     glUniform3f(glGetUniformLocation(shaderProgram, name.c_str()), vec.x, vec.y, vec.z);
-// }
-
-// void ShaderSetInt4(ShaderProgram shaderProgram, const std::string& name, int x, int y, int z, int w)
-// {
-//     glUniform4i(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z, w);
-// }
-
-// void ShaderSetFloat4(ShaderProgram shaderProgram, const std::string& name, float x, float y, float z, float w)
-// {
-//     glUniform4f(glGetUniformLocation(shaderProgram, name.c_str()), x, y, z, w);
-// }
-
-// void ShaderSetMat4(ShaderProgram shaderProgram, const std::string& name, const glm::mat4& matrix)
-// {
-//     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
-// }
+void ShaderSetFloatArray(ShaderProgram shaderProgram, const std::string& uniformName, size_t length, const float* array)
+{
+    ShaderSetFloatArray(shaderProgram, glGetUniformLocation(shaderProgram, uniformName.c_str()), length, array);
+}

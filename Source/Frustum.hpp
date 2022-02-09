@@ -4,4 +4,6 @@
 
 #include <glm/glm.hpp>
 
-std::vector<glm::vec4> GetFrustumCornersWorldSpace(const glm::mat4& projection, const glm::mat4& view);
+struct ViewProjection;
+
+std::vector<glm::vec4> GetFrustumCornersWorldSpace(const ViewProjection& viewProjection);

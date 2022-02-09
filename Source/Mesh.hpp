@@ -26,9 +26,9 @@ struct MeshData
 
 struct Mesh
 {
-    VertexArray   vao;
-    VertexBuffer  vbo;
-    ElementBuffer ebo;
+    VertexArrayObject   vao;
+    VertexBufferObject  vbo;
+    ElementBufferObject ebo;
 
     MaterialId   materialId;
     unsigned int numIndices;

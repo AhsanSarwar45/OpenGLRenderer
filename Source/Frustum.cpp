@@ -1,8 +1,10 @@
 #include "Frustum.hpp"
 
-std::vector<glm::vec4> GetFrustumCornersWorldSpace(const glm::mat4& projection, const glm::mat4& view)
+#include "Camera.hpp"
+
+std::vector<glm::vec4> GetFrustumCornersWorldSpace(const ViewProjection& viewProjection)
 {
-    const glm::mat4 inverseProjectionView = glm::inverse(projection * view);
+    const glm::mat4 inverseProjectionView = glm::inverse(viewProjection.projectionMatrix * viewProjection.viewMatrix);
 
     std::vector<glm::vec4> frustumCorners;
     for (unsigned int x = 0; x < 2; ++x)
