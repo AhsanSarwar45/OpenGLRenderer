@@ -17,6 +17,8 @@ struct PointLight
 
     float power;
 
+    bool castShadows;
+
     float shadowBias     = 0.08f;
     float shadowNearClip = 0.1f;
     float shadowFarClip  = 20.0f;
@@ -30,6 +32,8 @@ struct SunLight
     glm::vec3 color;
 
     float power;
+
+    bool castShadows;
 
     float shadowBias = 0.2f;
 

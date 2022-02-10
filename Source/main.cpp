@@ -128,17 +128,17 @@ int main()
     scene->models.push_back(sphere);
     scene->models.push_back(cube);
 
-    // scene->pointLights.push_back({
-    //     .position = {1.0f, 1.0f, 1.0f},
-    //     .color    = {1.0f, 1.0f, 1.0f},
-    //     .power    = 20.0f,
-    // });
+    scene->pointLights.push_back({
+        .position = {1.0f, 1.0f, 1.0f},
+        .color    = {1.0f, 1.0f, 1.0f},
+        .power    = 20.0f,
+    });
 
-    // scene->pointLights.push_back({
-    //     .position = {-1.0f, 1.0f, 1.0f},
-    //     .color    = {1.0f, 0.0f, 0.0f},
-    //     .power    = 20.0f,
-    // });
+    scene->pointLights.push_back({
+        .position = {-1.0f, 1.0f, 1.0f},
+        .color    = {1.0f, 0.0f, 0.0f},
+        .power    = 20.0f,
+    });
 
     // scene->pointLights.push_back({
     //     .position = {1.0f, 1.0f, -1.0f},
@@ -148,10 +148,10 @@ int main()
 
     // scene->sunLights.push_back(
     //     {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
-    scene->sunLights.push_back({.position  = {2.0f, 2.0f, 2.0f},
-                                .direction = glm::normalize(glm::vec3(3.0f, 3.0f, 3.0f)),
-                                .color     = {1.0f, 1.0f, 1.0f},
-                                .power     = 20.0f});
+    // scene->sunLights.push_back({.position  = {2.0f, 2.0f, 2.0f},
+    //                             .direction = glm::normalize(glm::vec3(3.0f, 3.0f, 3.0f)),
+    //                             .color     = {1.0f, 1.0f, 1.0f},
+    //                             .power     = 20.0f});
     // scene->sunLights.push_back(
     //     {.position = {4.0f, 4.0f, 4.0f}, .direction = {-3.0f, 4.0f, 2.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 

@@ -65,37 +65,3 @@ void SetCameraVectors(Camera& camera, const glm::vec3& position, float pitch, fl
 
 void ProcessCameraMouse(Camera& camera, float xoffset, float yoffset, bool constrainPitch = true);
 void ProcessCameraKeyboard(Camera& camera, const Window& window);
-
-// class Camera
-// {
-//   public:
-
-//     void Update(float deltaTime);
-
-//     glm::mat4 GetViewMatrix() { return m_View; }
-//     glm::mat4 GetProjectionMatrix() { return m_Projection; }
-
-//     float* GetNearClipPtr() { return &m_NearClip; }
-//     float* GetFarClipPtr() { return &m_FarClip; }
-//     float* GetSpeedPtr() { return &m_MovementSpeed; }
-
-//     float     GetZoom() const { return m_Zoom; }
-//     glm::vec3 GetPosition() const { return m_Position; }
-//     float     GetPitch() const { return m_Pitch; }
-//     float     GetYaw() const { return m_Yaw; }
-
-//     void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
-//     void ProcessMouseScroll(float yoffset)
-//     {
-//         m_Zoom -= (float)yoffset;
-//         if (m_Zoom < 1.0f)
-//             m_Zoom = 1.0f;
-//         if (m_Zoom > 45.0f)
-//             m_Zoom = 45.0f;
-//     }
-
-//   private:
-//     void UpdateCameraVectors();
-
-//     unsigned int m_UniformBuffer;
-// };

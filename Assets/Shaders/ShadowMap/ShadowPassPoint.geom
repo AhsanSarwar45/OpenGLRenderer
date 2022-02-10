@@ -19,15 +19,16 @@ layout(std140, binding = 5) uniform PointLightArray { PointLight pointLights[100
 pointLightArray;
 
 layout(triangles, invocations = 18) in;
-layout(triangle_strip, max_vertices = 18) out;
+layout(triangle_strip, max_vertices = 3) out;
 
-out vec4 FragPos;
+out vec4     fragPos;
+flat out int lightIndex;
 
 out gl_PerVertex { vec4 gl_Position; };
 
 void main()
 {
-    int lightIndex = gl_InvocationID / 6;
+    lightIndex = gl_InvocationID / 6;
     // vec3 normal     = cross(fragData[2].worldPos - fragData[0].worldPos, fragData[0].worldPos - fragData[1].worldPos);
     // vec3 lightDir   = pointLightArray.pointLights[lightIndex].position.xyz - fragData[0].worldPos;
 
@@ -74,7 +75,8 @@ void main()
 
     for (int i = 0; i < 3; ++i)
     {
-        gl_Position = pointLightTransform.lightSpaceVPMatrix[layerIndex] * gl_in[i].gl_Position;
+        fragPos     = gl_in[i].gl_Position;
+        gl_Position = pointLightTransform.lightSpaceVPMatrix[layerIndex] * fragPos;
 
         gl_Layer = layerIndex;
         EmitVertex();

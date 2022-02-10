@@ -33,3 +33,24 @@ void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram sh
         index++;
     }
 }
+void SetSunLightShadow(const std::shared_ptr<Scene> scene, int index, bool value)
+{
+    bool isShadowOn = index < scene->sunLightShadowSeperatorIndex;
+    if (isShadowOn != value)
+    {
+        int initialIndex, finalIndex;
+
+        if (value)
+        {
+            initialIndex = index;
+            // finalIndex   = scene->sunLights.length;
+        }
+        else
+        {
+            initialIndex = scene->sunLightShadowSeperatorIndex + index;
+        }
+
+        SunLight light = scene->sunLights[index];
+        scene->sunLights.erase(scene->sunLights.begin() + index);
+    }
+}
