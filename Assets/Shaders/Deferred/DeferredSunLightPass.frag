@@ -127,7 +127,7 @@ float CalculateSunShadow(float shadowBias, vec3 fragPos, float dotLightNormal)
     return shadow;
 }
 
-vec4 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0, vec3 fragPos)
+vec3 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallness, float roughness, vec3 F0, vec3 fragPos)
 {
     SunLight sunLight = sunLightArray.sunLights[lightIndex];
 
@@ -155,7 +155,7 @@ vec4 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallne
     float shadow   = CalculateSunShadow(sunLight.shadowBias, fragPos, NdotL);
     vec3  lighting = (kD * albedo / PI + specular) * radiance * NdotL;
 
-    return vec4(lighting * (1 - shadow), 0.5);
+    return lighting * (1 - shadow);
 }
 
 void main()
@@ -177,9 +177,9 @@ void main()
 
     // reflectance equation
 
-    vec4 color = CalculateSunLighting(viewDir, normal, albedo, metalness, roughness, F0, fragPos);
+    vec3 color = CalculateSunLighting(viewDir, normal, albedo, metalness, roughness, F0, fragPos);
 
     // color = vec3(float(layer) / float(shadowCascadeCount));
 
-    FragColor = color;
+    FragColor = vec4(color, 1.0);
 }
