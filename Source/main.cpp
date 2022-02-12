@@ -116,7 +116,7 @@ int main()
     std::shared_ptr<Model> cube   = LoadModel("Assets/Models/WoodenBox/cube.obj", metalMaterial, "Cube", true);
 
     cube->transform.position = glm::vec3(0.0, -2.0, 0.0);
-    cube->transform.scale    = glm::vec3(100.0, 1.0, 100.0);
+    cube->transform.scale    = glm::vec3(10.0, 1.0, 10.0);
 
     sphere->transform.position = glm::vec3(0.0, 0.0, 3.0);
 
@@ -146,12 +146,10 @@ int main()
     //     .power    = 20.0f,
     // });
 
-    scene->sunLights.push_back(
-        {.position = {2.0f, 2.0f, 2.0f}, .direction = {3.0f, 3.0f, 3.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
-    // scene->sunLights.push_back({.position  = {2.0f, 2.0f, 2.0f},
-    //                             .direction = glm::normalize(glm::vec3(3.0f, 3.0f, 3.0f)),
-    //                             .color     = {1.0f, 1.0f, 1.0f},
-    //                             .power     = 20.0f});
+    scene->sunLights.push_back({.position  = {2.0f, 2.0f, 2.0f},
+                                .direction = glm::normalize(glm::vec3(3.0f, 3.0f, 3.0f)),
+                                .color     = {1.0f, 1.0f, 1.0f},
+                                .power     = 20.0f});
     // scene->sunLights.push_back(
     //     {.position = {4.0f, 4.0f, 4.0f}, .direction = {-3.0f, 4.0f, 2.0f}, .color = {1.0f, 1.0f, 1.0f}, .power = 20.0f});
 
@@ -431,6 +429,8 @@ int main()
             {
                 currentPipeline = RunBenchmark(benchmark, window, SetRenderPipeline);
             }
+
+            SetModelMatrices(scene);
 
             switch (currentPipeline)
             {

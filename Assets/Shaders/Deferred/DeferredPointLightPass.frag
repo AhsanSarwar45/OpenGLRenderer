@@ -1,9 +1,9 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gPositionMetalness;
-uniform sampler2D gNormalRoughness;
-uniform sampler2D gAlbedoAO;
+layout(binding = 15) uniform sampler2D gPositionMetalness;
+layout(binding = 16) uniform sampler2D gNormalRoughness;
+layout(binding = 17) uniform sampler2D gAlbedoAO;
 
 layout(binding = 13) uniform samplerCubeArray pointShadowMapArray;
 

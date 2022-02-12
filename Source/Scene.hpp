@@ -28,3 +28,5 @@ struct Scene
 void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram shaderProgram);
 void SetSunLightShadow(const std::shared_ptr<Scene> scene, int index, bool value);
 void SetPointLightShadow(int index, bool value);
+
+void SetModelMatrices(const std::shared_ptr<Scene> scene);

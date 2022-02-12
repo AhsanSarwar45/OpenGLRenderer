@@ -35,7 +35,7 @@ struct SunLight
 
     bool castShadows;
 
-    float shadowBias = 0.2f;
+    float shadowBias = 0.04f;
 
     float zMult = 2.5f;
 };

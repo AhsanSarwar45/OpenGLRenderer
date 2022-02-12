@@ -1,5 +1,10 @@
 #include "Scene.hpp"
 
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 void SetSceneUniforms(const std::shared_ptr<const Scene> scene, ShaderProgram shaderProgram)
 {
 
@@ -52,5 +57,19 @@ void SetSunLightShadow(const std::shared_ptr<Scene> scene, int index, bool value
 
         SunLight light = scene->sunLights[index];
         scene->sunLights.erase(scene->sunLights.begin() + index);
+    }
+}
+
+void SetModelMatrices(const std::shared_ptr<Scene> scene)
+{
+
+    for (auto& model : scene->models)
+    {
+        Transform transform = model->transform;
+
+        glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
+
+        model->transform.modelMatrix =
+            glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
     }
 }

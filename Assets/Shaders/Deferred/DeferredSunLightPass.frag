@@ -1,9 +1,9 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gPositionMetalness;
-uniform sampler2D gNormalRoughness;
-uniform sampler2D gAlbedoAO;
+layout(binding = 15) uniform sampler2D gPositionMetalness;
+layout(binding = 16) uniform sampler2D gNormalRoughness;
+layout(binding = 17) uniform sampler2D gAlbedoAO;
 
 layout(binding = 12) uniform sampler2DArray sunShadowMapArray;
 
@@ -131,10 +131,10 @@ vec3 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallne
 {
     SunLight sunLight = sunLightArray.sunLights[lightIndex];
 
-    vec3 lightDir = normalize(sunLight.direction.xyz);
-
+    vec3 lightDir   = normalize(sunLight.direction.xyz);
     vec3 halfwayDir = normalize(viewDir + lightDir);
-    vec3 radiance   = sunLight.color.xyz * sunLight.power;
+
+    vec3 radiance = sunLight.color.xyz * sunLight.power;
 
     // cook-torrance brdf
     float NDF = DistributionGGX(normal, halfwayDir, roughness);
@@ -143,6 +143,8 @@ vec3 CalculateSunLighting(vec3 viewDir, vec3 normal, vec3 albedo, float metallne
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
+
+    // Metallic surfaces show no diffuse
     kD *= 1.0 - metallness;
 
     // add to outgoing radiance Lo

@@ -29,7 +29,5 @@ namespace ModelInternal
 {
 std::shared_ptr<Model> ParseScene(const aiScene* scene, const std::filesystem::path& path, bool flipTexture);
 std::shared_ptr<Mesh>  ParseMesh(const aiMesh* mesh);
-
-void SetModelUniforms(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram);
 } // namespace ModelInternal
 // void DrawMode(std::vector<Model>& model, Shader& shader);

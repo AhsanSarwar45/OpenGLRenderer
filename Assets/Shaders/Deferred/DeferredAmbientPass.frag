@@ -1,7 +1,7 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gAlbedoAO;
+layout(binding = 17) uniform sampler2D gAlbedoAO;
 
 layout(location = 0) in vec2 texCoord;
 

@@ -6,13 +6,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/types.h>
-#include <glm/ext/matrix_float4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
 #include <tinyobjloader/tiny_obj_loader.h>
 
 #include "Material.hpp"
@@ -162,15 +158,4 @@ std::shared_ptr<Mesh> ParseMesh(const aiMesh* rawMesh)
     return mesh;
 }
 
-void SetModelUniforms(const std::shared_ptr<const Model> model, ShaderProgram shaderProgram)
-{
-    Transform transform = model->transform;
-
-    glm::mat4 rotation = glm::toMat4(glm::quat(transform.rotation));
-
-    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transform.position) * rotation * glm::scale(glm::mat4(1.0f), transform.scale);
-
-    UseShaderProgram(shaderProgram);
-    ShaderSetMat4(shaderProgram, "model", modelMatrix);
-}
 } // namespace ModelInternal

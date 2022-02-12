@@ -1,7 +1,7 @@
 #version 430 core
 out vec4 FragColor;
 
-uniform sampler2D gPositionMetalness;
+layout(binding = 15) uniform sampler2D gPositionMetalness;
 
 struct SunLight
 {
